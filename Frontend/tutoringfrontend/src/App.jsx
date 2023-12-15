@@ -1,0 +1,32 @@
+// App.jsx
+import React from 'react';
+import {BrowserRouter as Router, Routes, Route, Navigate} from 'react-router-dom';
+import LoginForm from './components/LoginForm';
+import WelcomePage from './components/WelcomePage';
+import Homepage from "./components/Homepage.jsx";
+import Header from "./minicomponents/Header.jsx";
+import CreateAccount from "./components/CreateAccount.jsx";
+
+function App() {
+    return (
+        <>
+            {/*react fragment se zove i koristi za grupitanje*/}
+            <Header />
+        {/*   sve sto je izvan routes je stalno tu a unutar njega je dinamicko */}
+        <Router>
+            <Routes>
+                <Route path="/login" element={<LoginForm />} />
+                <Route path="/welcome" element={<WelcomePage />} />
+                <Route path="/" element={<Homepage />}></Route>
+                <Route path="createAccount" element={<CreateAccount />}></Route>
+                <Route path="*" element={<Navigate to="/" replace/>}/>
+            {/*    da navigira bilo koji nedefinirani path na login*/}
+            </Routes>
+        </Router>
+
+        </>
+    );
+}
+
+
+export default App;
