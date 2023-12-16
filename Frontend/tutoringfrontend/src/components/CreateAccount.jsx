@@ -30,7 +30,7 @@ Kada pozoveš event.preventDefault(), kažeš browseru: "Ne radi ono standardno 
             if (responce.ok)
             {
                 //ako je ok kreirano
-                navigate('/login');
+                navigate('/login');//useNavigate se koristi ciji je argument neki endpoint
             }
             else
             {
