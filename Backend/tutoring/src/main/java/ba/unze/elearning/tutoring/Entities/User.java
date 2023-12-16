@@ -14,6 +14,12 @@ public class User
     private String surname;
     private String email;
 
+    private String phoneNumber;
+    @OneToOne(mappedBy = "user")//mappedBy se koristi da se zna ko posjeduje stvarni kljuc
+    private Student studentProfile;
+    @OneToOne(mappedBy="user")//odnosi se na ime atributa unutar respektivne klase koja 'pointa' nad ovu nadklasu sa onetooneanotacijom
+    private Tutor tutorProfile;
+
     public Long getId()
     {
         return id;
@@ -27,7 +33,7 @@ public class User
     {
         this.username = username;
     }
-    User(){
+    public User(){
 
     }
 
