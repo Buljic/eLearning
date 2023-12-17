@@ -9,7 +9,11 @@ function CreateAccount()
     //dekonstrukcija nizova tj bukv uzimanje vrijednosti iz nekog niza nakon '='
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
+    const [name,setName]=useState('');
+    const [surname,setSurname]=useState('');
+    const [phoneNumber,setPhonenumber]=useState('');
     const [email, setEmail] = useState('');
+    const [accountType,setAccountType]=useState('');
 
     const navigate = useNavigate();
     const [message, setMessage] = useState('');
@@ -27,7 +31,7 @@ Kada pozoveš event.preventDefault(), kažeš browseru: "Ne radi ono standardno 
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({username, email, password}),//ono sto se salje na backend kao info tj
+                body: JSON.stringify({username,name,surname,phoneNumber ,email, password,accountType}),//ono sto se salje na backend kao info tj
                 //bukv argumenti za maping na backend strani
             });
             if (response.ok)
@@ -48,17 +52,31 @@ Kada pozoveš event.preventDefault(), kažeš browseru: "Ne radi ono standardno 
     };
     //TODO implementovati funkcionalnost slanja confirmationa na mail preko backenda
 
-
+    const isFormValid=accountType!=='';//da vidimo je li ostala pocetna opcija u drop downu
+                                    //striktno poredjenje poredi i typeove tj === i !==
     return (
         <div>
             <form onSubmit={handleCreateAccount}>
                 <input type="text"
                        value={username}
                        onChange={(e) => setUsername(e.target.value)}
-                       placeholder="Korisnicko ime"/>
+                       placeholder="Korisnicki username"/>
                 {/*    fazon ovo onchange proslijedjuje 'e' kao event zapravo kada se desi i mi moramo znati unaprijed
             koji ce se desiti event jer ono nezz program pa na osnovu toga koristiti tu funkciju koja je u ovom slucaju
             set username s pristupanjem eventu 'e' za to! a target je ono sto se mijenja u eventu a value vrijednost*/}
+                <input type="text"
+                        value={name}
+                        onChange={(e)=>setName(e.target.value)}
+                        placeholder="Korisnicko ime"/>
+                <input type="text"
+                       value={surname}
+                       onChange={(e)=>setSurname(e.target.value)}
+                       placeholder="Korisnicko prezime"/>
+                <input type="text"
+                       value={phoneNumber}
+                       onChange={(e)=>setPhonenumber(e.target.value)}
+                       placeholder="Broj telefona"/>
+
                 <input type="text"
                        value={email}
                        {/*       mozes bez '{}' ovo arrow functions jer je samo inline funkcija ovo*/}
@@ -69,8 +87,15 @@ Kada pozoveš event.preventDefault(), kažeš browseru: "Ne radi ono standardno 
                        value={password}
                        onChange={(e) => setPassword(e.target.value)}
                        placeholder="Lozinka"/>
-
-                <button type="submit">Kreiraj racun</button>
+                <select value={accountType} onChange={(e)=>setAccountType(e.target.value)}>
+                    <option value="">Odaberi tip account-a</option>
+                    <option value="STUDENT">Student</option>
+                    <option value="PROFESOR">Profesor</option>
+                    <option value="KORISNIK">Odabrati ću kasnije</option>
+                {/*TODO Napraviti provjeru za svaki input field ovdje*/}
+                </select>
+                <button type="submit" disabled={!isFormValid}>Kreiraj racun</button>
+            {/*disabled kad je true onda je forma onemogucena*/}
             </form>
             {/*prvi gleda jel ima nesto u njemu i ako ima onda je true i prikaze se ovo drugo*/}
             {/*U JSX-u, koristiš {} da ubaciš JavaScript izraz unutar JSX-a. Ovo ti omogućava da dinamički manipulišeš sadržajem.
