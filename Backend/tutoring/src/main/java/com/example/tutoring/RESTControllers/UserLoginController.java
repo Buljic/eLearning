@@ -1,18 +1,20 @@
 package com.example.tutoring.RESTControllers;
 
 import com.example.tutoring.DTOs.CreateAccountDTO;
-import com.example.tutoring.DTOs.LoginDetailsDTO;
 import com.example.tutoring.Entities.Student;
 import com.example.tutoring.Entities.Tutor;
 import com.example.tutoring.Entities.User;
 import com.example.tutoring.Other.AccountType;
 import com.example.tutoring.Repositories.UserRepository;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
+@RequestMapping("/api")
 public class UserLoginController
 {
     private final UserRepository userRepository;
@@ -21,15 +23,22 @@ public class UserLoginController
     {
         this.userRepository=userRepository;
     }
-    @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginDetailsDTO loginDetailsDTO)
-    {
-        //TODO operacija da se provjeri postojanje usernamea i provjera passworda njegovog
-        return null;
-    }
-    @PostMapping("createAccount")//request body uzima json npr koji je poslan s requestom
+
+//    @PostMapping("/login")
+//    public ResponseEntity<?> login(@RequestBody LoginDetailsDTO loginDetailsDTO)
+//    {
+//        //TODO operacija da se provjeri postojanje usernamea i provjera passworda njegovog
+//        return null;
+//    }
+    @PostMapping("/createAccount")//request body uzima json npr koji je poslan s requestom
     public ResponseEntity<?> createAccount(@RequestBody CreateAccountDTO createAccountDTO)
     {//na osnovu odredjenog enuma , ovisi kakav account kreiras
+        if(userRepository.existsByUsername(createAccountDTO.getUsername()))
+        {
+          return  ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body("Korisnicko ime vec postoji");
+        }
         User user=new User(createAccountDTO.getUsername(),createAccountDTO.getPassword()
         ,createAccountDTO.getName(),
                 createAccountDTO.getSurname(),

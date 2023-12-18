@@ -18,7 +18,6 @@ public class JwtUtil
 {
     private SecretKey secretKey= Keys.secretKeyFor(SignatureAlgorithm.HS512);//generira secret key
 
-
     public String generateToken(String username)
     {
         long nowMillis=System.currentTimeMillis();

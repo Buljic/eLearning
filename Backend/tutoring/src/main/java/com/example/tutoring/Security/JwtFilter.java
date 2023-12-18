@@ -9,6 +9,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.GenericFilterBean;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 
 @Component
 public class JwtFilter extends GenericFilterBean
@@ -21,24 +23,38 @@ public class JwtFilter extends GenericFilterBean
 
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
-            throws IOException, ServletException {
+            throws IOException, ServletException
+    {
 
-        HttpServletRequest httpRequest = (HttpServletRequest) request;
+        HttpServletRequest httpRequest = (HttpServletRequest)request;
         String requestURI = httpRequest.getRequestURI();
+        System.out.println("Processing request for: " + requestURI); // Dodaj ovo za logovanje
+
+        //Ovdje navodis sve endpointe koje ce jwt filter ignorirati tj sve one za koje frontend moze slati zahtjev a nije potrebna
+        //registracija
+        List<String> ignoredEndpointsBy = Arrays.asList("/api/login", "/api/createAccount", "/");
 
         // Preskacete provjeru JWT-a za login endpoint
-        if ("/login".equals(requestURI)) {
+        if (ignoredEndpointsBy.contains(requestURI))
+        {  //TODO IGNORE NAPRAVI
             chain.doFilter(request, response);
             return;
         }
+        else
+        {
 
-        String token = httpRequest.getHeader("Authorization"); //da skine header s api calla
+            String token = httpRequest.getHeader("Authorization"); //da skine header s api calla
 
-        if (token != null && jwtUtil.validateToken(token)) {
-            // Ako je JWT valjan, nastavite s lancem filtera
-            chain.doFilter(request, response);
-        } else {
-            throw new ServletException("Neispravan ili nedostajuci JWT");
+            if (token != null && jwtUtil.validateToken(token))
+            {
+                // Ako je JWT valjan, nastavite s lancem filtera
+                chain.doFilter(request, response);
+            }
+            else
+            {
+                throw new ServletException("Neispravan ili nedostajuci JWT");
+            }
         }
     }
 }
+

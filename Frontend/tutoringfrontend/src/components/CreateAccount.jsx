@@ -1,7 +1,7 @@
 import React, {useState} from "react";
 
 import {useNavigate} from "react-router-dom";
-import error from "eslint-plugin-react/lib/util/error.js";
+//import error from "eslint-plugin-react/lib/util/error.js";
 function CreateAccount()
 {
 //arrow functions... const imeFunkcije=(parametri)=>{tijelo Fx};
@@ -26,7 +26,7 @@ Kada pozoveš event.preventDefault(), kažeš browseru: "Ne radi ono standardno 
 
         try
         {
-            const response = await fetch('http://localhost:8080/createAccount', { //fetch je za sve radnje asinhrone
+            const response = await fetch('http://localhost:8080/api/createAccount', { //fetch je za sve radnje asinhrone
                 method: 'POST',//koristis za post , postmapping
                 headers: {
                     'Content-Type': 'application/json',
@@ -46,7 +46,7 @@ Kada pozoveš event.preventDefault(), kažeš browseru: "Ne radi ono standardno 
         }
         catch (error)
         {
-            console.error('greska prilikom stvaranja racuna', error);
+            //console.error('greska prilikom stvaranja racuna', error);
             setMessage('Doslo je do greske... pokusajte ponovo');
         }
     };
@@ -76,10 +76,10 @@ Kada pozoveš event.preventDefault(), kažeš browseru: "Ne radi ono standardno 
                        value={phoneNumber}
                        onChange={(e)=>setPhonenumber(e.target.value)}
                        placeholder="Broj telefona"/>
-
+                       {/*mozes bez '{}' ovo arrow functions jer je samo inline funkcija ovo*/}
                 <input type="text"
                        value={email}
-                       {/*       mozes bez '{}' ovo arrow functions jer je samo inline funkcija ovo*/}
+
                        onChange={(e) => setEmail(e.target.value)}
                        placeholder="Korisnicki email"/>
 
