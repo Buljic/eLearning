@@ -3,12 +3,12 @@ import React from 'react';
 
 const WelcomePage = () => {
     // Preuzmite JWT iz localStorage ili slično
-    const token = localStorage.getItem('token');
+   // const token = localStorage.getItem('token'); ne koristimo vise localstorage nego cookies
 
     return (
         <div>
             <h1>Dobrodošli</h1>
-            <p>Vaš JWT: {token}</p>
+            {/*<p>Vaš JWT: {token}</p>*/}
         </div>
     );
 };

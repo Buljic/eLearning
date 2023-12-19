@@ -11,7 +11,7 @@ function LoginForm() {
     const handleLogin = async (event) => {
         event.preventDefault();
         try {
-            const response = await fetch('http://localhost:8080/login', {
+            const response = await fetch('http://localhost:8080/api/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -20,8 +20,8 @@ function LoginForm() {
             });
 
             if (response.ok) {
-                const data = await response.json();
-                localStorage.setItem('token', data.token); // Spremanje JWT tokena u localStorage
+               // const data = await response.json();
+                //localStorage.setItem('token', data.token); // Spremanje JWT tokena u localStorage
                 navigate('/welcome'); // Preusmjeravanje na WelcomePage
             } else {
                 setMessage('Neuspješna prijava. Molimo pokušajte ponovo.');
