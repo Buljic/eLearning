@@ -6,12 +6,11 @@ import com.example.tutoring.Entities.Tutor;
 import com.example.tutoring.Entities.User;
 import com.example.tutoring.Other.AccountType;
 import com.example.tutoring.Repositories.UserRepository;
+import com.example.tutoring.Security.JwtUtil;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api")
@@ -19,9 +18,13 @@ public class UserLoginController
 {
     private final UserRepository userRepository;
 
-    UserLoginController(UserRepository userRepository)
+    private final JwtUtil jwtUtil;
+
+    UserLoginController(UserRepository userRepository,JwtUtil jwtUtil)
+
     {
         this.userRepository=userRepository;
+        this.jwtUtil=jwtUtil;
     }
 
 //    @PostMapping("/login")
@@ -71,5 +74,18 @@ public class UserLoginController
         return ResponseEntity.ok().body("Racun kreiran");
 
     }
+    @GetMapping("/welcomePage")
+    public ResponseEntity<?> welcomePage(HttpServletRequest request)
+    {
+        String token=jwtUtil.extractJwtFromCookie(request);
+        if(token!=null)
+        {
+            System.out.println("ok obradjuje ga bar");
+            String username= jwtUtil.getUsernameFromToken(token);
+            return ResponseEntity.status(HttpStatus.OK).body(username);
+        }else return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("NEISPRAVNO");
+
+    }
+
 
 }

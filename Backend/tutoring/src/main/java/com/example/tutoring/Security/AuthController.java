@@ -29,14 +29,14 @@ public class AuthController
         if(userRepository.existsByUsername(loginRequest.getUsername()))
         {
             Optional<User> user=userRepository.findByUsername(loginRequest.getUsername());
-            if(loginRequest.getPassword().equals(user.get().getPassword()))
+            if(loginRequest.getPassword().equals(user.get().getPassword()))//mozda da se provjeri ispresent ali i ne mora
             {
                 String token=jwtUtil.generateToken(loginRequest.getUsername());
 
                 //Kreiranje Http Cookie sa JWT tokenom
                 ResponseCookie jwtCookie=ResponseCookie.from("JWT",token)
                         .httpOnly(true)//da se ne dozvoli pristup klijentskom javascriptu radi xss i slicno
-                        .secure(true)//samo za https stranice
+                       // .secure(true)//samo za https stranice TODO podesi https stranicu
                         .path("/")//da je dostupan unutar cijele aplikacije
                         .build();
                 System.out.println("Poslano");

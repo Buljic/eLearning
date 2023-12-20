@@ -43,7 +43,7 @@ public class JwtFilter extends GenericFilterBean
         }
         else
         {
-            String token= extractJwtFromCookie(httpRequest);
+            String token= jwtUtil.extractJwtFromCookie(httpRequest);
 
             if(token!=null && jwtUtil.validateToken(token))
             {
@@ -65,17 +65,17 @@ public class JwtFilter extends GenericFilterBean
 //            }
         }
     }
-    private String extractJwtFromCookie(HttpServletRequest request) {
-        if (request.getCookies() != null) {
-            for (Cookie cookie : request.getCookies()) {
-                if ("JWT".equals(cookie.getName())) {
-                    System.out.println("Naslo ga je ");
-                    return cookie.getValue();
-                }
-            }
-        }
-        System.out.println("NIJE GA NASLO");
-        return null;
-    }
+//    private String extractJwtFromCookie(HttpServletRequest request) {
+//        if (request.getCookies() != null) {
+//            for (Cookie cookie : request.getCookies()) {
+//                if ("JWT".equals(cookie.getName())) {
+//                    System.out.println("Naslo ga je ");
+//                    return cookie.getValue();
+//                }
+//            }
+//        }
+//        System.out.println("NIJE GA NASLO");
+//        return null;
+//    }
 }
 

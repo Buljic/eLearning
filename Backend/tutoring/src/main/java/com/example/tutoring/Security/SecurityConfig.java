@@ -30,6 +30,8 @@ public class SecurityConfig {
         CorsConfiguration corsConfiguration = new CorsConfiguration();
         corsConfiguration.setAllowCredentials(true);
         corsConfiguration.addAllowedOriginPattern("*"); // Možete ograničiti na specifične origin-e ako je potrebno
+        corsConfiguration.addAllowedOrigin("http://localhost:5173"); // Ako je ovo origin frontend-a
+
         corsConfiguration.addAllowedHeader("*");
         corsConfiguration.addAllowedMethod("*");
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
@@ -39,7 +41,7 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(request -> corsConfiguration))
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests((authz) -> authz
-                        .requestMatchers("/api/**", "/api/login","/api/createAccount").permitAll()
+                        .requestMatchers("/api/**", "/api/login","/api/createAccount","api/welcomePage").permitAll()
                         .anyRequest().authenticated()
                 )
                 .httpBasic(Customizer.withDefaults())

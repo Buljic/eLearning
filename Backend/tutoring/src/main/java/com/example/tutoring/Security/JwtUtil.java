@@ -5,6 +5,8 @@ import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
@@ -55,5 +57,23 @@ public class JwtUtil
         }
     }
 
+    public String extractJwtFromCookie(HttpServletRequest request) {
+        if (request.getCookies() != null) {
+            for (Cookie cookie : request.getCookies()) {
+                if ("JWT".equals(cookie.getName())) {
+                    System.out.println("Naslo ga je ");
+                    return cookie.getValue();
+                }
+            }
+        }
+        System.out.println("NIJE GA NASLO");
+        return null;
+    }
+
+    public String getUsernameFromToken(String token)
+    {
+        Jws<Claims> claimsJws=Jwts.parser().setSigningKey(secretKey).build().parseClaimsJws(token);
+        return claimsJws.getBody().getSubject();
+    }
 
 }
