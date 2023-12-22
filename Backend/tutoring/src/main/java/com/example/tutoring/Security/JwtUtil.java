@@ -60,8 +60,8 @@ public class JwtUtil
     public String extractJwtFromCookie(HttpServletRequest request) {
         if (request.getCookies() != null) {
             for (Cookie cookie : request.getCookies()) {
-                if ("JWT".equals(cookie.getName())) {
-                    System.out.println("Naslo ga je ");
+                if ((cookie.getName()).contains("JWT") ) {
+                    System.out.println("Naslo ga je  TJ COOKIEA");
                     return cookie.getValue();
                 }
             }
