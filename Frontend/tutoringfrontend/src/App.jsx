@@ -6,6 +6,7 @@ import WelcomePage from './components/WelcomePage';
 import Homepage from "./components/Homepage.jsx";
 import Header from "./minicomponents/Header.jsx";
 import CreateAccount from "./components/CreateAccount.jsx";
+import Subjects from "./components/Subjects.jsx";
 
 function App() {
     return (
@@ -17,6 +18,7 @@ function App() {
             <Routes>
                 <Route path="/login" element={<LoginForm />} />
                 <Route path="/welcome" element={<WelcomePage />} />
+                <Route path="/searchSubjects" element={<Subjects/>}/>
                 <Route path="/" element={<Homepage />}></Route>
                 <Route path="createAccount" element={<CreateAccount />}></Route>
                 <Route path="*" element={<Navigate to="/" replace/>}/>
