@@ -1,5 +1,6 @@
 // components/WelcomePage.jsx
 import React, {useEffect, useState} from 'react';
+import {Link} from "react-router-dom";
 
 const WelcomePage = () => {
     // Preuzmite JWT iz localStorage ili slično
@@ -58,9 +59,16 @@ const [username,setUsername]=useState('');
         getUsername();
     }, []); // Efekat se izvršava samo jednom nakon montiranja komponente
     return (
+        // nav je za navigacijski i govori browseru da nisu samo kao obicni linkovi nego za navigaciju
         <div>
             <h1>Dobrodošli</h1>
             <p>Kornisnicko ime je {username}</p>
+
+            <nav>
+                <ul>
+                    <li><Link to="/searchSubjects">Trazi predmete</Link></li>
+                </ul>
+            </nav>
             {/*<p>Vaš JWT: {token}</p>*/}
         </div>
     );
