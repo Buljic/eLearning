@@ -11,14 +11,18 @@ import React, {useEffect, useState} from "react";
  */
 const Subjects = () => {
     //koristi se [] u usestate za nizove
-    const[subjects,setSubjects]=useState([]);
+    const[subjects,setSubjects]=useState([]);       //STRING LIST SA SVIM SUBJECTS
+
     const[searchTerm,setSearchTerm]=useState('');
     const[showSuggestions,setShowSuggestions]=useState(false);
     const[isSearching,setIsSearching]=useState(false);
-    const[displayedSubjects,setDisplayedSubjects]=useState([]);
 
-    const[suggestions,setSuggestions]=useState([]);
+    const[displayedSubjects,setDisplayedSubjects]=useState([]);//prikazani predmeti u listi
+    const[popularSubjects,setPopularSubjects]=useState([]);
     const[searchResults,setSearchResults]=useState([]);
+
+     const[suggestions,setSuggestions]=useState([]);
+    // const[searchResults,setSearchResults]=useState([]);
 
     useEffect( ()=>{
         const getPopularSubjects=async() =>{
@@ -36,13 +40,21 @@ const Subjects = () => {
                 throw new Error("Error u fetchangu predmeta popularnih");
             }else{
                 const data=await response.json();
-                setDisplayedSubjects(data);
+
+                //setDisplayedSubjects(data);     //POSTAVI SAMO ONE POPULARNE PREDMETE TJ S NAJVISE TUTORA
+                setPopularSubjects(data);
+                popularSubjects.forEach(subject=>{
+                    console.log(`Ime predmeta: ${subject.name} a broj tutora ${subject.number}`);
+                })
+
+
             }
         }
         getPopularSubjects();
     },[]);
 
-    //ucitavanje svih predmeta za prijedlog
+
+                            //ucitavanje svih predmeta za prijedlog
     useEffect( () =>{
         const getAllSubjects= async()=>{
             const response=await fetch('http://localhost:8080/api/allSubjects',{
@@ -67,7 +79,7 @@ const Subjects = () => {
 
 
     const handleSearchChange=(event )=>{
-        setSearchTerm(event.target.value);
+        setSearchTerm(event.target.value || ''); //moze se u JSu koristiti sa ne boolean kao shortcircuit  koja vraca prvu truthy vrijednost tj samo da nije undefined null ili false 0
         setShowSuggestions(true);
         //
         setSuggestions(subjects.filter(subject =>
@@ -97,7 +109,8 @@ const Subjects = () => {
     //za info o searched subjects
     const  getSearchedSubjectInfo=async ()=>
     {//koristi backticks tj `` umjesto navodnika , na podrucju gdje koristis queryje  i template literal za interpolaciju
-        const response=await fetch(`http://localhost:8080/api/subjects/search?term=${searchTerm}`,{
+        const response=await fetch(`http://localhost:8080/api/subjects/search?searchTerm=${searchTerm}`,{
+                                                        //ovaj prije ? mora biti zapravo ime koje se na backendu trazi
             method:'GET',
             credentials:'include',
             headers:{
@@ -106,6 +119,7 @@ const Subjects = () => {
         });
         if(!response.ok)
         {
+            setIsSearching(false);
             throw new Error("problem s dohvatom searched predmeta");
         }
         else{
@@ -114,7 +128,10 @@ const Subjects = () => {
                console.log("Ime predmeta", dto.name, );
                console.log("Broj tutora" , dto.number);
             });
-            setDisplayedSubjects(data);
+            //setDisplayedSubjects(data);
+            setSearchResults(data);
+            setIsSearching(false);
+
         }
     }
 //TODO FIX LOGIKU GDJE VARIJABLA IMA 2 RAZLICITA TIPA
@@ -122,15 +139,15 @@ const Subjects = () => {
     {
         event.preventDefault();//mora se uvijek stavljati
         setIsSearching(true);
-        setSearchTerm(event.target.value);
+        //setSearchTerm(event.target.value);
         getSearchedSubjectInfo();
     }
-
+//TODO POSTAVI DA SE NE PRIKAZUJE NISTA AKO OPET PRITISNEMO SEARCH I ON BUDE PRAZAN
     return(
         <div>
             {/*forma je zapravo wrapper za ovo i u njoj stavljamo input field i button i sl*/}
-            <form onSubmit={handleSubmit}>
-            <input
+            <form id="searchForm" onSubmit={handleSubmit}>
+            <input id="inputField"
                 type="text"
                 value={searchTerm}
                 onChange={handleSearchChange}
@@ -155,13 +172,20 @@ const Subjects = () => {
                     {/*{filteredSubjects.map((subject,index)=>(*/}
                     {/*    <li key={index}>{subject.name}  a broj tutora : {subject.number}</li>*/}
                     {/*))}*/}
-                {filteredSubjects.map(subject=>(
-                    <li key={subject.name}>{subject.name}  a broj tutora : {subject.number}</li>
-                    ))}
+
+                {/*{filteredSubjects.map(subject=>(*/}
+                {/*    <li key={subject.name}>{subject.name}</li>*/}
+                {/*    ))}*/}
+
+                    {popularSubjects.map(subject=>(
+                        <li key={subject.name}>Ime je "{subject.name}"  Broj tutora {subject.number}</li>
+
+                    ) )}
+
                 </ul>
             ) :( <ul>
-                    {displayedSubjects.map(subject=>(
-                        <li key={subject}>{subject}</li>
+                    {searchResults.map(subject=>(
+                        <li key={subject.name}>Ime je- "{subject.name}"  Broj tutora {subject.number}</li>
 
                         ) )}
             </ul>
