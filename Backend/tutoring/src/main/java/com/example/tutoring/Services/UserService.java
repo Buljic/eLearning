@@ -26,12 +26,26 @@ public class UserService
 
     public List<StringNumber> findMostTutorSubjects()
     {
-        String sql = "SELECT Subject.subject_name, COUNT(TutorSubject.id) as brojTutora " +
+        String sql = "SELECT Subject.subject_name AS name, " +
+                "COALESCE(COUNT(TutorSubject.id), 0) AS number " +
                 "FROM Subject " +
                 "LEFT JOIN TutorSubject ON Subject.id = TutorSubject.subject_id " +
                 "GROUP BY Subject.subject_name " +
-                "ORDER BY brojTutora DESC, Subject.subject_name " +
+                "ORDER BY number DESC, Subject.subject_name " +
                 "LIMIT 5;";
+//        String sql = "SELECT Subject.subject_name, " +
+//                "COALESCE(COUNT(TutorSubject.id), 0) as brojTutora " +
+//                "FROM Subject " +
+//                "LEFT JOIN TutorSubject ON Subject.id = TutorSubject.subject_id " +
+//                "GROUP BY Subject.subject_name " +
+//                "ORDER BY COUNT(TutorSubject.id) DESC, Subject.subject_name " +
+//                "LIMIT 5;";
+//        String sql = "SELECT Subject.subject_name, COUNT(TutorSubject.id) as brojTutora " +
+//                "FROM Subject " +
+//                "LEFT JOIN TutorSubject ON Subject.id = TutorSubject.subject_id " +
+//                "GROUP BY Subject.subject_name " +
+//                "ORDER BY brojTutora DESC, Subject.subject_name " +
+//                "LIMIT 5;";
 //        String sql="SELECT Subject.subject_name, COUNT(TutorSubject.id) as brojTutora " +
 //                "FROM TutorSubject " +
 //                "JOIN Subject ON TutorSubject.subject_id = Subject.id " +
@@ -42,11 +56,17 @@ public class UserService
     }
     public List<StringNumber> findSearchedSubjects(String searchedText)
     {//koristi se where nakon from i join ali prije npr group by
-        String sql="SELECT Subject.subject_name , COUNT(TutorSubject.id) as brojTutora " +
-                "FROM TutorSubject " +
-                "JOIN Subject ON TutorSubject.subject_id= Subject.id " +
-                "WHERE Subject.subject_name LIKE  ? " +
-                "GROUP BY Subject.subject_name ;";
+//        String sql="SELECT Subject.subject_name , COUNT(TutorSubject.id) as brojTutora " +
+//                "FROM TutorSubject " +
+//                "JOIN Subject ON TutorSubject.subject_id= Subject.id " +
+//                "WHERE LOWER(Subject.subject_name) LIKE  LOWER(?) " +
+//                "GROUP BY Subject.subject_name ;";
+            //COALESCE sE KORISTI da vrati element prvi koji nije null a ako su svi null onda vraca null
+        String sql = "SELECT Subject.subject_name AS name, COALESCE(COUNT(TutorSubject.id), 0) as number " +//moras AS koristiti ono sto ce dto-u lakse bit skontat
+                "FROM Subject " +
+                "LEFT JOIN TutorSubject ON Subject.id = TutorSubject.subject_id " +
+                "WHERE LOWER(Subject.subject_name) LIKE LOWER(?) " +
+                "GROUP BY Subject.subject_name;";
                 return jdbcTemplate.query(sql,new Object[]{"%"+searchedText+"%"},new BeanPropertyRowMapper<>(StringNumber.class));
     }
 }
