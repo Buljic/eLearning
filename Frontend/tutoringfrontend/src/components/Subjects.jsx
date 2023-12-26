@@ -1,4 +1,5 @@
 import React, {useEffect, useState} from "react";
+import {Link} from "react-router-dom";
 
 //Moze se koristiti i tj
 /*
@@ -71,6 +72,10 @@ const Subjects = () => {
             }else{
                 const data=await response.json();
                 setSubjects(data);
+                console.log(data);
+                subjects.forEach(subject=>{
+                    console.log(subject);
+                });
             }
         }
         getAllSubjects();
@@ -92,15 +97,21 @@ const Subjects = () => {
     //filter kreira novi niz iz originalnog koji zadovoljavaju neki uvjet
     //array.filter(element=>{});
     //filter prolazi kroz svaki element u ovom nad kojim se poziva isto foreach
-    const filteredSubjects=searchTerm
-        //subject je trenutni element niza subjects  koji se obradjuje
-    ? subjects.filter(subject=> subject.toLowerCase().includes(searchTerm.toLowerCase()))
+    // const filteredSubjects=searchTerm
+    //     //subject je trenutni element niza subjects  koji se obradjuje
+    // ? subjects.filter(subject=> subject.toLowerCase().includes(searchTerm.toLowerCase()))
+    //     : [];
+    const filteredSubjects = searchTerm && typeof searchTerm === 'string'
+        ? subjects.filter(subject => subject.toLowerCase().includes(searchTerm.toLowerCase()))
         : [];
+
 
 
     //koristi se da obradjuje se kada se pritisne neki suggested test ovdje
     const handleSuggestionClick = (subject)=>{
-        console.log(`pozvalo se ovo  a subject je :${subject}:`);
+        //console.log(`pozvalo se ovo  a subject je :${subject}:`);
+        //e.stopPropagation();
+        console.log("nesto");
         setSearchTerm(subject);
         setShowSuggestions(false);
     }//moze bilo koje ime u argument ali bitno je da se ne proslijedjuje event neki
@@ -151,17 +162,23 @@ const Subjects = () => {
                 type="text"
                 value={searchTerm}
                 onChange={handleSearchChange}
-                onBlur={()=>setShowSuggestions(false)}
+                //onBlur={()=>setShowSuggestions(false)}
                 onFocus={()=>searchTerm && setShowSuggestions(true)}
                 placeholder="Pretrazi predmete"
             />
                 <button type="submit">Pretrazi</button>
-        </form>
 
+        </form>
+            {/*TODO POPRAVI onClick funkciju sa handleSuggestionClick*/}
             {showSuggestions && searchTerm && (
-                <ul>
-                    {filteredSubjects.map(subject=>(
-                        <li key={subject} onClick={()=>handleSuggestionClick(subject)}>{subject}</li>
+                <ul id="suggestions">
+                    {filteredSubjects.map((subject, index) => (
+                        <li key={index} id={subject}>
+                            <button id={subject} onClick={() => handleSuggestionClick(subject) }>
+                                {subject}
+                            </button>
+
+                        </li>
                     ))}
                 </ul>
             )}
@@ -178,22 +195,23 @@ const Subjects = () => {
                 {/*    ))}*/}
 
                     {popularSubjects.map(subject=>(
-                        <li key={subject.name}>Ime je "{subject.name}"  Broj tutora {subject.number}</li>
+                       <Link to={`/tutorsFor/${subject.name}`} key={subject.name}> <li>Ime je "{subject.name}"  Broj tutora {subject.number}</li></Link>
 
                     ) )}
 
                 </ul>
             ) :( <ul>
                     {searchResults.map(subject=>(
-                        <li key={subject.name}>Ime je- "{subject.name}"  Broj tutora {subject.number}</li>
+                      <Link to={`/tutorsFor/${subject.name}`} key={subject.name}>  <li >Ime je- "{subject.name}"  Broj tutora {subject.number}</li></Link>
 
                         ) )}
             </ul>
 
 
                         ) }
+
         </div>
     );
 };
 
-export default Subjects
+export default Subjects;
