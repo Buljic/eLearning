@@ -1,6 +1,7 @@
 package com.example.tutoring.Services;
 
 import com.example.tutoring.DTOs.StringNumber;
+import com.example.tutoring.Entities.Tutor;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -68,5 +69,10 @@ public class UserService
                 "WHERE LOWER(Subject.subject_name) LIKE LOWER(?) " +
                 "GROUP BY Subject.subject_name;";
                 return jdbcTemplate.query(sql,new Object[]{"%"+searchedText+"%"},new BeanPropertyRowMapper<>(StringNumber.class));
+    }
+    public List<Tutor> findTutorsBySubjectName(String subject_name){
+        String sql="SELECT * from (SELECT Subject.id AS sid FROM Subject WHERE Subject LIKE ? ) " +
+                " LEFT JOIN  tutor_subject  ON sid=tutor_subject.subject_id";
+        return jdbcTemplate.query(sql,new Object[]{subject_name},new BeanPropertyRowMapper<>(Tutor.class));
     }
 }

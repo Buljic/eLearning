@@ -1,9 +1,6 @@
 package com.example.tutoring.Entities;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToMany;
-import jakarta.persistence.OneToOne;
+import jakarta.persistence.*;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -11,18 +8,24 @@ import java.util.Set;
 @Entity
 public class Tutor extends User
 {
-    //koristi kasnije super() za konstruktor nadklase
-    @ManyToMany
-//    @JoinTable(
-//            name = "tutor_subject",
-//            joinColumns = @JoinColumn(name = "tutor_id"),
-//            inverseJoinColumns = @JoinColumn(name = "subject_id")
-//    ) moze i s ovim ali nam treba nova klasa radi ostalih atributa
-    private Set<Subject> subjects=new HashSet<>();
-
+    //TODO odluci se za naslijedjivanje ili onetoone ne oboje
     @OneToOne
     @JoinColumn(name = "user_id")
     private User user;
+
+    //koristi kasnije super() za konstruktor nadklase
+    @ManyToMany
+    @JoinTable(
+            name = "tutorsubject",
+            joinColumns = @JoinColumn(name = "tutor_id"),
+            inverseJoinColumns = @JoinColumn(name = "subject_id")
+    )// moze i s ovim ali nam treba nova klasa radi ostalih atributa
+    private Set<Subject> subjects=new HashSet<>();
+
+
+
+    @OneToMany(mappedBy = "tutor")
+    private Set<TutorSubjectRequest> subjectRequests=new HashSet<>();
 
     public Set<Subject> getSubjects()
     {

@@ -16,4 +16,7 @@ public class Subject
     @ManyToMany(mappedBy="subjects")
     private Set<Tutor> tutors=new HashSet<>();//da osiguramo da nema ono nullptr exception
 
+    @OneToMany(mappedBy = "subject")
+    private Set<TutorSubjectRequest> tutorRequests=new HashSet<>();
+
 }

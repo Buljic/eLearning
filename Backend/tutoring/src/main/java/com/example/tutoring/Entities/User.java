@@ -1,5 +1,6 @@
 package com.example.tutoring.Entities;
 
+import com.example.tutoring.Other.AccountType;
 import jakarta.persistence.*;
 
 @Entity
@@ -19,6 +20,9 @@ public class User
     private Student studentProfile;
     @OneToOne(mappedBy="user")//odnosi se na ime atributa unutar respektivne klase koja 'pointa' nad ovu nadklasu sa onetooneanotacijom
     private Tutor tutorProfile;//koristi se ime java klase
+
+    private AccountType accountType;
+
 
     public Long getId()
     {

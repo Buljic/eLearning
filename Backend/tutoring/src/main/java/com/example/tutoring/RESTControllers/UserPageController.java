@@ -67,4 +67,15 @@ public class UserPageController
         }
         return ResponseEntity.status(HttpStatus.OK).body(list);
     }
+    @GetMapping("/getTutorsFor")
+    public ResponseEntity<?> getTutorsForSubject(@RequestParam String subject)
+    {
+        if(subject==null)
+        {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Prazan subject parameter");
+        }
+        return null;//todo implementuj
+
+    }
+
 }
