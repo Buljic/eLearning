@@ -6,11 +6,14 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Entity
-public class Tutor extends User
+public class Tutor //extends User
 {
     //TODO odluci se za naslijedjivanje ili onetoone ne oboje
-    @OneToOne
-    @JoinColumn(name = "user_id")
+    @Id
+    private Long id;
+    @OneToOne(fetch = FetchType.LAZY)
+    @MapsId
+    @JoinColumn(name = "id")
     private User user;
 
     //koristi kasnije super() za konstruktor nadklase

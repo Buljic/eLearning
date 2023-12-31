@@ -5,7 +5,7 @@ import {Link} from "react-router-dom";
 const WelcomePage = () => {
     // Preuzmite JWT iz localStorage ili slično
    // const token = localStorage.getItem('token'); ne koristimo vise localstorage nego cookies
-const [username,setUsername]=useState('');
+const [user,setUser]=useState('');
 
     // useEffect(() => {
     //     const getUsername = async () => {
@@ -48,9 +48,9 @@ const [username,setUsername]=useState('');
                     console.log("NIJE OK");
                     throw new Error('Problem with fetch');
                 } else {
-                    const username = await response.text(); // Pretpostavimo da backend vraća samo tekst
+                    const data = await response.json();//await response.text(); // Pretpostavimo da backend vraća samo tekst
                     console.log("OVO SE POSTAVLJA");
-                    setUsername(username); // Postavljanje korisničkog imena u state
+                    setUser(data); // Postavljanje korisničkog imena u state
                 }
             } catch (error) {
                 console.log("Error sa fetchom");
@@ -62,11 +62,13 @@ const [username,setUsername]=useState('');
         // nav je za navigacijski i govori browseru da nisu samo kao obicni linkovi nego za navigaciju
         <div>
             <h1>Dobrodošli</h1>
-            <p>Kornisnicko ime je {username}</p>
+            <p>Kornisnicko ime je {user.name}</p>
 
             <nav>
                 <ul>
-                    <li><Link to="/searchSubjects">Trazi predmete</Link></li>
+                    {/*nemoj dva puta resolvati objekat neki*/}
+                    { ((user.accountType==='STUDENT') || (user.accountType==='OBOJE')  ) && <li><Link to="/searchSubjects">Trazi predmete</Link></li> }
+
                 </ul>
             </nav>
             {/*<p>Vaš JWT: {token}</p>*/}
