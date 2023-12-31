@@ -41,7 +41,7 @@ public class User
 
     }
 
-    public User(String username,String password, String name, String surname, String email,String phoneNumber)
+    public User(String username,String password, String name, String surname, String email,String phoneNumber, AccountType accountType)
     {
         this.username = username;
         this.password=password;
@@ -49,6 +49,7 @@ public class User
         this.surname = surname;
         this.email = email;
         this.phoneNumber=phoneNumber;
+        this.accountType=accountType;
     }
 
     public Student getStudentProfile()

@@ -1,5 +1,6 @@
 package ba.unze.elearning.tutoring.Services;
 
+import ba.unze.elearning.tutoring.DTOs.GenericDTO;
 import ba.unze.elearning.tutoring.DTOs.StringNumber;
 import ba.unze.elearning.tutoring.Entities.Tutor;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
@@ -74,5 +75,11 @@ public class UserService
         String sql="SELECT * from (SELECT Subject.id AS sid FROM Subject WHERE Subject LIKE ? ) " +
                 " LEFT JOIN  tutor_subject  ON sid=tutor_subject.subject_id";
         return jdbcTemplate.query(sql,new Object[]{subject_name},new BeanPropertyRowMapper<>(Tutor.class));
+    }
+
+    public GenericDTO getUserInfo(String username)
+    {
+        String sql="";
+        return jdbcTemplate.queryForObject(sql,new Object[]{username},new BeanPropertyRowMapper<>(GenericDTO.class));
     }
 }

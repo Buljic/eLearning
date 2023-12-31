@@ -5,8 +5,11 @@ import ba.unze.elearning.tutoring.Entities.Student;
 import ba.unze.elearning.tutoring.Entities.Tutor;
 import ba.unze.elearning.tutoring.Entities.User;
 import ba.unze.elearning.tutoring.Other.AccountType;
+import ba.unze.elearning.tutoring.Repositories.StudentRepository;
+import ba.unze.elearning.tutoring.Repositories.TutorRepository;
 import ba.unze.elearning.tutoring.Repositories.UserRepository;
 import ba.unze.elearning.tutoring.Security.JwtUtil;
+import ba.unze.elearning.tutoring.Services.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,13 +20,20 @@ import org.springframework.web.bind.annotation.*;
 public class UserLoginController
 {
     private final UserRepository userRepository;
+    private final TutorRepository tutorRepository;
+    private final StudentRepository studentRepository;
+    private final UserService userService;
 
     private final JwtUtil jwtUtil;
 
-    UserLoginController(UserRepository userRepository,JwtUtil jwtUtil)
+    UserLoginController(UserRepository userRepository, TutorRepository tutorRepository,
+                        StudentRepository studentRepository, UserService userService, JwtUtil jwtUtil)
 
     {
         this.userRepository=userRepository;
+        this.tutorRepository = tutorRepository;
+        this.studentRepository = studentRepository;
+        this.userService = userService;
         this.jwtUtil=jwtUtil;
     }
 
@@ -46,19 +56,23 @@ public class UserLoginController
         ,createAccountDTO.getName(),
                 createAccountDTO.getSurname(),
                 createAccountDTO.getEmail(),
-                createAccountDTO.getPhoneNumber());
+                createAccountDTO.getPhoneNumber(),
+                createAccountDTO.getAccountType());
         userRepository.save(user);
         if(createAccountDTO.getAccountType()== AccountType.STUDENT)
         {
             Student student=new Student();
-
             student.setUser(user);
             user.setStudentProfile(student);
+            studentRepository.save(student);
+            System.out.println("Kreiran novi student:" +student.getUser().getName());
         }else if(createAccountDTO.getAccountType()==AccountType.PROFESOR)
         {
             Tutor tutor=new Tutor();
             tutor.setUser(user);
             user.setTutorProfile(tutor);
+            tutorRepository.save(tutor);
+            System.out.println("Kreiran novi profesor:" + tutor.getUser().getName() );
         }else if(createAccountDTO.getAccountType()==AccountType.KORISNIK)
         {
 
@@ -68,6 +82,8 @@ public class UserLoginController
             student.setUser(user);
             Tutor tutor=new Tutor();
             tutor.setUser(user);
+            studentRepository.save(student);
+            tutorRepository.save(tutor);
             user.setStudentProfile(student);
             user.setTutorProfile(tutor);
         }
@@ -82,7 +98,8 @@ public class UserLoginController
         {
             System.out.println("ok obradjuje ga bar");
             String username= jwtUtil.getUsernameFromToken(token);
-            return ResponseEntity.status(HttpStatus.OK).body(username);
+            //return ResponseEntity.status(HttpStatus.OK).body(username);
+            return ResponseEntity.status(HttpStatus.OK).body(userService.getUserInfo(username));
         }else return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("NEISPRAVNO");
 
     }
