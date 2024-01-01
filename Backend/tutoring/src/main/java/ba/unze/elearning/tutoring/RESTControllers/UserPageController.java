@@ -59,7 +59,7 @@ public class UserPageController
         List<StringNumber> list=userService.findSearchedSubjects(searchTerm);
         for(int i =0;i<list.size();i++)
         {
-            System.out.print("ELEMENT"+ " i."+" je "+list.get(i).getName());
+            System.out.print("ELEMENT"+ i+". je "+list.get(i).getName());
         }
         if(list.isEmpty())
         {
