@@ -21,6 +21,7 @@ public class User
     @OneToOne(mappedBy="user")//odnosi se na ime atributa unutar respektivne klase koja 'pointa' nad ovu nadklasu sa onetooneanotacijom
     private Tutor tutorProfile;//koristi se ime java klase
 
+    @Enumerated(EnumType.STRING)
     private AccountType accountType;
 
 
