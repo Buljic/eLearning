@@ -3,39 +3,16 @@ import React, {useEffect, useState} from 'react';
 import {Link} from "react-router-dom";
 
 const WelcomePage = () => {
-    // Preuzmite JWT iz localStorage ili slično
+    // Preuzmi JWT iz localStorage ili slično
    // const token = localStorage.getItem('token'); ne koristimo vise localstorage nego cookies
-const [user,setUser]=useState('');
 
-    // useEffect(() => {
-    //     const getUsername = async () => {
-    //         try {
-    //             const response = await fetch('http://localhost:8080/api/welcomePage', {
-    //                 method: 'GET',
-    //                 credentials: 'include', // Šalje cookie-e uz zahtjev
-    //             });
-    //
-    //             // Logovanje Set-Cookie headera iz odgovora, ako je dostupan
-    //             console.log('Set-Cookie header:', response.headers.get('Set-Cookie'));
-    //
-    //             if (!response.ok) {
-    //                 console.log("NIJE OK");
-    //                 throw new Error(`Problem with fetch: ${response.statusText}`);
-    //             }
-    //
-    //             const data = await response.text(); // Pretpostavimo da server vraća JSON
-    //             console.log("OVO SE POSTAVLJA", data);
-    //             setUsername(data.username); // Pretpostavimo da je 'username' ključ u JSON odgovoru
-    //         } catch (error) {
-    //             console.error("Error sa fetchom", error);
-    //         }
-    //     };
-    //
-    //     getUsername();
-    // }, []);
+
+    const [user,setUser]=useState('');
+
+
 
     useEffect(() => {
-        const getUsername = async () => {
+        const getUser = async () => {
             try {
                 const response = await fetch('http://localhost:8080/api/welcomePage', {
                     method: 'GET',
@@ -57,7 +34,7 @@ const [user,setUser]=useState('');
                 console.log("Error sa fetchom");
             }
         };
-        getUsername();
+        getUser();
     }, []); // Efekat se izvršava samo jednom nakon montiranja komponente
     return (
         // nav je za navigacijski i govori browseru da nisu samo kao obicni linkovi nego za navigaciju
@@ -73,7 +50,7 @@ const [user,setUser]=useState('');
                     {(user.accountType==='STUDENT') && <li>STUDENT</li>}
                 </ul>
             </nav>
-            {/*<p>Vaš JWT: {token}</p>*/}
+            {/*<p>Vas JWT: {token}</p>*/}
         </div>
     );
 };

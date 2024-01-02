@@ -4,7 +4,7 @@ import org.springframework.jdbc.core.RowMapper;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-
+//TODO provjeri ModelMapper
 public class GenericDTOMapper implements RowMapper<GenericDTO>
 {
     @Override

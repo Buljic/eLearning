@@ -103,7 +103,7 @@ public class UserLoginController
             System.out.println("ok obradjuje ga bar");
             String username= jwtUtil.getUsernameFromToken(token);
             //return ResponseEntity.status(HttpStatus.OK).body(username);
-            GenericDTO dto=userService.getUserInfo(username);
+            GenericDTO dto=userService.getUserInfo2(username);
             //ispis
 //            for(Map.Entry<String,Object> i :dto.entrySet)
 //            {
@@ -112,9 +112,7 @@ public class UserLoginController
             System.out.println("ime je " + username);
             System.out.println(dto);
             System.out.println("------------------");
-            UserDTO i=userService.getUserInfo2(username);
-//            System.out.println(dto2);
-
+            UserDTO i=userService.getUserInfo(username);
                 System.out.println(i.getId());
                 System.out.println(i.getUsername());
                 System.out.println(i.getName());
@@ -124,7 +122,7 @@ public class UserLoginController
                 System.out.println(i.getPhoneNumber());
                 System.out.println(i.getAccountType());
 
-            return ResponseEntity.status(HttpStatus.OK).body(userService.getUserInfo2(username));
+            return ResponseEntity.status(HttpStatus.OK).body(userService.getUserInfo(username));
         }else return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("NEISPRAVNO");
 
     }
