@@ -5,6 +5,7 @@ import org.springframework.jdbc.core.RowMapper;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 //TODO provjeri ModelMapper
+//Koristi se za mapiranje u GenericDTO kada se fetcha s baze
 public class GenericDTOMapper implements RowMapper<GenericDTO>
 {
     @Override
@@ -15,6 +16,7 @@ public class GenericDTOMapper implements RowMapper<GenericDTO>
         dto.addProperty("surname", rs.getString("surname"));
         dto.addProperty("username", rs.getString("username"));
         dto.addProperty("accountType", rs.getString("account_type"));
+        dto.addProperty("id",rs.getInt("id"));
 
         return dto;
     }
