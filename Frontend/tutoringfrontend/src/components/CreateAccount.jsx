@@ -18,7 +18,7 @@ function CreateAccount()
     const navigate = useNavigate();
     const [message, setMessage] = useState('');
 
-
+    //async je da radi u pozadini
     const handleCreateAccount = async (event) => {
         event.preventDefault();
         /*U slučaju forme, defaultno ponašanje je slanje forme (što obično učitava novu stranicu ili šalje podatke na server).

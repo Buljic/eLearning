@@ -24,5 +24,7 @@ public class TutorSubject
     @JoinColumn(name="subject_id")
     private Subject subject;
 
+    private double teachingGrade;
+
     //private int grade;
 }

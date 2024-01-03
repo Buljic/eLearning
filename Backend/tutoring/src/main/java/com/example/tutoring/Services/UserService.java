@@ -91,4 +91,15 @@ public class UserService
                 " FROM user where LOWER(user.username) = LOWER (?) ; ";
         return jdbcTemplate.queryForObject(sql,new Object[]{username},new BeanPropertyRowMapper<>(UserDTO.class));
     }
+
+    public List<GenericDTO> getTutorsForSubjectWithInfo(String name)
+    {
+        String sql="SELECT user.name,user.surname, user.username, tutor.teaching_grade" +
+                " from tutorsubject JOIN tutor ON tutorsubject.tutor_id = tutor.id " +
+                " JOIN user ON tutor.id=user.id " +
+                " where  tutorsubject.subject_id = (SELECT Subject.id AS sid FROM Subject where Lower(subject.name) LIKE Lower(?) ); " +
+                " ";
+
+        return jdbcTemplate.query(sql,new Object[]{name},new GenericDTOMapper());
+    }
 }
