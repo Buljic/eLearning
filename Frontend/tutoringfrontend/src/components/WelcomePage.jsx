@@ -22,7 +22,7 @@ const WelcomePage = () => {
                 {(user.accountType==='STUDENT')||(user.accountType==='OBOJE') && <li><Link to='/searchSubjects'>Trazi predmete</Link></li>}
                 { (user.accountType==='OBOJE') && <li>Radi</li>}
                 {(user.accountType==='STUDENT') && <li>STUDENT</li>}
-                {(user.accountType==='TUTOR')||(user.accountType==='OBOJE') && <li><Link to="requestSubjectsAsTutor">Registruj se za predmete</Link></li>}
+                {(user.accountType==='TUTOR')||(user.accountType==='OBOJE') && <li><Link to="/requestSubjectsAsTutor">Registruj se za predmete</Link></li>}
             </ul>
         </div>
     );

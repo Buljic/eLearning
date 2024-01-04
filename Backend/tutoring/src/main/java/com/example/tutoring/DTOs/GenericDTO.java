@@ -8,7 +8,16 @@ public class GenericDTO
 {
     private Map<String,Object> properties=new HashMap<>();
 
-    public void addProperty(String key,Object value)
+    public GenericDTO()
+    {
+    }
+
+    public GenericDTO(Map<String, Object> properties)
+    {
+        this.properties = properties;
+    }
+
+    public void addProperty(String key, Object value)
     {
         this.properties.put(key,value);
     }

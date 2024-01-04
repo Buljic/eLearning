@@ -1,15 +1,13 @@
 package com.example.tutoring.RESTControllers;
 
+import com.example.tutoring.DTOs.GenericDTO;
 import com.example.tutoring.DTOs.StringNumber;
 import com.example.tutoring.Repositories.SubjectRepository;
 import com.example.tutoring.Services.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -75,7 +73,17 @@ public class UserPageController
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Prazan subject parameter");
         }
         return null;//todo implementuj
-
+    }
+    @PostMapping ("/registerForSubjectAsTutor")
+    public ResponseEntity<?> requestASubject(@RequestBody GenericDTO genericDTO)
+    {
+        //TODO popravi problem deserijalizacije u genericdto i implementuj spremanje u entitet
+        System.out.println(genericDTO);
+        String sName= (String)genericDTO.getProperty("inputSubject");
+        String writtenQualifications = (String) genericDTO.getProperty("writtenQualifications");
+        String comment = (String) genericDTO.getProperty("comment");
+        System.out.println(sName+" "+writtenQualifications+" "+comment);
+        return ResponseEntity.status(HttpStatus.OK).body("Racun kreiran");
     }
 
 
