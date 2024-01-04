@@ -87,7 +87,7 @@ public class UserService
     }
     public UserDTO getUserInfo(String username)
     {
-        String sql="SELECT user.name , user.surname, user.username, user.account_type " +
+        String sql="SELECT user.id, user.name , user.surname, user.username, user.account_type " +
                 " FROM user where LOWER(user.username) = LOWER (?) ; ";
         return jdbcTemplate.queryForObject(sql,new Object[]{username},new BeanPropertyRowMapper<>(UserDTO.class));
     }
