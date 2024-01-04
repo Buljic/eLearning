@@ -12,14 +12,18 @@ import useFetchSubjects from "../customHooks/useFetchSubjects.js";
  */
 const Subjects = () => {
     //koristi se [] u usestate za nizove
-    const[subjects,setSubjects]=useState([]);       //STRING LIST SA SVIM SUBJECTS
+  //  const[subjects,setSubjects]=useState([]);       //STRING LIST SA SVIM SUBJECTS
+    const{subjects,error,loading}=useFetchSubjects();
 
     const[searchTerm,setSearchTerm]=useState('');
     const[showSuggestions,setShowSuggestions]=useState(false);
     const[isSearching,setIsSearching]=useState(false);
 
     const[displayedSubjects,setDisplayedSubjects]=useState([]);//prikazani predmeti u listi
+
+
     const[popularSubjects,setPopularSubjects]=useState([]);
+
     const[searchResults,setSearchResults]=useState([]);
 
      const[suggestions,setSuggestions]=useState([]);
@@ -47,38 +51,9 @@ const Subjects = () => {
                 popularSubjects.forEach(subject=>{
                     console.log(`Ime predmeta: ${subject.name} a broj tutora ${subject.number}`);
                 })
-
-
             }
         }
         getPopularSubjects();
-    },[]);
-
-
-                            //ucitavanje svih predmeta za prijedlog
-    useEffect( () =>{
-        const getAllSubjects= async()=>{
-            const response=await fetch('http://localhost:8080/api/allSubjects',{
-                method:'GET',
-                credentials:'include',
-                headers:{
-                    'Content-Type':'application/json',
-                }
-            });
-            if(!response.ok)
-            {
-                console.log("Problem s fetchom");
-                throw new Error('Problem with fetch on subjects');
-            }else{
-                const data=await response.json();
-                setSubjects(data);
-                console.log(data);
-                subjects.forEach(subject=>{
-                    console.log(subject);
-                });
-            }
-        }
-        getAllSubjects();
     },[]);
 
 
