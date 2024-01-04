@@ -103,14 +103,14 @@ public class UserLoginController
             System.out.println("ok obradjuje ga bar");
             String username= jwtUtil.getUsernameFromToken(token);
             //return ResponseEntity.status(HttpStatus.OK).body(username);
-            GenericDTO dto=userService.getUserInfo2(username);
+       //     GenericDTO dto=userService.getUserInfo2(username);
             //ispis
 //            for(Map.Entry<String,Object> i :dto.entrySet)
 //            {
 //                System.out.println(i.getKey()  + ": :" + i.getValue());
 //            }
             System.out.println("ime je " + username);
-            System.out.println(dto);
+           // System.out.println(dto);
             System.out.println("------------------");
             UserDTO i=userService.getUserInfo(username);
                 System.out.println(i.getId());

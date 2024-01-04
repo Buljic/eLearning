@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from "react";
 import {Link} from "react-router-dom";
-
+import useFetchSubjects from "../customHooks/useFetchSubjects.js";
 //Moze se koristiti i tj
 /*
     const ImeKomponente = () => {return };
@@ -163,7 +163,7 @@ const Subjects = () => {
                 value={searchTerm}
                 onChange={handleSearchChange}
                 //onBlur={()=>setShowSuggestions(false)}
-                onFocus={()=>searchTerm && setShowSuggestions(true)}
+                onFocus={()=>searchTerm && setShowSuggestions(true)} //na fazon ako smo fokusirani i ako ima nesto da se stavi da je showsuggestion true
                 placeholder="Pretrazi predmete"
             />
                 <button type="submit">Pretrazi</button>
