@@ -1,9 +1,11 @@
 package ba.unze.elearning.tutoring.DTOs;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
-
+@JsonDeserialize (using = GenericDTODeserializer.class)
 public class GenericDTO
 {
     private Map<String,Object> properties=new HashMap<>();
