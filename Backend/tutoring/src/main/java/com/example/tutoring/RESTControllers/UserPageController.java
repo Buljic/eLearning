@@ -3,6 +3,7 @@ package com.example.tutoring.RESTControllers;
 import com.example.tutoring.DTOs.GenericDTO;
 import com.example.tutoring.DTOs.StringNumber;
 import com.example.tutoring.Repositories.SubjectRepository;
+import com.example.tutoring.Security.JwtUtil;
 import com.example.tutoring.Services.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
@@ -17,74 +18,89 @@ public class UserPageController
 {
     private final SubjectRepository subjectRepository;
     private final UserService userService;
-//Mora biti bean kako bi bila injektovana negdje
-    UserPageController(SubjectRepository subjectRepository, UserService userService)
+    private final JwtUtil jwtUtil;
+
+    //Mora biti bean kako bi bila injektovana negdje
+    UserPageController(SubjectRepository subjectRepository, UserService userService, JwtUtil jwtUtil)
     {
-        this.subjectRepository=subjectRepository;
+        this.subjectRepository = subjectRepository;
         this.userService = userService;
+        this.jwtUtil = jwtUtil;
     }
-    @GetMapping("/allSubjects")
+
+    @GetMapping ("/allSubjects")
     public ResponseEntity<?> giveAllSubjects()
     {
-        List<String> subjectList=subjectRepository.findAllSubjects();
-        for(String i :subjectList)
+        List<String> subjectList = subjectRepository.findAllSubjects();
+        for (String i : subjectList)
         {
-            System.out.println("ELEMENT SVIH SUBJECTS"+ i);
+            System.out.println("ELEMENT SVIH SUBJECTS" + i);
         }
         return ResponseEntity.status(HttpStatus.OK).body(subjectList);
     }
 
-    @GetMapping("/mostTutorSubjects")
+    @GetMapping ("/mostTutorSubjects")
     public ResponseEntity<?> giveSubjectsWithMostTutors(HttpServletRequest request)
     {
-        List<StringNumber> list=userService.findMostTutorSubjects();
-        for(StringNumber i:list)
+        List<StringNumber> list = userService.findMostTutorSubjects();
+        for (StringNumber i : list)
         {
-            System.out.println("MOSTTUTORSUBJECTS :"+i.getName()+":broj tutora:"+ i.getNumber());
+            System.out.println("MOSTTUTORSUBJECTS :" + i.getName() + ":broj tutora:" + i.getNumber());
         }
         return ResponseEntity.status(HttpStatus.OK).body(userService.findMostTutorSubjects());
     }
+
     //NEMOJ HARDCODEAT QUERY PARAMETRE jer je lakse ovako skalirati
-    @GetMapping("/subjects/search")/*? term=searchTerm"*/
+    @GetMapping ("/subjects/search")/*? term=searchTerm"*/
     public ResponseEntity<?> giveSearchedSubjects(@RequestParam String searchTerm)
     {
-        System.out.println("ONO STO SE TRAZI JE :"+searchTerm+":");
-        if(searchTerm==null || searchTerm.trim().isEmpty())
+        System.out.println("ONO STO SE TRAZI JE :" + searchTerm + ":");
+        if (searchTerm == null || searchTerm.trim().isEmpty())
         {
-            return ResponseEntity.status(HttpStatus.OK).body(subjectRepository.findAllSubjects());//Ako se proslijedi prazan
+            return ResponseEntity.status(HttpStatus.OK)
+                    .body(subjectRepository.findAllSubjects());//Ako se proslijedi prazan
             //request da samo vrati sve predmete
         }
-        List<StringNumber> list=userService.findSearchedSubjects(searchTerm);
-        for(int i =0;i<list.size();i++)
+        List<StringNumber> list = userService.findSearchedSubjects(searchTerm);
+        for (int i = 0; i < list.size(); i++)
         {
-            System.out.print("ELEMENT"+ i+". je "+list.get(i).getName());
+            System.out.print("ELEMENT" + i + ". je " + list.get(i).getName());
         }
-        if(list.isEmpty())
+        if (list.isEmpty())
         {
             return ResponseEntity.status(HttpStatus.OK).body("Prazno je"); //TODO treba nesto drugo vratiti
         }
         return ResponseEntity.status(HttpStatus.OK).body(list);
     }
-    @GetMapping("/getTutorsFor")
+
+    @GetMapping ("/getTutorsFor")
     public ResponseEntity<?> getTutorsForSubject(@RequestParam String subject)
     {
-        if(subject==null)
+        if (subject == null)
         {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Prazan subject parameter");
         }
         return null;//todo implementuj
     }
+
     @PostMapping ("/registerForSubjectAsTutor")
-    public ResponseEntity<?> requestASubject(@RequestBody GenericDTO genericDTO)
+    public ResponseEntity<?> requestASubject(HttpServletRequest request,
+                                             @RequestBody GenericDTO genericDTO)/*(HttpServletRequest request)*///@RequestBody GenericDTO genericDTO)
     {
-        //TODO popravi problem deserijalizacije u genericdto i implementuj spremanje u entitet
-        System.out.println(genericDTO);
-        String sName= (String)genericDTO.getProperty("inputSubject");
-        String writtenQualifications = (String) genericDTO.getProperty("writtenQualifications");
-        String comment = (String) genericDTO.getProperty("comment");
-        System.out.println(sName+" "+writtenQualifications+" "+comment);
-        return ResponseEntity.status(HttpStatus.OK).body("Racun kreiran");
+        String token = jwtUtil.extractJwtFromCookie(request);
+        if (token != null)//mslm ovo se ne moze desiti ali opet  TODO catch nacin obradi uradi za return za ovu metodu u userService
+        {
+//        String jsonData = request.getReader().lines().collect(Collectors.joining());
+//        System.out.println(jsonData);
+            String username = jwtUtil.getUsernameFromToken(token);
+            System.out.println(genericDTO);
+            userService.insertIntoTutorSubjectRequest((String)genericDTO.getProperty("inputSubject"),
+                    username, (String)genericDTO.getProperty("comment"));
+            return ResponseEntity.status(HttpStatus.OK).body("Racun kreiran");
+        }
+        else
+        {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Nepostojuc User");
+        }
     }
-
-
 }

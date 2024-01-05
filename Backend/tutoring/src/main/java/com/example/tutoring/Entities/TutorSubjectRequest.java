@@ -22,6 +22,39 @@ public class TutorSubjectRequest
     @MapsId("subjectId")
     private Subject subject;
 
-//    @MapsId("requestDate")    //NE STAVLJA SE
+    private String comment;
+    private String writtenQualification;
+
+    public String getWrittenQualification()
+    {
+        return writtenQualification;
+    }
+
+    public void setWrittenQualification(String writtenQualification)
+    {
+        this.writtenQualification = writtenQualification;
+    }
+
+    public TutorSubjectRequestId getId()
+    {
+        return id;
+    }
+
+    public void setId(TutorSubjectRequestId id)
+    {
+        this.id = id;
+    }
+
+    public String getComment()
+    {
+        return comment;
+    }
+
+    public void setComment(String comment)
+    {
+        this.comment = comment;
+    }
+
+    //    @MapsId("requestDate")    //NE STAVLJA SE
 //    private LocalDate requestDate;
 }

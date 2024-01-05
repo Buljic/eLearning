@@ -9,6 +9,7 @@ import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 @Service
 public class UserService
@@ -101,5 +102,12 @@ public class UserService
                 " ";
 
         return jdbcTemplate.query(sql,new Object[]{name},new GenericDTOMapper());
+    }
+
+    public void insertIntoTutorSubjectRequest(String subject,String tutorUsername,String comment)
+    {
+        String sql="INSERT INTO tutorsubjectrequest  (request_date,subject_id,tutor_id,comment) " +
+                "values (?,(SELECT id FROM subject where subject.subject_name=?) , (SELECT id FROM user WHERE user.username=?) ,?);";
+        jdbcTemplate.update(sql,new Object[]{LocalDate.now(),subject,tutorUsername,comment});
     }
 }
