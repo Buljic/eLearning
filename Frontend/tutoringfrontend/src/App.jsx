@@ -10,6 +10,7 @@ import Subjects from "./components/Subjects.jsx";
 import tutorsForSubject from "./components/TutorsForSubject.jsx";
 import TutorsForSubject from "./components/TutorsForSubject.jsx";
 import RequestSubjectAsTutor from "./components/RequestSubjectAsTutor.jsx";
+import UserInfo from "./components/UserInfo.jsx";
 
 function App() {
     return (
@@ -24,7 +25,7 @@ function App() {
                 <Route path="/welcome" element={<WelcomePage />} />
                 <Route path="/searchSubjects" element={<Subjects/>}/>
                 <Route path="/requestSubjectsAsTutor" element={<RequestSubjectAsTutor/>}/>
-
+                <Route path="/userInfoFor/:username" element={<UserInfo/>}/>
 
                 <Route path="/tutorsFor/:subject" element={<TutorsForSubject/>}/>
 

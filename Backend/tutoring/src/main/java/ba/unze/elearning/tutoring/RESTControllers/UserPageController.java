@@ -2,6 +2,7 @@ package ba.unze.elearning.tutoring.RESTControllers;
 
 import ba.unze.elearning.tutoring.DTOs.GenericDTO;
 import ba.unze.elearning.tutoring.DTOs.StringNumber;
+import ba.unze.elearning.tutoring.Other.AccountType;
 import ba.unze.elearning.tutoring.Repositories.SubjectRepository;
 import ba.unze.elearning.tutoring.Security.JwtUtil;
 import ba.unze.elearning.tutoring.Services.UserService;
@@ -104,5 +105,19 @@ public class UserPageController
         {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Nepostojuc User");
         }
+    }
+    @GetMapping("/getUser/{username}")
+    public ResponseEntity<?> getCertainUserInfo(@PathVariable String username)
+    {
+        System.out.println("NJEGOV USERNAME JE:"+username+":");
+        GenericDTO user=userService.getUserInfoExtended(username);
+//        if((AccountType)user.getProperty("account_type")==AccountType.OBOJE)
+//        {
+//            //TODO moze se implementovati kao recenzije za neki predmet npr i nagrade ili nesto slicno a za to se treba napraviti nova baza
+//             //TODO IMPLEMENTUJ PRIKAZIVANJE I SUBJECTA KAO <String<String,Object>> struktura
+//            return null;
+//        }
+        System.out.println("moj user je"+ user);
+        return ResponseEntity.status(HttpStatus.OK).body(user);
     }
 }
