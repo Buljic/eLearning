@@ -1,10 +1,12 @@
 package com.example.tutoring.DTOs;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
+@JsonSerialize (using = GenericDTOSerializer.class)
 @JsonDeserialize (using = GenericDTODeserializer.class)
 public class GenericDTO
 {
@@ -28,6 +30,9 @@ public class GenericDTO
     {
         return this.properties.get(key);
     }
+    public Map<String,Object> getProperties(){
+        return properties;
+}
 
     public String getString(String key) {
         return (String) properties.get(key);

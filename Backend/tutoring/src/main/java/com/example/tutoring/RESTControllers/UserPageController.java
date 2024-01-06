@@ -80,7 +80,9 @@ public class UserPageController
         {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Prazan subject parameter");
         }
-        return null;//todo implementuj
+        List<GenericDTO> lista=userService.getTutorsForSubjectWithInfo(subject);
+        System.out.println(lista);
+        return ResponseEntity.status(HttpStatus.OK).body(lista);
     }
 
     @PostMapping ("/registerForSubjectAsTutor")

@@ -41,9 +41,10 @@ const tutorsForSubject = () =>{
 
             {tutors && (
                 <ul>
-                    {tutors.map(tutor=>(
+                    {tutors.map((tutor,index)=>(
 
-                        <li key={tutor.id}>Tutor se zove {tutor.id} a ocjena mu je {tutor.ocjena} </li>
+                        <li key={index}>Tutor se zove {tutor.name} a ocjena mu je {tutor.teaching_grade}
+                        username mu je {tutor.username}</li>
 
                     ))}
                 </ul>
