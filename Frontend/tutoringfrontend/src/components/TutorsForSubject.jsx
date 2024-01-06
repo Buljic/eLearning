@@ -43,8 +43,8 @@ const tutorsForSubject = () =>{
                 <ul>
                     {tutors.map((tutor,index)=>(
 
-                        <li key={index}>Tutor se zove {tutor.name} a ocjena mu je {tutor.teaching_grade}
-                        username mu je {tutor.username}</li>
+                      <Link to={`/userInfoFor/${tutor.username}`} key={index}>  <li >Tutor se zove {tutor.name} a ocjena mu je {tutor.teaching_grade}
+                        username mu je {tutor.username}</li> </Link>
 
                     ))}
                 </ul>
