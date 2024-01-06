@@ -93,15 +93,13 @@ public class UserService
         return jdbcTemplate.queryForObject(sql,new Object[]{username},new BeanPropertyRowMapper<>(UserDTO.class));
     }
 
-    public List<GenericDTO> getTutorsForSubjectWithInfo(String name)
+    public List<GenericDTO> getTutorsForSubjectWithInfo(String subjectName)
     {
-        String sql="SELECT user.name,user.surname, user.username, tutor.teaching_grade" +
+        String sql="SELECT user.name,user.surname, user.username, tutorsubject.teaching_grade" +
                 " from tutorsubject JOIN tutor ON tutorsubject.tutor_id = tutor.id " +
                 " JOIN user ON tutor.id=user.id " +
-                " where  tutorsubject.subject_id = (SELECT Subject.id AS sid FROM Subject where Lower(subject.name) LIKE Lower(?) ); " +
-                " ";
-
-        return jdbcTemplate.query(sql,new Object[]{name},new GenericDTOMapper());
+                " where  tutorsubject.subject_id = (SELECT subject.id AS sid FROM subject where subject.subject_name = ? ); ";
+        return jdbcTemplate.query(sql,new Object[]{subjectName},new GenericDTOMapper());
     }
 
     public void insertIntoTutorSubjectRequest(String subject,String tutorUsername,String comment)

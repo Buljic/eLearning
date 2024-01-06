@@ -2,6 +2,7 @@ import React from "react";
 import {useState,useEffect} from "react";
 import useFetchUser from "../customHooks/useFetchUser.js";
 import useFetchSubjects from "../customHooks/useFetchSubjects.js";
+//TODO kasnije postavi admin-only stranicu za obradu ovih requestova i dodaj image based obradjivanje
 const RequestSubjectAsTutor=()=>{
     const {user,error,loading}=useFetchUser();
     const [inputSubject,setInputSubject]=useState('');
