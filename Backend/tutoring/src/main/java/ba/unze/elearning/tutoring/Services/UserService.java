@@ -82,7 +82,7 @@ public class UserService
 
     public GenericDTO getUserInfoExtended(String username)
     {
-        String sql="SELECT user.name , user.surname, user.username, user.account_type, user.phone_number, user.email " +
+        String sql="SELECT user.id, user.name , user.surname, user.username, user.account_type, user.phone_number, user.email " +
                 " FROM user where LOWER(user.username) = LOWER(?) ; ";
         return jdbcTemplate.queryForObject(sql,new Object[]{username},new GenericDTOMapper());
     }
@@ -107,5 +107,12 @@ public class UserService
         String sql="INSERT INTO tutorsubjectrequest  (request_date,subject_id,tutor_id,comment) " +
                 "values (?,(SELECT id FROM subject where subject.subject_name=?) , (SELECT id FROM user WHERE user.username=?) ,?);";
         jdbcTemplate.update(sql,new Object[]{LocalDate.now(),subject,tutorUsername,comment});
+    }
+    public List<GenericDTO> findTutorsSubjectsWithInfo(Long id)
+    {
+        String sql="select subject.subject_name , tutorsubject.teaching_grade from\n" +
+                "tutorsubject JOIN subject on tutorsubject.subject_id=subject.id \n" +
+                "where tutorsubject.tutor_id = ?;";
+        return jdbcTemplate.query(sql,new Object[]{id},new GenericDTOMapper());
     }
 }
