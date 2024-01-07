@@ -111,12 +111,22 @@ public class UserPageController
     {
         System.out.println("NJEGOV USERNAME JE:"+username+":");
         GenericDTO user=userService.getUserInfoExtended(username);
-//        if((AccountType)user.getProperty("account_type")==AccountType.OBOJE)
-//        {
-//            //TODO moze se implementovati kao recenzije za neki predmet npr i nagrade ili nesto slicno a za to se treba napraviti nova baza
-//             //TODO IMPLEMENTUJ PRIKAZIVANJE I SUBJECTA KAO <String<String,Object>> struktura
-//            return null;
-//        }
+        System.out.println(user.getProperty("account_type"));
+        Object type=user.getProperty("account_type");
+        System.out.println(type.getClass()+"|||");
+        if(type instanceof AccountType)
+        {
+            System.out.println("jesteWWWWWW");
+        }
+        if(((String)user.getProperty("account_type")) .equals(/*AccountType.*/"OBOJE"))
+        {
+            //TODO moze se implementovati kao recenzije za neki predmet npr i nagrade ili nesto slicno a za to se treba napraviti nova baza
+             //TODO IMPLEMENTUJ PRIKAZIVANJE I SUBJECTA KAO <String<String,Object>> struktura
+            List< GenericDTO> subjects=userService.findTutorsSubjectsWithInfo((Long)user.getProperty("id"));
+            user.addProperty("subjects",subjects);
+            System.out.println("ISPISANI PREDMETI"+ subjects);
+            return ResponseEntity.status(HttpStatus.OK).body(user);
+        }
         System.out.println("moj user je"+ user);
         return ResponseEntity.status(HttpStatus.OK).body(user);
     }

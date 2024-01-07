@@ -1,6 +1,7 @@
 import React from "react";
 import {useParams} from "react-router-dom";
 import useFetchCertainUser from "../customHooks/useFetchCertainUser.js";
+import "../css/subject.css";
 const UserInfo=()=>{
     const {username}=useParams();
     console.log("PARAMETAR JE :"+username)
@@ -8,6 +9,10 @@ const UserInfo=()=>{
     if(!userInfo)
     {
         return <h3>LOADING</h3>
+    }
+    if(userInfo)
+    {
+        console.log("INFORMACIJE"+userInfo);
     }
     // if(loading){
     //     return (<div>
@@ -21,10 +26,18 @@ const UserInfo=()=>{
 
     return (<div>
         <p>Ime tutora je {userInfo.username}</p>
-        {/*<p>Ocjena tutora je {userInfo.teaching_grade}</p>*/}
-    </div>)
+        {/*<p>Ocjena tutora je {userInfo.subjects.Matematika.teaching_grade}</p>*/}
 
-    //TODO PROMISE ERROR RIJESI
+        {userInfo && userInfo.subjects.map((subject, index) => (
+            <div key={index} id="subjectPresent">
+                <p>Predmet ID: {subject.subject_name}</p>
+                {/*<p>Tutor ID: {subject.tutor_id}</p>*/}
+                <p>Ocjena Predavanja: {subject.teaching_grade}</p>
+            </div>
+        ))}
+    </div>
+    );
+
 }
 
 export default UserInfo;
