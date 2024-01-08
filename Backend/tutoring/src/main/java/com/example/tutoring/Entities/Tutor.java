@@ -8,7 +8,6 @@ import java.util.Set;
 @Entity
 public class Tutor //extends User
 {
-    //TODO odluci se za naslijedjivanje ili onetoone ne oboje
     @Id
     private Long id;
     @OneToOne(fetch = FetchType.LAZY)

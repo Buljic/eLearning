@@ -1,0 +1,10 @@
+#loginDiv{
+    text-align: center;
+    /*align-items: center;*/
+    /*display: inline-block;*/
+}
+#loginSubmit{
+    align-content: space-around;
+    background-color: #34c3eb;
+    margin-top: 10px;
+}
