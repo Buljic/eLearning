@@ -120,7 +120,7 @@ public class UserPageController
         }
         if(((String)user.getProperty("account_type")) .equals(/*AccountType.*/"OBOJE"))
         {
-            //TODO moze se implementovati kao recenzije za neki predmet npr i nagrade ili nesto slicno a za to se treba napraviti nova baza
+            //TODO moze se implementovati kao recenzije za neki predmet npr i badges ili nesto slicno a za to se treba napraviti nova baza
              //TODO IMPLEMENTUJ PRIKAZIVANJE I SUBJECTA KAO <String<String,Object>> struktura
             List< GenericDTO> subjects=userService.findTutorsSubjectsWithInfo((Long)user.getProperty("id"));
             user.addProperty("subjects",subjects);

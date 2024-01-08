@@ -1,7 +1,7 @@
 // components/LoginForm.jsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-
+import "../css/general.css"
 function LoginForm() {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
@@ -35,6 +35,9 @@ function LoginForm() {
 
     return (
         <div>
+
+            <div id="loginDiv">
+                <h2>Ukucajte svoje kredencijale</h2>
             <form onSubmit={handleLogin}>
                 <input
                     type="text"
@@ -48,8 +51,10 @@ function LoginForm() {
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Lozinka"
                 />
-                <button type="submit">Login</button>
+                <br/>
+                <button type="submit" id="loginSubmit">Login</button>
             </form>
+            </div>
             {message && <p>{message}</p>}
         </div>
     );

@@ -1,7 +1,7 @@
 import React , {useEffect,useState} from "react";
 import {Link} from "react-router-dom";
 import {useParams} from "react-router-dom";
-
+import "../css/subject.css"
 const tutorsForSubject = () =>{
     const { subject }=useParams();
     console.log({subject});
@@ -43,9 +43,12 @@ const tutorsForSubject = () =>{
                 <ul>
                     {tutors.map((tutor,index)=>(
 
-                      <Link to={`/userInfoFor/${tutor.username}`} key={index}>  <li >Tutor se zove {tutor.name} a ocjena mu je {tutor.teaching_grade}
-                        username mu je {tutor.username}</li> </Link>
-
+                        <div id="tutorInfo">
+                      <Link to={`/userInfoFor/${tutor.username}`} key={index}>
+                          <li >Tutor se zove {tutor.name}
+                          ocjena mu je {tutor.teaching_grade}
+                          username mu je {tutor.username}</li> </Link>
+                        </div>
                     ))}
                 </ul>
             )}
