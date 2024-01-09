@@ -170,15 +170,17 @@ const Subjects = () => {
                 {/*    ))}*/}
 
                     {popularSubjects.map(subject=>(
+                        <div id="popularSubjectsResult">
                        <Link to={`/tutorsFor/${subject.name}`} key={subject.name}> <li>Ime je "{subject.name}"  Broj tutora {subject.number}</li></Link>
-
+                        </div>
                     ) )}
 
                 </ul>
             ) :( <ul>
                     {searchResults.map(subject=>(
+                        <div id="searchSubjectsResult">
                       <Link to={`/tutorsFor/${subject.name}`} key={subject.name}>  <li >Ime je- "{subject.name}"  Broj tutora {subject.number}</li></Link>
-
+                        </div>
                         ) )}
             </ul>
 

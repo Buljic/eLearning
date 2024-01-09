@@ -70,11 +70,12 @@ const RequestSubjectAsTutor=()=>{
             <h1>REGISTRACIJA ZA PREDMETE</h1>
             <p>KORISNIK JE {user.name}</p>
 
-
+            <div id="subjectRegistrationForm">
             <form onSubmit={handleFormInput}>
 
                 <div id="subjectSearch">
             <input
+                id="subjectInputField"
                 type="text"
                 value={inputSubject}
                 onChange={handleSearchChange}
@@ -92,19 +93,22 @@ const RequestSubjectAsTutor=()=>{
                         </ul>
                     )}
                 </div>
-                <input type="text"
+                <input id="textQualificationField"
+                    type="text"
                        value={writtenQualifications}
                        onChange={(e)=>setWrittenQualifications(e.target.value)}
-                       placeholder="Unesi svoje kvalifikacije"/>
-                <input type="text"
+                       placeholder="Unesi svoje kvalifikacije"/><br/>
+                <input id="extraInformationField"
+                    type="text"
                        value={comment}
                        onChange={(e)=>setComment(e.target.value)}
                        placeholder="Unesi dodatne informacije"/>
 
 
-
-                <button type="submit">Submit</button>
+                <br/>
+                <button id="subjectRequestSubmit" type="submit">Submit</button>
             </form>
+            </div>
         </div>
     );
 
