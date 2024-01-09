@@ -1,8 +1,9 @@
-#subjectPresent{    /*za ID-jeve*/
-    background-color: antiquewhite;
-}
+/*#subjectPresent{    !*za ID-jeve*!*/
+/*    background-color: antiquewhite;*/
+/*}*/
 #tutorInfo{
     background-color: aqua;
     border: solid black;
     width: 300px;
+    font-weight: bold;
 }

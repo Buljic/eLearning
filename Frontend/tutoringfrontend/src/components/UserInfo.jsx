@@ -33,6 +33,8 @@ const UserInfo=()=>{
                 <p>Predmet ID: {subject.subject_name}</p>
                 {/*<p>Tutor ID: {subject.tutor_id}</p>*/}
                 <p>Ocjena Predavanja: {subject.teaching_grade}</p>
+
+                {/*<p>TODO dodati info tj custom bio za korisnika</p>*/}
             </div>
         ))}
     </div>
