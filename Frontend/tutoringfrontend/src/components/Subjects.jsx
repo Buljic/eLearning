@@ -141,7 +141,7 @@ const Subjects = () => {
                 onFocus={()=>searchTerm && setShowSuggestions(true)} //na fazon ako smo fokusirani i ako ima nesto da se stavi da je showsuggestion true
                 placeholder="Pretrazi predmete"
             />
-                <button type="submit">Pretrazi</button>
+                <button type="submit" id="subjectsSearch">Pretrazi</button>
 
         </form>
             {/*TODO POPRAVI onClick funkciju sa handleSuggestionClick*/}
