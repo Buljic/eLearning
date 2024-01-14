@@ -11,6 +11,7 @@ import tutorsForSubject from "./components/TutorsForSubject.jsx";
 import TutorsForSubject from "./components/TutorsForSubject.jsx";
 import RequestSubjectAsTutor from "./components/RequestSubjectAsTutor.jsx";
 import UserInfo from "./components/UserInfo.jsx";
+import ChatTo from "./components/ChatTo.jsx";
 
 function App() {
     return (
@@ -26,6 +27,7 @@ function App() {
                 <Route path="/searchSubjects" element={<Subjects/>}/>
                 <Route path="/requestSubjectsAsTutor" element={<RequestSubjectAsTutor/>}/>
                 <Route path="/userInfoFor/:username" element={<UserInfo/>}/>
+                <Route path="/chatTo/:user" element={<ChatTo/>}></Route>
 
                 <Route path="/tutorsFor/:subject" element={<TutorsForSubject/>}/>
 

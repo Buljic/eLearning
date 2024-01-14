@@ -1,5 +1,5 @@
 import React from "react";
-import {useParams} from "react-router-dom";
+import {Link, useParams} from "react-router-dom";
 import useFetchCertainUser from "../customHooks/useFetchCertainUser.js";
 import "../css/subject.css";
 const UserInfo=()=>{
@@ -26,8 +26,8 @@ const UserInfo=()=>{
 
     return (<div>
         <p>Ime tutora je {userInfo.username}</p>
-        {/*<p>Ocjena tutora je {userInfo.subjects.Matematika.teaching_grade}</p>*/}
-
+        <Link to={`/chatTo/${userInfo.id}`}><h3>Zakaži termin</h3></Link>
+        //TODO username ili id
         {userInfo && userInfo.subjects.map((subject, index) => (
             <div key={index} id="subjectPresent">
                 <p>Predmet ID: {subject.subject_name}</p>
