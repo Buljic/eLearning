@@ -2,7 +2,20 @@ package ba.unze.elearning.tutoring.WebSocket;
 
 public class ChatMessage
 {
-    String message;
+   private String message;
+   private Integer receiver;
+    //private String receiver;
+    //Ovo se moze koristiti u slucaju ako koristimo jedan endpoint , da razlikuje od koga stize poruka
+
+    public Integer getReceiver()
+    {
+        return receiver;
+    }
+
+    public void setReceiver(Integer receiver)
+    {
+        this.receiver = receiver;
+    }
 
     public String getMessage()
     {
