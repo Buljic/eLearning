@@ -12,7 +12,7 @@ const ChatTo=()=>{
     useEffect(()=>{
         // const websocket=new WebSocket('ws://localhost:8080/chat');
         const socket=new SockJS('ws://localhost:8080/chat');//navodno znati ce se da je ovdje veza ta
-        const stompClient=Stomp.over(socket);
+        const stompClient=Stomp.over(socket);//koristimo socket iznad kao argument za ovaj stompClient
 
         stompClient.connect({},function(frame){
             console.log('Povezano:'+frame);
@@ -26,6 +26,7 @@ const ChatTo=()=>{
 
     return (
         <div>
+            
 
         </div>
     );

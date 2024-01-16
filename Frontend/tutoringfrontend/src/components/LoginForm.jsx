@@ -1,12 +1,18 @@
 // components/LoginForm.jsx
-import React, { useState } from 'react';
+import React, {useContext, useState} from 'react';
 import { useNavigate } from 'react-router-dom';
 import "../css/general.css"
+import MyUserContext from "../minicomponents/Context/MyUserContext.js";
+import useFetchUser from "../customHooks/useFetchUser.js";
 function LoginForm() {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const navigate = useNavigate();
     const [message, setMessage] = useState('');
+
+
+
+    const {myUser,setMyUser}=useContext(MyUserContext);
 
     const handleLogin = async (event) => {
         event.preventDefault();
@@ -23,7 +29,28 @@ function LoginForm() {
             if (response.ok) {
                // const data = await response.json();
                 //localStorage.setItem('token', data.token); // Spremanje JWT tokena u localStorage
-                navigate('/welcome'); // Preusmjeravanje na WelcomePage
+                // const {fetchedUser,error,loading}=useFetchUser();
+                // //dodavanje u context
+                // setMyUser(fetchedUser);
+                //navigate('/welcome'); // Preusmjeravanje na WelcomePage
+
+                const userResponse = await fetch('http://localhost:8080/api/welcomePage', {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                if (userResponse.ok) {
+                    const fetchedUser = await userResponse.json();
+                    setMyUser(fetchedUser); // ažuriranje konteksta
+                    navigate('/welcome'); // Preusmeravanje na WelcomePage
+                } else {
+                    // Obrada grešaka
+                    setMessage('Neuspješno dohvatanje korisničkih podataka.');
+                }
+
+
             } else {
                 setMessage('Neuspješna prijava. Molimo pokušajte ponovo.');
             }

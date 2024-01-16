@@ -1,5 +1,5 @@
 // App.jsx
-import React from 'react';
+import React, {useState} from 'react';
 import {BrowserRouter as Router, Routes, Route, Navigate} from 'react-router-dom';
 import LoginForm from './components/LoginForm';
 import WelcomePage from './components/WelcomePage';
@@ -12,14 +12,18 @@ import TutorsForSubject from "./components/TutorsForSubject.jsx";
 import RequestSubjectAsTutor from "./components/RequestSubjectAsTutor.jsx";
 import UserInfo from "./components/UserInfo.jsx";
 import ChatTo from "./components/ChatTo.jsx";
-
+import "./minicomponents/Context/MyUserContext.js"
+import MyUserContext from "./minicomponents/Context/MyUserContext.js";
 function App() {
+    const [myUser,setMyUser]=useState(null);
     return (
         <>
             {/*react fragment se zove i koristi za grupitanje*/}
             <Header />
         {/*   sve sto je izvan routes je stalno tu a unutar njega je dinamicko */}
-        <Router>
+        <MyUserContext.Provider value={{myUser,setMyUser}}>
+            <Router>
+
             <Routes>
                 <Route path="/login" element={<LoginForm />} />
                 <Route path="/createAccount" element={<CreateAccount />}></Route>
@@ -37,7 +41,7 @@ function App() {
             {/*    da navigira bilo koji nedefinirani path na login*/}
             </Routes>
         </Router>
-
+        </MyUserContext.Provider>
         </>
     );
 }
