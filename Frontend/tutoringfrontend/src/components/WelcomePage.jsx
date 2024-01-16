@@ -1,11 +1,14 @@
 
-import React from 'react';
+import React, {useContext} from 'react';
 import useFetchUser from "../customHooks/useFetchUser";
 import {Link} from "react-router-dom";
+import myUserContext from "../minicomponents/Context/MyUserContext.js";
+import MyUserContext from "../minicomponents/Context/MyUserContext.js";
 
 const WelcomePage = () => {
     const { user, error, loading } = useFetchUser(); // Koristimo naš custom hook
 
+    const {myUser,setMyUser}=useContext(MyUserContext);
     if (loading) {
         return <div>Učitavanje...</div>; // Prikazujemo dok se podaci učitavaju
     }
@@ -17,6 +20,7 @@ const WelcomePage = () => {
     // Kada nije ucitavanje i nema greske, prikazujemo podatke korisnika
     return (
         <div>
+            <h1>NAS USER {myUser.username}</h1>
             <h1>Dobrodošli, {user?.name}</h1>
             <ul>
                 {(user.accountType==='STUDENT')||(user.accountType==='OBOJE') && <li><Link to='/searchSubjects'>Trazi predmete</Link></li>}
