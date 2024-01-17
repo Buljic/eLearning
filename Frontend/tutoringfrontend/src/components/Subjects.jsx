@@ -1,6 +1,7 @@
-import React, {useEffect, useState} from "react";
+import React, {useContext, useEffect, useState} from "react";
 import {Link} from "react-router-dom";
 import useFetchSubjects from "../customHooks/useFetchSubjects.js";
+import MyUserContext from "../minicomponents/Context/MyUserContext.js";
 //Moze se koristiti i tj
 /*
     const ImeKomponente = () => {return };
@@ -14,6 +15,10 @@ const Subjects = () => {
     //koristi se [] u usestate za nizove
   //  const[subjects,setSubjects]=useState([]);       //STRING LIST SA SVIM SUBJECTS
     const{subjects,error,loading}=useFetchSubjects();
+
+   // const{myUser,setMyUser}=useContext(MyUserContext);
+    const storedUser=sessionStorage('myUser');
+    const myUser=JSON.parse(storedUser);
 
     const[searchTerm,setSearchTerm]=useState('');
     const[showSuggestions,setShowSuggestions]=useState(false);
@@ -128,9 +133,11 @@ const Subjects = () => {
         //setSearchTerm(event.target.value);
         getSearchedSubjectInfo();
     }
+    //console.log("KORISNIK JE " + myUser);//TODO context brise podatke na reloadu
 //TODO POSTAVI DA SE NE PRIKAZUJE NISTA AKO OPET PRITISNEMO SEARCH I ON BUDE PRAZAN
     return(
         <div>
+            <h1>Nas user je {myUser.username}</h1>
             {/*forma je zapravo wrapper za ovo i u njoj stavljamo input field i button i sl*/}
             <form id="searchForm" onSubmit={handleSubmit}>
             <input id="inputField"
