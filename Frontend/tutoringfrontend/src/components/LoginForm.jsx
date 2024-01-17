@@ -34,6 +34,7 @@ function LoginForm() {
                 // setMyUser(fetchedUser);
                 //navigate('/welcome'); // Preusmjeravanje na WelcomePage
 
+
                 const userResponse = await fetch('http://localhost:8080/api/welcomePage', {
                     method: 'GET',
                     credentials: 'include',
@@ -43,7 +44,9 @@ function LoginForm() {
                 });
                 if (userResponse.ok) {
                     const fetchedUser = await userResponse.json();
-                    setMyUser(fetchedUser); // ažuriranje konteksta
+                  //  setMyUser(fetchedUser); // ovo azurira kontekst koji smo kreirali
+
+                    sessionStorage.setItem('myUser',JSON.stringify(fetchedUser));//jer kao argument prima samo stringove
                     navigate('/welcome'); // Preusmeravanje na WelcomePage
                 } else {
                     // Obrada grešaka
