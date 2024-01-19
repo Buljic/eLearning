@@ -17,7 +17,7 @@ const Subjects = () => {
     const{subjects,error,loading}=useFetchSubjects();
 
    // const{myUser,setMyUser}=useContext(MyUserContext);
-    const storedUser=sessionStorage('myUser');
+    const storedUser=sessionStorage.getItem('myUser');
     const myUser=JSON.parse(storedUser);
 
     const[searchTerm,setSearchTerm]=useState('');

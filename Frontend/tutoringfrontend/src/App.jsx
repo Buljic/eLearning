@@ -31,7 +31,7 @@ function App() {
                 <Route path="/searchSubjects" element={<Subjects/>}/>
                 <Route path="/requestSubjectsAsTutor" element={<RequestSubjectAsTutor/>}/>
                 <Route path="/userInfoFor/:username" element={<UserInfo/>}/>
-                <Route path="/chatTo/:user" element={<ChatTo/>}></Route>
+                <Route path="/chatTo/:objectUser" element={<ChatTo/>}></Route>
 
                 <Route path="/tutorsFor/:subject" element={<TutorsForSubject/>}/>
 

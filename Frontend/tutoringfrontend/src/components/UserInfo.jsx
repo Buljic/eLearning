@@ -27,7 +27,7 @@ const UserInfo=()=>{
     return (<div>
         <p>Ime tutora je {userInfo.username}</p>
         <Link to={`/chatTo/${userInfo.id}`}><h3>Zakaži termin</h3></Link>
-        //TODO username ili id
+        {/*//TODO username ili id*/}
         {userInfo && userInfo.subjects.map((subject, index) => (
             <div key={index} id="subjectPresent">
                 <p>Predmet ID: {subject.subject_name}</p>
