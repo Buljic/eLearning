@@ -15,12 +15,13 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer
     {
         //ovdje idu URLovi na koje ce se klijenti povezivati da bi uspostavili kao vezu ...tj klijenti na frontend pa fr
         //ontend na ovaj endpoint
-        registry.addEndpoint("/chatTo").withSockJS();//TODO implementuj specificni endpoint
+        registry.addEndpoint("/api/chatTo").setAllowedOriginPatterns("*").withSockJS();//TODO implementuj specificni endpoint
     }
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry)
     {
         registry.setApplicationDestinationPrefixes("/app");
         registry.enableSimpleBroker("/topic");
+        registry.enableSimpleBroker("/queue");
     }
 }
