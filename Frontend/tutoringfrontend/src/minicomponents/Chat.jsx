@@ -1,6 +1,8 @@
 import React, {useEffect} from "react";
 
 import SockJS from 'sockjs-client';
+import Stomp from 'stompjs';
+
 const Chat=({chatId,isGroupChat})=>{//ako je group chat onda proslijedujemo groupchatid a inace samo id te osobe
     const storedUser=sessionStorage.getItem('myUser');
     const myUser=JSON.parse(storedUser);
@@ -8,7 +10,7 @@ const Chat=({chatId,isGroupChat})=>{//ako je group chat onda proslijedujemo grou
     {
         useEffect(()=>{
             // const websocket=new WebSocket('ws://localhost:8080/chat');
-            const socket=new SockJS('ws://localhost:8080/chat');//navodno znati ce se da je ovdje veza ta
+            const socket=new SockJS('http://localhost:8080/api/chatTo');//navodno znati ce se da je ovdje veza ta
             const stompClient=Stomp.over(socket);//koristimo socket iznad kao argument za ovaj stompClient
 
             stompClient.connect({},function(frame){
