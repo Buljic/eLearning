@@ -22,16 +22,21 @@ public class ChatController
         this.userRepository = userRepository;
     }
 
-    @MessageMapping("/message")
+    @MessageMapping("/{user1}/{user2}")
     public void processMessageFromClient(@Payload ChatMessage chatMessage, HttpServletRequest request)
     {
         String token=jwtUtil.extractJwtFromCookie(request);
         Integer ourUser=userRepository.getIdByUsername(jwtUtil.getUsernameFromToken(token));
         if(ourUser<chatMessage.getReceiver())
         {
+            System.out.println(chatMessage.getMessage()+"OVO JE PORUKA NA BACKENDU");
             template.convertAndSend("/queue/"+ourUser.toString()+'/'+chatMessage.getReceiver().toString(),chatMessage.getMessage());
         }
-        template.convertAndSend("/queue/"+chatMessage.getReceiver().toString()+'/'+ourUser.toString(),chatMessage.getMessage());
+        else
+        {
+            template.convertAndSend("/queue/" + chatMessage.getReceiver().toString() + '/' + ourUser.toString(),
+                    chatMessage.getMessage());
+        }
         //String username=jwtUtil.getUsernameFromToken(token);
         //mozes koristiti dinamicki endpoint ili jedan endpoint kod kojeg svaka poruka ima razliciti sender npr
         //template.convertAndSendToUser(chatMessage.getReceiver(),"/queue/messages",chatMessage);
