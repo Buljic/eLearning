@@ -6,6 +6,12 @@ public class ChatMessage
    private Integer receiver;
     //private String receiver;
     //Ovo se moze koristiti u slucaju ako koristimo jedan endpoint , da razlikuje od koga stize poruka
+    public ChatMessage(String message, Integer receiver)
+    {
+        this.message = message;
+        this.receiver = receiver;
+    }
+    public ChatMessage() {}
 
     public Integer getReceiver()
     {
