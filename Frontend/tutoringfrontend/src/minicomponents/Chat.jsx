@@ -9,7 +9,8 @@ const Chat=({chatId,isGroupChat})=>{//ako je group chat onda proslijedujemo grou
     const myUser=JSON.parse(storedUser);
 
     const stompClient=useRef(null);
-    const[ourEndpoint,setOurEndpoint]=useState('');
+    const[ourEndpointToReceive,setOurEndpointToReceive]=useState('');
+    const[ourEndpointToSend,setOurEndpointToSend]=useState('');
 
     // if(!isGroupChat) //TODO Postavi i za groupChat
 
@@ -24,22 +25,26 @@ const Chat=({chatId,isGroupChat})=>{//ako je group chat onda proslijedujemo grou
 
             if (myUser.id < chatId)
             {
-                setOurEndpoint(  /*'/queue/'*/ + myUser.id.toString() + '/' +/*objectUser.*/chatId.toString());
-            }//TODO popravi endpointe tj njihvo mapiranje
+                setOurEndpointToReceive(  '/queue/' + myUser.id.toString() + '/' +/*objectUser.*/chatId.toString());
+                setOurEndpointToSend('/app/'+myUser.id.toString() + '/' +/*objectUser.*/chatId.toString());
+            }
             else
             {
-                setOurEndpoint(/*'/queue/' +*/ chatId.toString() + '/' + myUser.id.toString());
+                setOurEndpointToReceive('/queue/' + chatId.toString() + '/' + myUser.id.toString());
+                setOurEndpointToSend('/app/'+chatId.toString() + '/' + myUser.id.toString());
             }
 
-            stompClient.current.subscribe(ourEndpoint, (messageOutput) => {
+            stompClient.current.subscribe(ourEndpointToReceive, (messageOutput) => {
                 appendMessage(messageOutput.body);
             });
         });
 
         // const sendMessage=()=>
 
-        function appendMessage(messageBody)
+        function appendMessage(neformatiranaPoruka)
         {
+            const messageBody=JSON.parse(neformatiranaPoruka);
+            console.log("Ovo je poruka"+messageBody);
             let chatBox = document.getElementById('chatBox');
             let messageElement = document.createElement('div');//da fazon kreira div za jednu neku poruku
 
@@ -57,7 +62,7 @@ const Chat=({chatId,isGroupChat})=>{//ako je group chat onda proslijedujemo grou
         }
 
         //TODO dodaj cleanup funkciju
-    }, [ourEndpoint]);
+    }, [ourEndpointToReceive]);
     function sendMessage()
     {
         let messageElement = document.getElementById('messageInput');
@@ -65,7 +70,11 @@ const Chat=({chatId,isGroupChat})=>{//ako je group chat onda proslijedujemo grou
         if (messageText.trim() !== '')//da nije prazno
         {
             console.log(messageText+"OVO JE PORUKA");
-            stompClient.current.send(ourEndpoint, {}, JSON.stringify(messageText));
+            const chatMessage={
+                message:messageText,
+                receiver:chatId
+            };
+            stompClient.current.send(ourEndpointToSend, {}, JSON.stringify(chatMessage)/*JSON.stringify(messageText,chatId)*/);
             messageElement.value = '';
         }
     }
