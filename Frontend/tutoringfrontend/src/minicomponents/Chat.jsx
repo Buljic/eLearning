@@ -19,6 +19,7 @@ const Chat=({chatId,isGroupChat})=>{//ako je group chat onda proslijedujemo grou
         const socket = new SockJS('http://localhost:8080/api/chatTo');//navodno znati ce se da je ovdje veza ta
         //const stompClient = Stomp.over(socket);//koristimo socket iznad kao argument za ovaj stompClient
         stompClient.current=Stomp.over(socket);
+        let subscription;
 
         stompClient.current.connect({}, function (frame) {
             console.log('Povezano:' + frame);
@@ -34,9 +35,12 @@ const Chat=({chatId,isGroupChat})=>{//ako je group chat onda proslijedujemo grou
                 setOurEndpointToSend('/app/'+chatId.toString() + '/' + myUser.id.toString());
             }
 
-            stompClient.current.subscribe(ourEndpointToReceive, (messageOutput) => {
+            subscription= stompClient.current.subscribe(ourEndpointToReceive, (messageOutput) => {
                 appendMessage(messageOutput.body);
             });
+
+
+
         });
 
         // const sendMessage=()=>
@@ -52,14 +56,33 @@ const Chat=({chatId,isGroupChat})=>{//ako je group chat onda proslijedujemo grou
 
             if (messageBody.receiver === chatId)//ako mi saljemo poruku nekome
             {
-                messageElement.className = 'sent-message';
+                messageElement.className = 'received-message';
             }
             else
             {
-                messageElement.className = 'received-message';
+                messageElement.className = 'sent-message';
             }
             chatBox.appendChild(messageElement);//da u onaj nas chatBox element appenda jos jedan element
         }
+        // return () => {
+        //     if (stompClient.current) {
+        //         stompClient.current.disconnect(() => {
+        //             console.log('Diskonektovan!');
+        //         }, {});
+        //         if(ourEndpointToReceive) {
+        //             stompClient.current.unsubscribe(ourEndpointToReceive);
+        //         }
+        //     }
+        // };
+        return () => {
+            if (subscription) {
+                subscription.unsubscribe();
+            }
+            if (stompClient.current) {
+                stompClient.current.disconnect();
+                console.log('Diskonektovan!');
+            }
+        };
 
         //TODO dodaj cleanup funkciju
     }, [ourEndpointToReceive]);
@@ -84,11 +107,18 @@ const Chat=({chatId,isGroupChat})=>{//ako je group chat onda proslijedujemo grou
         <div>
             <h1>Dopisivanje {myUser.id} sa {chatId}</h1>
 
+        {/*<div className="chat-container">*/}
             <div id="chatBox">
             </div>
             {/*TODO POSTAVI KONFIGURACIJU POSTO RADIMO S VITEOM*/}
-            <input type="text" id="messageInput"></input>
-            <button type="submit" onClick={()=>sendMessage()}>Slanje</button>
+
+                <div className="input-area">
+                    <input type="text" id="messageInput" />
+                    <button type="submit" onClick={sendMessage}>Slanje</button>
+                </div>
+
+
+        {/*</div>*/}
 
         </div>
     );
