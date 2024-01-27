@@ -22,21 +22,24 @@ public class DirectMessage
 
     private String messageText;
 
+    public DirectMessage() {}
+    public DirectMessage(DirectMessageId id, String messageText)
+    {
+        this.id = id;
+        this.messageText = messageText;
+    }
     public DirectMessageId getId()
     {
         return id;
     }
-
     public void setId(DirectMessageId id)
     {
         this.id = id;
     }
-
     public String getMessageText()
     {
         return messageText;
     }
-
     public void setMessageText(String messageText)
     {
         this.messageText = messageText;
