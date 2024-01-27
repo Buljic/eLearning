@@ -74,17 +74,19 @@ const Chat=({chatId,isGroupChat})=>{//ako je group chat onda proslijedujemo grou
         //         }
         //     }
         // };
-        return () => {
-            if (subscription) {
-                subscription.unsubscribe();
-            }
-            if (stompClient.current) {
-                stompClient.current.disconnect();
-                console.log('Diskonektovan!');
-            }
-        };
+
+        // return () => {
+        //     if (subscription) {
+        //         subscription.unsubscribe();
+        //     }
+        //     if (stompClient.current) {
+        //         stompClient.current.disconnect();
+        //         console.log('Diskonektovan!');
+        //     }
+        // };
 
         //TODO dodaj cleanup funkciju
+        //TODO dodaj fetchanje prethodnih poruka pri loadanju
     }, [ourEndpointToReceive]);
     function sendMessage()
     {
@@ -116,10 +118,7 @@ const Chat=({chatId,isGroupChat})=>{//ako je group chat onda proslijedujemo grou
                     <input type="text" id="messageInput" />
                     <button type="submit" onClick={sendMessage}>Slanje</button>
                 </div>
-
-
         {/*</div>*/}
-
         </div>
     );
 }

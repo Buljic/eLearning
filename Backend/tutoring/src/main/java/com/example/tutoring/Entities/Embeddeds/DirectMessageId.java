@@ -12,6 +12,17 @@ public class DirectMessageId implements Serializable
     private Long user2;
     private LocalDateTime time;
 
+    public DirectMessageId()
+    {
+    }
+
+    public DirectMessageId(Long user1, Long user2, LocalDateTime time)
+    {
+        this.user1 = user1;
+        this.user2 = user2;
+        this.time = time;
+    }
+
     public Long getUser1()
     {
         return user1;
