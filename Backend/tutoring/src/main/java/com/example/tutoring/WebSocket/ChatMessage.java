@@ -3,24 +3,24 @@ package com.example.tutoring.WebSocket;
 public class ChatMessage
 {
    private String message;
-   private Integer receiver;
-    //private String receiver;
+   private Long user2;
+    //private String user2;
     //Ovo se moze koristiti u slucaju ako koristimo jedan endpoint , da razlikuje od koga stize poruka
-    public ChatMessage(String message, Integer receiver)
+    public ChatMessage(String message, Long user2)
     {
         this.message = message;
-        this.receiver = receiver;
+        this.user2 = user2;
     }
     public ChatMessage() {}
 
-    public Integer getReceiver()
+    public Long getUser2()
     {
-        return receiver;
+        return user2;
     }
 
-    public void setReceiver(Integer receiver)
+    public void setUser2(Long user2)
     {
-        this.receiver = receiver;
+        this.user2 = user2;
     }
 
     public String getMessage()

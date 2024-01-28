@@ -1,17 +1,18 @@
 package com.example.tutoring.WebSocket;
 
-import com.example.tutoring.Entities.Embeddeds.DirectMessageId;
 import com.example.tutoring.Repositories.DirectMessageRepository;
 import com.example.tutoring.Repositories.UserRepository;
 import com.example.tutoring.Security.JwtUtil;
 import com.example.tutoring.Services.MessageService;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
-
-import java.time.LocalDateTime;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 
 @Controller //ne treba nam restcontrollerovdje jer koristimo @Messagemappiong
 public class ChatController
@@ -32,6 +33,12 @@ public class ChatController
         this.messageService = messageService;
     }
 
+    @GetMapping ("/api/{user1}/{user2}/getOldDirectMessages")
+    public ResponseEntity<?> getOldDMs(@PathVariable String user1, @PathVariable String user2)
+    {
+       return ResponseEntity.status(HttpStatus.OK).body( messageService.getOldDMs(Long.parseLong(user2), Long.parseLong(user1)));
+    }
+
     @MessageMapping("/{user1}/{user2}")//ima 'app' prefix   //mozda da se Principal nekako nastima da rjesi ovaj problem s servletom
     public void processMessageFromClient(@Payload ChatMessage chatMessage, @DestinationVariable String user1,
                                          @DestinationVariable String user2
@@ -40,24 +47,27 @@ public class ChatController
         System.out.println(chatMessage.getMessage()+" OVO JE PORUKA NA BACKENDU "+ user1+" "+user2);
         //DirectMessageId id=new DirectMessageId(Long.parseLong(user1),Long.parseLong(user2), LocalDateTime.now());
 
-        messageService.saveDirectMessage(Long.parseLong(user1),Long.parseLong(user2),chatMessage.getMessage());
+        if(user1.equals(chatMessage.getUser2().toString()))//receiver treba biti na drugom mjestu tj kao user2
+        {
+            messageService.saveDirectMessage(Long.parseLong(user2), Long.parseLong(user1), chatMessage.getMessage());
+        }else messageService.saveDirectMessage(Long.parseLong(user1), Long.parseLong(user2), chatMessage.getMessage());
         System.out.println("USPJESNO");
         template.convertAndSend("/queue/"+user1+'/'+user2,chatMessage);
 
         // String token=jwtUtil.extractJwtFromCookie(request);
       //  Integer ourUser=userRepository.getIdByUsername(jwtUtil.getUsernameFromToken(token));
-//        if(ourUser<chatMessage.getReceiver())
+//        if(ourUser<chatMessage.getUser2())
 //        {
 //            System.out.println(chatMessage.getMessage()+"OVO JE PORUKA NA BACKENDU");
-//            template.convertAndSend("/queue/"+ourUser.toString()+'/'+chatMessage.getReceiver().toString(),chatMessage.getMessage());
+//            template.convertAndSend("/queue/"+ourUser.toString()+'/'+chatMessage.getUser2().toString(),chatMessage.getMessage());
 //        }
 //        else
 //        {
-//            template.convertAndSend("/queue/" + chatMessage.getReceiver().toString() + '/' + ourUser.toString(),
+//            template.convertAndSend("/queue/" + chatMessage.getUser2().toString() + '/' + ourUser.toString(),
 //                    chatMessage.getMessage());
 //        }
         //String username=jwtUtil.getUsernameFromToken(token);
         //mozes koristiti dinamicki endpoint ili jedan endpoint kod kojeg svaka poruka ima razliciti sender npr
-        //template.convertAndSendToUser(chatMessage.getReceiver(),"/queue/messages",chatMessage);
+        //template.convertAndSendToUser(chatMessage.getUser2(),"/queue/messages",chatMessage);
     }
 }
