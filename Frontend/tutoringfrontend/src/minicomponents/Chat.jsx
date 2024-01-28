@@ -11,6 +11,7 @@ const Chat=({chatId,isGroupChat})=>{//ako je group chat onda proslijedujemo grou
     const stompClient=useRef(null);
     const[ourEndpointToReceive,setOurEndpointToReceive]=useState('');
     const[ourEndpointToSend,setOurEndpointToSend]=useState('');
+    const[baseEndpoint,setBaseEndpoint]=useState('');//TODO skrati s 3 varijable na jednu i koristi ovu
 
     // if(!isGroupChat) //TODO Postavi i za groupChat
 
@@ -28,11 +29,13 @@ const Chat=({chatId,isGroupChat})=>{//ako je group chat onda proslijedujemo grou
             {
                 setOurEndpointToReceive(  '/queue/' + myUser.id.toString() + '/' +/*objectUser.*/chatId.toString());
                 setOurEndpointToSend('/app/'+myUser.id.toString() + '/' +/*objectUser.*/chatId.toString());
+                setBaseEndpoint(myUser.id.toString+'/'+chatId.toString());
             }
             else
             {
                 setOurEndpointToReceive('/queue/' + chatId.toString() + '/' + myUser.id.toString());
                 setOurEndpointToSend('/app/'+chatId.toString() + '/' + myUser.id.toString());
+                setBaseEndpoint(chatId.toString()+'/'+myUser.id.toString());
             }
 
             subscription= stompClient.current.subscribe(ourEndpointToReceive, (messageOutput) => {
@@ -44,6 +47,20 @@ const Chat=({chatId,isGroupChat})=>{//ako je group chat onda proslijedujemo grou
         });
 
         // const sendMessage=()=>
+        async function fetchPreviousMessages(){
+            const response=await fetch( `http://localhost:8080/api/${myUser.id.toString()}/${chatId.toString()}/getOldDirectMessages`,{//'http://localhost:8080/api/'+baseEndpoint+'/getOldDirectMessages',{
+                method:'GET',
+                credentials:'include',
+                headers:{
+                    'Content-Type':'application/json',
+                }
+            });
+            // TODO undefined error u poruci
+            const poruke=await response.json();
+            poruke.forEach(poruka=>{
+                appendMessage(JSON.stringify(poruka));
+            });
+        }
 
         function appendMessage(neformatiranaPoruka)
         {
@@ -64,6 +81,11 @@ const Chat=({chatId,isGroupChat})=>{//ako je group chat onda proslijedujemo grou
             }
             chatBox.appendChild(messageElement);//da u onaj nas chatBox element appenda jos jedan element
         }
+
+        if (baseEndpoint) {
+            fetchPreviousMessages();
+        }
+
         // return () => {
         //     if (stompClient.current) {
         //         stompClient.current.disconnect(() => {
@@ -88,6 +110,9 @@ const Chat=({chatId,isGroupChat})=>{//ako je group chat onda proslijedujemo grou
         //TODO dodaj cleanup funkciju
         //TODO dodaj fetchanje prethodnih poruka pri loadanju
     }, [ourEndpointToReceive]);
+
+
+
     function sendMessage()
     {
         let messageElement = document.getElementById('messageInput');
