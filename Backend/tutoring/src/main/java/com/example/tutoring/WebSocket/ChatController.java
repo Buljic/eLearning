@@ -1,5 +1,6 @@
 package com.example.tutoring.WebSocket;
 
+import com.example.tutoring.DTOs.GenericDTO;
 import com.example.tutoring.Repositories.DirectMessageRepository;
 import com.example.tutoring.Repositories.UserRepository;
 import com.example.tutoring.Security.JwtUtil;
@@ -13,6 +14,8 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+
+import java.util.List;
 
 @Controller //ne treba nam restcontrollerovdje jer koristimo @Messagemappiong
 public class ChatController
@@ -36,6 +39,13 @@ public class ChatController
     @GetMapping ("/api/{user1}/{user2}/getOldDirectMessages")
     public ResponseEntity<?> getOldDMs(@PathVariable String user1, @PathVariable String user2)
     {
+        List<GenericDTO> dto= messageService.getOldDMs(Long.parseLong(user2), Long.parseLong(user1));
+       // System.out.println(dto);
+        System.out.println("------ELEMENT------");
+        for(GenericDTO i:dto)
+        {
+            System.out.println(i);
+        }
        return ResponseEntity.status(HttpStatus.OK).body( messageService.getOldDMs(Long.parseLong(user2), Long.parseLong(user1)));
     }
 
