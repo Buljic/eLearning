@@ -58,6 +58,9 @@ const Chat=({chatId,isGroupChat})=>{//ako je group chat onda proslijedujemo grou
             // TODO undefined error u poruci
             const poruke=await response.json();
             poruke.forEach(poruka=>{
+                print(JSON.stringify(poruka));
+            });
+            poruke.forEach(poruka=>{
                 appendMessage(JSON.stringify(poruka));
             });
         }
@@ -71,7 +74,7 @@ const Chat=({chatId,isGroupChat})=>{//ako je group chat onda proslijedujemo grou
 
             messageElement.innerText = messageBody.message;//u taj novi nas div stavlja poruku tu koju joj proslijedimo
 
-            if (messageBody.receiver === chatId)//ako mi saljemo poruku nekome
+            if (messageBody.user2 === chatId)//ako mi saljemo poruku nekome     //PROMJENJENO S receiver
             {
                 messageElement.className = 'received-message';
             }
@@ -122,7 +125,7 @@ const Chat=({chatId,isGroupChat})=>{//ako je group chat onda proslijedujemo grou
             console.log(messageText+"OVO JE PORUKA");
             const chatMessage={
                 message:messageText,
-                receiver:chatId
+                user2:chatId
             };
             stompClient.current.send(ourEndpointToSend, {}, JSON.stringify(chatMessage)/*JSON.stringify(messageText,chatId)*/);
             messageElement.value = '';
