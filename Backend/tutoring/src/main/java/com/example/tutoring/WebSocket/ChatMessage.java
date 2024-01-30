@@ -2,13 +2,13 @@ package com.example.tutoring.WebSocket;
 
 public class ChatMessage
 {
-   private String message;
+   private String message_text;
    private Long user2;
     //private String user2;
     //Ovo se moze koristiti u slucaju ako koristimo jedan endpoint , da razlikuje od koga stize poruka
-    public ChatMessage(String message, Long user2)
+    public ChatMessage(String message_text, Long user2)
     {
-        this.message = message;
+        this.message_text = message_text;
         this.user2 = user2;
     }
     public ChatMessage() {}
@@ -23,13 +23,13 @@ public class ChatMessage
         this.user2 = user2;
     }
 
-    public String getMessage()
+    public String getMessage_text()
     {
-        return message;
+        return message_text;
     }
 
-    public void setMessage(String message)
+    public void setMessage_text(String message_text)
     {
-        this.message = message;
+        this.message_text = message_text;
     }
 }
