@@ -72,7 +72,7 @@ const Chat=({chatId,isGroupChat})=>{//ako je group chat onda proslijedujemo grou
             let chatBox = document.getElementById('chatBox');
             let messageElement = document.createElement('div');//da fazon kreira div za jednu neku poruku
 
-            messageElement.innerText = messageBody.message;//u taj novi nas div stavlja poruku tu koju joj proslijedimo
+            messageElement.innerText = messageBody.message_text;//u taj novi nas div stavlja poruku tu koju joj proslijedimo
 
             if (messageBody.user2 === chatId)//ako mi saljemo poruku nekome     //PROMJENJENO S receiver
             {
@@ -124,7 +124,7 @@ const Chat=({chatId,isGroupChat})=>{//ako je group chat onda proslijedujemo grou
         {
             console.log(messageText+"OVO JE PORUKA");
             const chatMessage={
-                message:messageText,
+                message_text:messageText,
                 user2:chatId
             };
             stompClient.current.send(ourEndpointToSend, {}, JSON.stringify(chatMessage)/*JSON.stringify(messageText,chatId)*/);

@@ -39,13 +39,6 @@ public class ChatController
     @GetMapping ("/api/{user1}/{user2}/getOldDirectMessages")
     public ResponseEntity<?> getOldDMs(@PathVariable String user1, @PathVariable String user2)
     {
-        List<GenericDTO> dto= messageService.getOldDMs(Long.parseLong(user2), Long.parseLong(user1));
-       // System.out.println(dto);
-        System.out.println("------ELEMENT------");
-        for(GenericDTO i:dto)
-        {
-            System.out.println(i);
-        }
        return ResponseEntity.status(HttpStatus.OK).body( messageService.getOldDMs(Long.parseLong(user2), Long.parseLong(user1)));
     }
 
@@ -54,13 +47,13 @@ public class ChatController
                                          @DestinationVariable String user2
             /*, HttpServletRequest request*/)
     {
-        System.out.println(chatMessage.getMessage()+" OVO JE PORUKA NA BACKENDU "+ user1+" "+user2);
+        System.out.println(chatMessage.getMessage_text()+" OVO JE PORUKA NA BACKENDU "+ user1+" "+user2);
         //DirectMessageId id=new DirectMessageId(Long.parseLong(user1),Long.parseLong(user2), LocalDateTime.now());
 
         if(user1.equals(chatMessage.getUser2().toString()))//receiver treba biti na drugom mjestu tj kao user2
         {
-            messageService.saveDirectMessage(Long.parseLong(user2), Long.parseLong(user1), chatMessage.getMessage());
-        }else messageService.saveDirectMessage(Long.parseLong(user1), Long.parseLong(user2), chatMessage.getMessage());
+            messageService.saveDirectMessage(Long.parseLong(user2), Long.parseLong(user1), chatMessage.getMessage_text());
+        }else messageService.saveDirectMessage(Long.parseLong(user1), Long.parseLong(user2), chatMessage.getMessage_text());
         System.out.println("USPJESNO");
         template.convertAndSend("/queue/"+user1+'/'+user2,chatMessage);
 
@@ -68,13 +61,13 @@ public class ChatController
       //  Integer ourUser=userRepository.getIdByUsername(jwtUtil.getUsernameFromToken(token));
 //        if(ourUser<chatMessage.getUser2())
 //        {
-//            System.out.println(chatMessage.getMessage()+"OVO JE PORUKA NA BACKENDU");
-//            template.convertAndSend("/queue/"+ourUser.toString()+'/'+chatMessage.getUser2().toString(),chatMessage.getMessage());
+//            System.out.println(chatMessage.getMessage_text()+"OVO JE PORUKA NA BACKENDU");
+//            template.convertAndSend("/queue/"+ourUser.toString()+'/'+chatMessage.getUser2().toString(),chatMessage.getMessage_text());
 //        }
 //        else
 //        {
 //            template.convertAndSend("/queue/" + chatMessage.getUser2().toString() + '/' + ourUser.toString(),
-//                    chatMessage.getMessage());
+//                    chatMessage.getMessage_text());
 //        }
         //String username=jwtUtil.getUsernameFromToken(token);
         //mozes koristiti dinamicki endpoint ili jedan endpoint kod kojeg svaka poruka ima razliciti sender npr
