@@ -133,6 +133,7 @@ const Chat=({chatId,isGroupChat})=>{//ako je group chat onda proslijedujemo grou
     }
 
 
+
     return (
         <div>
             <h1>Dopisivanje {myUser.id} sa {chatId}</h1>

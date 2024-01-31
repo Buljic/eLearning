@@ -29,6 +29,7 @@ const WelcomePage = () => {
                 { (user.accountType==='OBOJE') && <li>Radi</li>}
                 {(user.accountType==='STUDENT') && <li>STUDENT</li>}
                 {(user.accountType==='TUTOR')||(user.accountType==='OBOJE') && <li><Link to="/requestSubjectsAsTutor">Registruj se za predmete</Link></li>}
+                {(user.accountType==='STUDENT')||(user.accountType==='OBOJE') && <li></li>}
             </ul>
         </div>
     );
