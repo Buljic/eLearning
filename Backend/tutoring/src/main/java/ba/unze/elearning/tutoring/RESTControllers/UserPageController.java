@@ -130,4 +130,8 @@ public class UserPageController
         System.out.println("moj user je"+ user);
         return ResponseEntity.status(HttpStatus.OK).body(user);
     }
+    @GetMapping("/getAttendedSubjects")
+    public ResponseEntity<?> getAttendedCourses(@RequestParam Long userId){
+       return ResponseEntity.status(HttpStatus.OK).body( userService.findAttendedCourses(userId));
+    }
 }

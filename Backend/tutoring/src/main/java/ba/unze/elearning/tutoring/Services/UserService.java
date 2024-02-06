@@ -115,4 +115,10 @@ public class UserService
                 "where tutorsubject.tutor_id = ?;";
         return jdbcTemplate.query(sql,new Object[]{id},new GenericDTOMapper());
     }
+
+    public List<GenericDTO> findAttendedCourses(Long id)
+    {
+        String sql="SELECT * From user_group where userid=?;";
+        return jdbcTemplate.query(sql,new Object[]{id},new GenericDTOMapper());
+    }
 }
