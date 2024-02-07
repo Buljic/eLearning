@@ -116,9 +116,9 @@ public class UserService
         return jdbcTemplate.query(sql,new Object[]{id},new GenericDTOMapper());
     }
 
-    public List<GenericDTO> findAttendedCourses(Long id)
+    public List<GenericDTO> findAttendedCourses(Long userId)
     {
-        String sql="SELECT * From user_group where userid=?;";
-        return jdbcTemplate.query(sql,new Object[]{id},new GenericDTOMapper());
+        String sql="SELECT * From group_table where (select group_id from user_group where user_id=?);";
+        return jdbcTemplate.query(sql,new Object[]{userId},new GenericDTOMapper());
     }
 }

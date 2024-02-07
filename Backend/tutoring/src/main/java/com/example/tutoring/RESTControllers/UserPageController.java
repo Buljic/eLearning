@@ -130,8 +130,14 @@ public class UserPageController
         System.out.println("moj user je"+ user);
         return ResponseEntity.status(HttpStatus.OK).body(user);
     }
-    @GetMapping("/getAttendedSubjects")
+    @GetMapping("/getAttendedGroups")
     public ResponseEntity<?> getAttendedCourses(@RequestParam Long userId){
+        System.out.println(userId+"OVO JE NAS USER");
+        List<GenericDTO> dto= userService.findAttendedCourses(userId);
+        for (GenericDTO dto1:dto)
+        {
+            System.out.println(dto1);
+        }
        return ResponseEntity.status(HttpStatus.OK).body( userService.findAttendedCourses(userId));
     }
 }

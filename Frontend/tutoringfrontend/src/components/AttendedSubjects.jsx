@@ -6,11 +6,11 @@ const AttendedSubjects=()=>{
     const storedUser=sessionStorage.getItem('myUser');
     const myUser=JSON.parse(storedUser);
 
-    const [attendedSubjects,setAttendedSubjects]=useState([]);
+    const [attendedGroups,setAttendedGroups]=useState([]);
 
     useEffect(()=>{
         const getAttendedSubjects=async()=>{
-            const response=await fetch(`http://localhost:8080/api/getAttendedSubjects?userid=${myUser.id}`,{
+            const response=await fetch(`http://localhost:8080/api/getAttendedGroups?userId=${myUser.id}`,{
                 method:'GET',
                 credentials:'include',
                 headers:{
@@ -19,19 +19,19 @@ const AttendedSubjects=()=>{
             });
             if (!response.ok)
             {
-                throw new Error('Problem s fetchanjem attended subjects');
+                throw new Error('Problem s fetchanjem attended groups');
             }
             else{
                 const data= await response.json();
-                setAttendedSubjects(data);
-                attendedSubjects.forEach(subject=>{
-                    console.log('ovo je predmet'+ subject);
+                setAttendedGroups(data);
+                attendedGroups.forEach(subject=>{
+                    console.log('ovo je grupa'+ subject);
                 })
             }
         }
         getAttendedSubjects();
     },[]);
-    if(!attendedSubjects)
+    if(!attendedGroups)
     {
         return <h1>Ucitavanje ...</h1>
     }
@@ -40,12 +40,12 @@ const AttendedSubjects=()=>{
           <h1>Pohađani kursevi</h1>
 
           <br/>
-          {attendedSubjects && (
-              <ul id="attendedSubjects">
-                  {attendedSubjects.map((subject,index)=>(
-                      <li key={index} id={subject}>
-                          <button onClick={/*()=><Link to=''}></Link>*/}>
-                              {subject}
+          {attendedGroups && (
+              <ul id="attendedGroups">
+                  {attendedGroups.map((group, index)=>(
+                      <li key={index} id={group}>
+                          <button >
+                              {group.group_name}
                           </button>
                       </li>
                   ))}
