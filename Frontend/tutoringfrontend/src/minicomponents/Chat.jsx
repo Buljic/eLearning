@@ -2,6 +2,7 @@ import React, {useEffect, useRef, useState} from "react";
 
 import SockJS from 'sockjs-client';
 import Stomp from 'stompjs';
+import {act} from "react-dom/test-utils";
 
 const Chat=({chatId,isGroupChat})=>{//ako je group chat onda proslijedujemo groupchatid a inace samo id te osobe
 
@@ -13,18 +14,18 @@ const Chat=({chatId,isGroupChat})=>{//ako je group chat onda proslijedujemo grou
     const[ourEndpointToSend,setOurEndpointToSend]=useState('');
     const[baseEndpoint,setBaseEndpoint]=useState('');//TODO skrati s 3 varijable na jednu i koristi ovu
 
-    // if(!isGroupChat) //TODO Postavi i za groupChat
-
+     if(!isGroupChat) //TODO Postavi i za groupChat
+     {
     useEffect(() => {
         // const websocket=new WebSocket('ws://localhost:8080/chat');
         const socket = new SockJS('http://localhost:8080/api/chatTo');//navodno znati ce se da je ovdje veza ta
         //const stompClient = Stomp.over(socket);//koristimo socket iznad kao argument za ovaj stompClient
         stompClient.current=Stomp.over(socket);
         let subscription;
-
+       // let activeConnection;
         stompClient.current.connect({}, function (frame) {
             console.log('Povezano:' + frame);
-
+//activeConnection=true;
             if (myUser.id < chatId)
             {
                 setOurEndpointToReceive(  '/queue/' + myUser.id.toString() + '/' +/*objectUser.*/chatId.toString());
@@ -109,13 +110,29 @@ const Chat=({chatId,isGroupChat})=>{//ako je group chat onda proslijedujemo grou
         //         console.log('Diskonektovan!');
         //     }
         // };
+        // return () => {
+        //     // Logika za čišćenje
+        //     if (stompClient.current) {
+        //         stompClient.current.disconnect(() => {
+        //             console.log('Diskonektovan!');
+        //         }, {});
+        //         // Otkazivanje pretplate, ako je potrebno
+        //     }
+        // };
 
+        // return () => {
+        //     if (activeConnection && stompClient.current) {
+        //         // Proverite da li je veza aktivna pre diskonektovanja
+        //         stompClient.current.disconnect(() => {
+        //             console.log('Diskonektovan!');
+        //         });
+        //         activeConnection = false;
+        //     }
+        // };
         //TODO dodaj cleanup funkciju
         //TODO dodaj fetchanje prethodnih poruka pri loadanju
     }, [ourEndpointToReceive]);
-
-
-
+     }
     function sendMessage()
     {
         let messageElement = document.getElementById('messageInput');
@@ -131,6 +148,8 @@ const Chat=({chatId,isGroupChat})=>{//ako je group chat onda proslijedujemo grou
             messageElement.value = '';
         }
     }
+
+//Ako jeste group chat
 
 
 

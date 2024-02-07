@@ -14,7 +14,7 @@ import UserInfo from "./components/UserInfo.jsx";
 import ChatTo from "./components/ChatTo.jsx";
 import "./minicomponents/Context/MyUserContext.js"
 import MyUserContext from "./minicomponents/Context/MyUserContext.js";
-import Groups from "./components/Groups.jsx";
+import ChatGroup from "./components/ChatGroup.jsx";
 import AttendedSubjects from "./components/AttendedSubjects.jsx";
 function App() {
     const [myUser,setMyUser]=useState(null);
@@ -39,7 +39,7 @@ function App() {
 
                 <Route path="/attendedCourses" element={<AttendedSubjects/>}/>
 
-                <Route path="/groups" element={<Groups/>}/>
+                <Route path="/chatGroup/:objectGroup" element={<ChatGroup/>}/>
 
                 {/*<Route path="/tutorsFor/:subject" element={<tutorsForSubject/>}> </Route>*/}
                 <Route path="/" element={<Homepage />}></Route>

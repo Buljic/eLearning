@@ -22,6 +22,8 @@ public class Group
     @JoinColumn(name = "headtutor_id")
     private Tutor tutor;
 
+    private String group_name;
+
     public Long getGroup_id()
     {
         return group_id;
