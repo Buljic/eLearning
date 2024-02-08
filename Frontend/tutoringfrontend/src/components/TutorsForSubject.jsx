@@ -4,8 +4,8 @@ import {useParams} from "react-router-dom";
 import "../css/subject.css"
 const tutorsForSubject = () =>{
     const { subject }=useParams();
-    console.log({subject});
-
+   // console.log({subject}+"JEDNOM");
+console.log("JEDNOM");
     const[tutors,setTutors]=useState([]);
 
     useEffect(()=>{
@@ -37,8 +37,6 @@ const tutorsForSubject = () =>{
     return (
         <div>
         <p>TEST- {subject}</p>
-            <p>NESTO</p>
-
             {tutors && (
                 <ul>
                     {tutors.map((tutor,index)=>(

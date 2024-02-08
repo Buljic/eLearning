@@ -8,6 +8,7 @@ import MyUserContext from "../minicomponents/Context/MyUserContext.js";
 const WelcomePage = () => {
     const { user, error, loading } = useFetchUser(); // Koristimo naš custom hook
 
+    console.log("SAMO JEDNOM");
     //const {myUser,setMyUser}=useContext(MyUserContext);//dodajemo usera u context
     const storedUser=sessionStorage.getItem('myUser');
     const myUser=JSON.parse(storedUser);//jer ono inace dobijamo string obicni
