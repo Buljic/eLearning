@@ -22,10 +22,10 @@ const Chat=({chatId,isGroupChat})=>{//ako je group chat onda proslijedujemo grou
         //const stompClient = Stomp.over(socket);//koristimo socket iznad kao argument za ovaj stompClient
         stompClient.current=Stomp.over(socket);
         let subscription;
-       // let activeConnection;
+       let activeConnection;
         stompClient.current.connect({}, function (frame) {
             console.log('Povezano:' + frame);
-//activeConnection=true;
+activeConnection=true;
             if (myUser.id < chatId)
             {
                 setOurEndpointToReceive(  '/queue/' + myUser.id.toString() + '/' +/*objectUser.*/chatId.toString());
@@ -56,10 +56,10 @@ const Chat=({chatId,isGroupChat})=>{//ako je group chat onda proslijedujemo grou
                     'Content-Type':'application/json',
                 }
             });
-            // TODO undefined error u poruci
             const poruke=await response.json();
+            poruke.reverse();//Koristi se jer inace se najmladja poruka prva appenda
             poruke.forEach(poruka=>{
-                print(JSON.stringify(poruka));
+                console.log("STARA PORUKA"+JSON.stringify(poruka));
             });
             poruke.forEach(poruka=>{
                 appendMessage(JSON.stringify(poruka));
@@ -75,12 +75,14 @@ const Chat=({chatId,isGroupChat})=>{//ako je group chat onda proslijedujemo grou
 
             messageElement.innerText = messageBody.message_text;//u taj novi nas div stavlja poruku tu koju joj proslijedimo
 
-            if (messageBody.user2 === chatId)//ako mi saljemo poruku nekome     //PROMJENJENO S receiver
+            if (messageBody.user2 === myUser.id)//ako mi primamo poruku od nekoga     //PROMJENJENO S receiver
             {
+                console.log("OVO JE PRIMLJENA PORUKA");
                 messageElement.className = 'received-message';
             }
             else
             {
+                console.log("OVO JE POSLANA PORUKA");
                 messageElement.className = 'sent-message';
             }
             chatBox.appendChild(messageElement);//da u onaj nas chatBox element appenda jos jedan element
@@ -120,17 +122,16 @@ const Chat=({chatId,isGroupChat})=>{//ako je group chat onda proslijedujemo grou
         //     }
         // };
 
-        // return () => {
-        //     if (activeConnection && stompClient.current) {
-        //         // Proverite da li je veza aktivna pre diskonektovanja
-        //         stompClient.current.disconnect(() => {
-        //             console.log('Diskonektovan!');
-        //         });
-        //         activeConnection = false;
-        //     }
-        // };
+        return () => {
+            if (activeConnection && stompClient.current) {
+                // Proverite da li je veza aktivna pre diskonektovanja
+                stompClient.current.disconnect(() => {
+                    console.log('Diskonektovan!');
+                });
+                activeConnection = false;
+            }
+        };
         //TODO dodaj cleanup funkciju
-        //TODO dodaj fetchanje prethodnih poruka pri loadanju
     }, [ourEndpointToReceive]);
      }
     function sendMessage()

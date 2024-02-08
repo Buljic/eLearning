@@ -34,6 +34,8 @@ const Subjects = () => {
      const[suggestions,setSuggestions]=useState([]);
     // const[searchResults,setSearchResults]=useState([]);
 
+    console.log("JEDANPUT");
+
     useEffect( ()=>{
         const getPopularSubjects=async() =>{
             //response ovo tj response=await fetch('',{}); je zasebna stvar neovisna o useEffect ali se koristi cesto tu
