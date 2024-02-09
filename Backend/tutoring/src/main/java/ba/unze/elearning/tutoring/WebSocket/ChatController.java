@@ -56,21 +56,13 @@ public class ChatController
         }else messageService.saveDirectMessage(Long.parseLong(user1), Long.parseLong(user2), chatMessage.getMessage_text());
         System.out.println("USPJESNO");
         template.convertAndSend("/queue/"+user1+'/'+user2,chatMessage);
+    }
 
-        // String token=jwtUtil.extractJwtFromCookie(request);
-      //  Integer ourUser=userRepository.getIdByUsername(jwtUtil.getUsernameFromToken(token));
-//        if(ourUser<chatMessage.getUser2())
-//        {
-//            System.out.println(chatMessage.getMessage_text()+"OVO JE PORUKA NA BACKENDU");
-//            template.convertAndSend("/queue/"+ourUser.toString()+'/'+chatMessage.getUser2().toString(),chatMessage.getMessage_text());
-//        }
-//        else
-//        {
-//            template.convertAndSend("/queue/" + chatMessage.getUser2().toString() + '/' + ourUser.toString(),
-//                    chatMessage.getMessage_text());
-//        }
-        //String username=jwtUtil.getUsernameFromToken(token);
-        //mozes koristiti dinamicki endpoint ili jedan endpoint kod kojeg svaka poruka ima razliciti sender npr
-        //template.convertAndSendToUser(chatMessage.getUser2(),"/queue/messages",chatMessage);
+    @MessageMapping("/{group}")
+    public void processMessageFromGroup(@DestinationVariable Long group, @Payload GroupMessage groupMessage)
+    {
+        System.out.println("OVO JE GROUP PORUKA"+groupMessage.getMessage_text()+" "+groupMessage.getSender()+" sa group"+group);
+        messageService.saveGroupMessage(group,groupMessage.getSender(),groupMessage.getMessage_text());
+        template.convertAndSend("/topic/"+group,groupMessage);
     }
 }

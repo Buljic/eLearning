@@ -43,8 +43,6 @@ activeConnection=true;
                 appendMessage(messageOutput.body);
             });
 
-
-
         });
 
         // const sendMessage=()=>
@@ -92,35 +90,6 @@ activeConnection=true;
             fetchPreviousMessages();
         }
 
-        // return () => {
-        //     if (stompClient.current) {
-        //         stompClient.current.disconnect(() => {
-        //             console.log('Diskonektovan!');
-        //         }, {});
-        //         if(ourEndpointToReceive) {
-        //             stompClient.current.unsubscribe(ourEndpointToReceive);
-        //         }
-        //     }
-        // };
-
-        // return () => {
-        //     if (subscription) {
-        //         subscription.unsubscribe();
-        //     }
-        //     if (stompClient.current) {
-        //         stompClient.current.disconnect();
-        //         console.log('Diskonektovan!');
-        //     }
-        // };
-        // return () => {
-        //     // Logika za čišćenje
-        //     if (stompClient.current) {
-        //         stompClient.current.disconnect(() => {
-        //             console.log('Diskonektovan!');
-        //         }, {});
-        //         // Otkazivanje pretplate, ako je potrebno
-        //     }
-        // };
 
         return () => {
             if (activeConnection && stompClient.current) {
@@ -131,15 +100,104 @@ activeConnection=true;
                 activeConnection = false;
             }
         };
-        //TODO dodaj cleanup funkciju
+
     }, [ourEndpointToReceive]);
      }
+
+                //Ako jeste group chat
+     else {
+
+         useEffect(() => {
+
+             const socket = new SockJS('http://localhost:8080/api/chatGroup');//navodno znati ce se da je ovdje veza ta
+             stompClient.current=Stomp.over(socket);
+             let subscription;
+             let activeConnection;
+             stompClient.current.connect({}, function (frame) {
+                 console.log('Povezano:' + frame);
+                 activeConnection=true;
+                 if (chatId)
+                 {
+                     setOurEndpointToReceive(  '/topic/' + chatId.toString());
+                     setOurEndpointToSend('/app/'+chatId.toString());
+                     setBaseEndpoint(chatId.toString());
+                 }
+
+                 subscription= stompClient.current.subscribe(ourEndpointToReceive, (messageOutput) => {
+                     appendMessage(messageOutput.body);
+                 });
+
+             });
+
+             // const sendMessage=()=>
+             //TODO IMPLEMENT FETCH PREVIOUS MESSAGES FOR GROUP
+             // async function fetchPreviousMessages(){
+             //     const response=await fetch( `http://localhost:8080/api/${myUser.id.toString()}/${chatId.toString()}/getOldDirectMessages`,{//'http://localhost:8080/api/'+baseEndpoint+'/getOldDirectMessages',{
+             //         method:'GET',
+             //         credentials:'include',
+             //         headers:{
+             //             'Content-Type':'application/json',
+             //         }
+             //     });
+             //     const poruke=await response.json();
+             //     poruke.reverse();//Koristi se jer inace se najmladja poruka prva appenda
+             //     poruke.forEach(poruka=>{
+             //         console.log("STARA PORUKA"+JSON.stringify(poruka));
+             //     });
+             //     poruke.forEach(poruka=>{
+             //         appendMessage(JSON.stringify(poruka));
+             //     });
+             // }
+
+             function appendMessage(neformatiranaPoruka)
+             {
+                 const messageBody=JSON.parse(neformatiranaPoruka);
+                 console.log("Ovo je poruka"+messageBody);
+                 let chatBox = document.getElementById('chatBox');
+                 let messageElement = document.createElement('div');//da fazon kreira div za jednu neku poruku
+
+                 messageElement.innerText = messageBody.message_text;//u taj novi nas div stavlja poruku tu koju joj proslijedimo
+
+                 if (messageBody.sender !== myUser.id)//ako mi primamo poruku od nekoga     //PROMJENJENO S receiver
+                 {
+                     console.log("OVO JE PRIMLJENA PORUKA");
+                     messageElement.className = 'received-message';
+                 }
+                 else
+                 {
+                     console.log("OVO JE POSLANA PORUKA");
+                     messageElement.className = 'sent-message';
+                 }
+                 chatBox.appendChild(messageElement);//da u onaj nas chatBox element appenda jos jedan element
+             }
+             //TODO
+             // if (baseEndpoint) {
+             //     fetchPreviousMessages();
+             // }
+
+
+             return () => {
+                 if (activeConnection && stompClient.current) {
+
+                     stompClient.current.disconnect(() => {
+                         console.log('Diskonektovan!');
+                     });
+                     activeConnection = false;
+                 }
+             };
+
+         }, [ourEndpointToReceive]);
+
+     }
+
+
     function sendMessage()
     {
         let messageElement = document.getElementById('messageInput');
         let messageText = messageElement.value; //value se koristi za input field a ne innerText(on za <p> i sl)
         if (messageText.trim() !== '')//da nije prazno
         {
+            //TODO ADAPTIRAJ ZA GROUP
             console.log(messageText+"OVO JE PORUKA");
             const chatMessage={
                 message_text:messageText,
@@ -150,7 +208,7 @@ activeConnection=true;
         }
     }
 
-//Ako jeste group chat
+
 
 
 
