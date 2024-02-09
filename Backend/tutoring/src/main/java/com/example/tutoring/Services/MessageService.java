@@ -30,4 +30,11 @@ public class MessageService
                 "ORDER BY time DESC LIMIT 5;";
         return jdbcTemplate.query(sql,new Object[]{user1,user1,user2,user2},new GenericDTOMapper());
     }
+
+    public void saveGroupMessage(Long group,Long sender,String message)
+    {
+        String sql="INSERT INTO group_message(group,sender,time,message_text) VALUES " +
+                "(?,?,?,?);";
+        jdbcTemplate.update(sql,new Object[]{group,sender,LocalDateTime.now(),message});
+    }
 }
