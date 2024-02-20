@@ -16,10 +16,12 @@ public class GroupMessage
 
     @ManyToOne
     @MapsId("group")
-    @JoinColumn(name = "group")
+    @JoinColumn(name = "group_id") //jer ne smijes kljucnu rijec group koristiti
     private Group group;
 
     private String message_text;
+
+   public GroupMessage(){}
 
     public String getMessage_text()
     {
@@ -29,6 +31,31 @@ public class GroupMessage
     public void setMessage_text(String message_text)
     {
         this.message_text = message_text;
+    }
+
+    public void setId(GroupMessageId id)
+    {
+        this.id = id;
+    }
+
+    public User getUser()
+    {
+        return user;
+    }
+
+    public void setUser(User user)
+    {
+        this.user = user;
+    }
+
+    public Group getGroup()
+    {
+        return group;
+    }
+
+    public void setGroup(Group group)
+    {
+        this.group = group;
     }
 
     public GroupMessageId getId()

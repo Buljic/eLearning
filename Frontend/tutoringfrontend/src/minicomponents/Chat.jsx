@@ -109,7 +109,7 @@ activeConnection=true;
 
          useEffect(() => {
 
-             const socket = new SockJS('http://localhost:8080/api/chatGroup');//navodno znati ce se da je ovdje veza ta
+             const socket = new SockJS('http://localhost:8080/api/chatGroup');
              stompClient.current=Stomp.over(socket);
              let subscription;
              let activeConnection;
@@ -131,23 +131,23 @@ activeConnection=true;
 
              // const sendMessage=()=>
              //TODO IMPLEMENT FETCH PREVIOUS MESSAGES FOR GROUP
-             // async function fetchPreviousMessages(){
-             //     const response=await fetch( `http://localhost:8080/api/${myUser.id.toString()}/${chatId.toString()}/getOldDirectMessages`,{//'http://localhost:8080/api/'+baseEndpoint+'/getOldDirectMessages',{
-             //         method:'GET',
-             //         credentials:'include',
-             //         headers:{
-             //             'Content-Type':'application/json',
-             //         }
-             //     });
-             //     const poruke=await response.json();
-             //     poruke.reverse();//Koristi se jer inace se najmladja poruka prva appenda
-             //     poruke.forEach(poruka=>{
-             //         console.log("STARA PORUKA"+JSON.stringify(poruka));
-             //     });
-             //     poruke.forEach(poruka=>{
-             //         appendMessage(JSON.stringify(poruka));
-             //     });
-             // }
+             async function fetchPreviousMessages(){
+                 const response=await fetch( `http://localhost:8080/api/${myUser.id.toString()}/${chatId.toString()}/getOldDirectMessages`,{//'http://localhost:8080/api/'+baseEndpoint+'/getOldDirectMessages',{
+                     method:'GET',
+                     credentials:'include',
+                     headers:{
+                         'Content-Type':'application/json',
+                     }
+                 });
+                 const poruke=await response.json();
+                 poruke.reverse();//Koristi se jer inace se najmladja poruka prva appenda
+                 poruke.forEach(poruka=>{
+                     console.log("STARA PORUKA"+JSON.stringify(poruka));
+                 });
+                 poruke.forEach(poruka=>{
+                     appendMessage(JSON.stringify(poruka));
+                 });
+             }
 
              function appendMessage(neformatiranaPoruka)
              {
