@@ -136,7 +136,7 @@ public class UserPageController
         List<GenericDTO> dto= userService.findAttendedCourses(userId);
         for (GenericDTO dto1:dto)
         {
-            System.out.println(dto1);
+            System.out.println(dto1+"Ovo je attended kurs");
         }
        return ResponseEntity.status(HttpStatus.OK).body( userService.findAttendedCourses(userId));
     }

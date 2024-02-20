@@ -25,8 +25,8 @@ const AttendedSubjects=()=>{
                 const data= await response.json();
                 setAttendedGroups(data);
                 attendedGroups.forEach(subject=>{
-                    console.log('ovo je grupa'+ subject);
-                })
+                    console.log('ovo je grupa'+ subject.group_id);
+                });
             }
         }
         getAttendedSubjects();
@@ -44,9 +44,7 @@ const AttendedSubjects=()=>{
               <ul id="attendedGroups">
                   {attendedGroups.map((group, index)=>(
                       <li key={index} id={group}>
-                          <button >
-                              {group.group_name}
-                          </button>
+                           <Link to={`/chatGroup/${group.group_id}`}>  {group.group_name}</Link>
                       </li>
                   ))}
               </ul>

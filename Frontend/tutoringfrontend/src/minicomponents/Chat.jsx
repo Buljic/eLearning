@@ -14,6 +14,11 @@ const Chat=({chatId,isGroupChat})=>{//ako je group chat onda proslijedujemo grou
     const[ourEndpointToSend,setOurEndpointToSend]=useState('');
     const[baseEndpoint,setBaseEndpoint]=useState('');//TODO skrati s 3 varijable na jednu i koristi ovu
 
+    if(chatId===undefined || chatId===null)
+    {
+        return;
+    }
+
      if(!isGroupChat) //TODO Postavi i za groupChat
      {
     useEffect(() => {
@@ -129,16 +134,21 @@ activeConnection=true;
 
              });
 
-             // const sendMessage=()=>
+
              //TODO IMPLEMENT FETCH PREVIOUS MESSAGES FOR GROUP
              async function fetchPreviousMessages(){
-                 const response=await fetch( `http://localhost:8080/api/${myUser.id.toString()}/${chatId.toString()}/getOldDirectMessages`,{//'http://localhost:8080/api/'+baseEndpoint+'/getOldDirectMessages',{
+                 console.log(chatId.toString()+"OVO JE CHATID");
+                 const response=await fetch( `http://localhost:8080/api/${chatId}/getOldGroupMessages`,{
                      method:'GET',
                      credentials:'include',
                      headers:{
                          'Content-Type':'application/json',
                      }
                  });
+                 if(response.ok)
+                 {
+
+
                  const poruke=await response.json();
                  poruke.reverse();//Koristi se jer inace se najmladja poruka prva appenda
                  poruke.forEach(poruka=>{
@@ -147,6 +157,9 @@ activeConnection=true;
                  poruke.forEach(poruka=>{
                      appendMessage(JSON.stringify(poruka));
                  });
+                 }else{
+                     console.log("Nema starih poruka");
+                 }
              }
 
              function appendMessage(neformatiranaPoruka)
@@ -171,9 +184,9 @@ activeConnection=true;
                  chatBox.appendChild(messageElement);//da u onaj nas chatBox element appenda jos jedan element
              }
              //TODO
-             // if (baseEndpoint) {
-             //     fetchPreviousMessages();
-             // }
+             if (baseEndpoint) {
+                 fetchPreviousMessages();
+             }
 
 
              return () => {
@@ -193,11 +206,14 @@ activeConnection=true;
 
     function sendMessage()
     {
+        if(!isGroupChat)
+        {
+
+
         let messageElement = document.getElementById('messageInput');
         let messageText = messageElement.value; //value se koristi za input field a ne innerText(on za <p> i sl)
         if (messageText.trim() !== '')//da nije prazno
         {
-            //TODO ADAPTIRAJ ZA GROUP
             console.log(messageText+"OVO JE PORUKA");
             const chatMessage={
                 message_text:messageText,
@@ -207,7 +223,22 @@ activeConnection=true;
             messageElement.value = '';
         }
     }
+        else{
+            let messageElement = document.getElementById('messageInput');
+            let messageText = messageElement.value; //value se koristi za input field a ne innerText(on za <p> i sl)
+            if (messageText.trim() !== '')//da nije prazno
+            {
+                console.log(messageText+"OVO JE PORUKA");
+                const chatMessage={
+                    message_text:messageText,
+                    sender:myUser.id
+                };
+                stompClient.current.send(ourEndpointToSend, {}, JSON.stringify(chatMessage)/*JSON.stringify(messageText,chatId)*/);
+                messageElement.value = '';
+            }
+        }
 
+    }
 
 
 
