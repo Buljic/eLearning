@@ -12,6 +12,8 @@ public class GroupMessageId implements Serializable
     private Long sender;
     private LocalDateTime time;
 
+    public GroupMessageId(){}
+
     public Long getGroup()
     {
         return group;
