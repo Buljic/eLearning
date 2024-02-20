@@ -41,6 +41,12 @@ public class ChatController
     {
        return ResponseEntity.status(HttpStatus.OK).body( messageService.getOldDMs(Long.parseLong(user2), Long.parseLong(user1)));
     }
+    @GetMapping("/api/{chatId}/getOldGroupMessages")
+    public ResponseEntity<?> getOldChatMessages(@PathVariable Long chatId)
+    {
+        System.out.println("Doslo je do metode");
+        return ResponseEntity.status(HttpStatus.OK).body(messageService.getOldGroupMessages(chatId));
+    }
 
     @MessageMapping("/{user1}/{user2}")//ima 'app' prefix   //mozda da se Principal nekako nastima da rjesi ovaj problem s servletom
     public void processMessageFromClient(@Payload ChatMessage chatMessage, @DestinationVariable String user1,
@@ -58,11 +64,12 @@ public class ChatController
         template.convertAndSend("/queue/"+user1+'/'+user2,chatMessage);
     }
 
-    @MessageMapping("/{group}")
-    public void processMessageFromGroup(@DestinationVariable Long group, @Payload GroupMessage groupMessage)
+
+    @MessageMapping("/{groupId}")
+    public void processMessageFromGroup(@DestinationVariable Long groupId, @Payload GroupMessage groupMessage)
     {
-        System.out.println("OVO JE GROUP PORUKA"+groupMessage.getMessage_text()+" "+groupMessage.getSender()+" sa group"+group);
-        messageService.saveGroupMessage(group,groupMessage.getSender(),groupMessage.getMessage_text());
-        template.convertAndSend("/topic/"+group,groupMessage);
+        System.out.println("OVO JE GROUP PORUKA"+groupMessage.getMessage_text()+" "+groupMessage.getSender()+" sa group"+groupId);
+        messageService.saveGroupMessage(groupId,groupMessage.getSender(),groupMessage.getMessage_text());
+        template.convertAndSend("/topic/"+groupId,groupMessage);
     }
 }

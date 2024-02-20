@@ -33,8 +33,15 @@ public class MessageService
 
     public void saveGroupMessage(Long group,Long sender,String message)
     {
-        String sql="INSERT INTO group_message(group,sender,time,message_text) VALUES " +
+        String sql="INSERT INTO group_message(group_id,sender,time,message_text) VALUES " +
                 "(?,?,?,?);";
         jdbcTemplate.update(sql,new Object[]{group,sender,LocalDateTime.now(),message});
     }
+
+    public List<GenericDTO> getOldGroupMessages(Long groupId)
+    {
+        String sql="SELECT * FROM group_message WHERE group_id=? ORDER BY time DESC LIMIT 10;";
+        return jdbcTemplate.query(sql,new Object[]{groupId},new GenericDTOMapper());
+    }
+
 }
