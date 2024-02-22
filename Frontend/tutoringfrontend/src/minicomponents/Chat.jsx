@@ -113,6 +113,7 @@ activeConnection=true;
      else {
 
          useEffect(() => {
+             if(!chatId) return;
 
              const socket = new SockJS('http://localhost:8080/api/chatGroup');
              stompClient.current=Stomp.over(socket);
@@ -123,19 +124,21 @@ activeConnection=true;
                  activeConnection=true;
                  if (chatId)
                  {
-                     setOurEndpointToReceive(  '/topic/' + chatId.toString());
+                     setOurEndpointToReceive(  '/queue/' + chatId.toString());
                      setOurEndpointToSend('/app/'+chatId.toString());
                      setBaseEndpoint(chatId.toString());
                  }
 
                  subscription= stompClient.current.subscribe(ourEndpointToReceive, (messageOutput) => {
+                     console.log("Ovo je nas endpoint za primanje"+ourEndpointToReceive);
                      appendMessage(messageOutput.body);
                  });
+                 console.log(ourEndpointToReceive+"EVO NASEG ENDPOINTA");
 
              });
 
 
-             //TODO IMPLEMENT FETCH PREVIOUS MESSAGES FOR GROUP
+
              async function fetchPreviousMessages(){
                  console.log(chatId.toString()+"OVO JE CHATID");
                  const response=await fetch( `http://localhost:8080/api/${chatId}/getOldGroupMessages`,{
@@ -209,7 +212,6 @@ activeConnection=true;
         if(!isGroupChat)
         {
 
-
         let messageElement = document.getElementById('messageInput');
         let messageText = messageElement.value; //value se koristi za input field a ne innerText(on za <p> i sl)
         if (messageText.trim() !== '')//da nije prazno
@@ -222,22 +224,21 @@ activeConnection=true;
             stompClient.current.send(ourEndpointToSend, {}, JSON.stringify(chatMessage)/*JSON.stringify(messageText,chatId)*/);
             messageElement.value = '';
         }
-    }
-        else{
+    }else{
             let messageElement = document.getElementById('messageInput');
             let messageText = messageElement.value; //value se koristi za input field a ne innerText(on za <p> i sl)
             if (messageText.trim() !== '')//da nije prazno
             {
-                console.log(messageText+"OVO JE PORUKA");
+                console.log(messageText+"OVO JE PORUKA ZA GROUP");
                 const chatMessage={
                     message_text:messageText,
                     sender:myUser.id
                 };
                 stompClient.current.send(ourEndpointToSend, {}, JSON.stringify(chatMessage)/*JSON.stringify(messageText,chatId)*/);
                 messageElement.value = '';
+                console.log(ourEndpointToReceive+"OVO JE TAJ ENDPOINT");
             }
         }
-
     }
 
 

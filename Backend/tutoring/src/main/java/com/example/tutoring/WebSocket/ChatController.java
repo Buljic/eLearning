@@ -70,6 +70,8 @@ public class ChatController
     {
         System.out.println("OVO JE GROUP PORUKA"+groupMessage.getMessage_text()+" "+groupMessage.getSender()+" sa group"+groupId);
         messageService.saveGroupMessage(groupId,groupMessage.getSender(),groupMessage.getMessage_text());
-        template.convertAndSend("/topic/"+groupId,groupMessage);
+        template.convertAndSend("/queue/"+groupId.toString(),groupMessage);
+        System.out.println("Provjera da li uopste postoji ovo ovdje");
+        System.out.println("/queue/"+groupId);
     }
 }
