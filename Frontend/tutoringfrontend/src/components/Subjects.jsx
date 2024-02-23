@@ -127,7 +127,6 @@ const Subjects = () => {
 
         }
     }
-//TODO FIX LOGIKU GDJE VARIJABLA IMA 2 RAZLICITA TIPA
     const handleSubmit=(event) =>
     {
         event.preventDefault();//mora se uvijek stavljati
@@ -135,8 +134,7 @@ const Subjects = () => {
         //setSearchTerm(event.target.value);
         getSearchedSubjectInfo();
     }
-    //console.log("KORISNIK JE " + myUser);//TODO context brise podatke na reloadu
-//TODO POSTAVI DA SE NE PRIKAZUJE NISTA AKO OPET PRITISNEMO SEARCH I ON BUDE PRAZAN
+
     return(
         <div>
             <h1>Nas user je {myUser.username}</h1>
@@ -169,14 +167,6 @@ const Subjects = () => {
             {/*TODO Implmentovati kartice umjesto listi dole , optimizacija , debouncing*/}
             {!isSearching ?(
                 <ul>
-                {/*//prikaz rezultata pretrage*/}
-                    {/*{filteredSubjects.map((subject,index)=>(*/}
-                    {/*    <li key={index}>{subject.name}  a broj tutora : {subject.number}</li>*/}
-                    {/*))}*/}
-
-                {/*{filteredSubjects.map(subject=>(*/}
-                {/*    <li key={subject.name}>{subject.name}</li>*/}
-                {/*    ))}*/}
 
                     {popularSubjects.map(subject=>(
                         <div id="popularSubjectsResult">
@@ -192,7 +182,6 @@ const Subjects = () => {
                         </div>
                         ) )}
             </ul>
-
 
                         ) }
 
