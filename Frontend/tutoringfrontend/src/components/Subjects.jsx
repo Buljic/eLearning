@@ -57,7 +57,7 @@ const Subjects = () => {
                 setPopularSubjects(data);
                 popularSubjects.forEach(subject=>{
                     console.log(`Ime predmeta: ${subject.name} a broj tutora ${subject.number}`);
-                })
+                });
             }
         }
         getPopularSubjects();

@@ -16,6 +16,7 @@ import "./minicomponents/Context/MyUserContext.js"
 import MyUserContext from "./minicomponents/Context/MyUserContext.js";
 import ChatGroup from "./components/ChatGroup.jsx";
 import AttendedSubjects from "./components/AttendedSubjects.jsx";
+import SearchUsers from "./components/SearchUsers.jsx";
 function App() {
     const [myUser,setMyUser]=useState(null);
     return (
@@ -34,7 +35,7 @@ function App() {
                 <Route path="/requestSubjectsAsTutor" element={<RequestSubjectAsTutor/>}/>
                 <Route path="/userInfoFor/:username" element={<UserInfo/>}/>
                 <Route path="/chatTo/:objectUser" element={<ChatTo/>}></Route>
-
+                <Route path="/userSearch" element={<SearchUsers/>}/>
                 <Route path="/tutorsFor/:subject" element={<TutorsForSubject/>}/>
 
                 <Route path="/attendedCourses" element={<AttendedSubjects/>}/>

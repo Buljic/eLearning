@@ -20,14 +20,7 @@ public class UserService
     {
         this.jdbcTemplate = jdbcTemplate;
     }
-//    private final UserRepository userRepository;
-//    private final TutorRepository tutorRepository;
-//    UserService(JdbcTemplate jdbcTemplate,UserRepository userRepository,TutorRepository tutorRepository)
-//    {
-//        this.jdbcTemplate=jdbcTemplate;
-//        this.userRepository=userRepository;
-//        this.tutorRepository=tutorRepository;
-//    }
+
 
     public List<StringNumber> findMostTutorSubjects()
     {//'-' se koristi da bi se izbjeglo ono 12 i 3 moze biti 1 i 23 ili 12 i 3 i slicno
@@ -120,5 +113,11 @@ public class UserService
     {
         String sql="SELECT * From group_table where (select group_id from user_group where user_id=?);";
         return jdbcTemplate.query(sql,new Object[]{userId},new GenericDTOMapper());
+    }
+
+    public List<GenericDTO> getSearchedUsers(String username)
+    {
+        String sql="SELECT * FROM USER WHERE username LIKE ?;";
+        return jdbcTemplate.query(sql,new Object[]{"%"+username+"%"},new GenericDTOMapper());
     }
 }

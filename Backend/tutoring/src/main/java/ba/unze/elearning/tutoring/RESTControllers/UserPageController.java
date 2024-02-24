@@ -140,4 +140,9 @@ public class UserPageController
         }
        return ResponseEntity.status(HttpStatus.OK).body( userService.findAttendedCourses(userId));
     }
+    @GetMapping("/getUsers")
+    public ResponseEntity<?> getSearchedUsers(@RequestParam String searchTerm)
+    {
+        return ResponseEntity.status(HttpStatus.OK).body(userService.getSearchedUsers(searchTerm));
+    }
 }
