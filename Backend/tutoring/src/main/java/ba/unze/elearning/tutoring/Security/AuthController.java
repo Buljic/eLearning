@@ -6,6 +6,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -19,9 +20,11 @@ public class AuthController
 {
     private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
-    public AuthController(JwtUtil jwtUtil,UserRepository userRepository){
+    private final BCryptPasswordEncoder bCryptPasswordEncoder;
+    public AuthController(JwtUtil jwtUtil, UserRepository userRepository, BCryptPasswordEncoder bCryptPasswordEncoder){
         this.jwtUtil=jwtUtil;
         this.userRepository=userRepository;
+        this.bCryptPasswordEncoder = bCryptPasswordEncoder;
     }
     @PostMapping ("/login") //mozes fakticki koristiti bilo koju klasu koja odgovara json formatu koji se salje
     public ResponseEntity<?> autentificarKorisnika(@RequestBody LoginRequest loginRequest){//(@RequestParam String username,@RequestParam String password){
@@ -29,7 +32,7 @@ public class AuthController
         if(userRepository.existsByUsername(loginRequest.getUsername()))
         {
             Optional<User> user=userRepository.findByUsername(loginRequest.getUsername());
-            if(loginRequest.getPassword().equals(user.get().getPassword()))//mozda da se provjeri ispresent ali i ne mora
+            if(bCryptPasswordEncoder.matches(loginRequest.getPassword(),user.get().getPassword()))//loginRequest.getPassword().equals(user.get().getPassword()))//mozda da se provjeri ispresent ali i ne mora
             {
                 String token=jwtUtil.generateToken(loginRequest.getUsername());
 
