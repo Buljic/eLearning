@@ -15,6 +15,7 @@ import com.example.tutoring.Services.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -27,11 +28,12 @@ public class UserLoginController
     private final TutorRepository tutorRepository;
     private final StudentRepository studentRepository;
     private final UserService userService;
-
     private final JwtUtil jwtUtil;
+    private final BCryptPasswordEncoder bCryptPasswordEncoder;
 
     UserLoginController(UserRepository userRepository, TutorRepository tutorRepository,
-                        StudentRepository studentRepository, UserService userService, JwtUtil jwtUtil)
+                        StudentRepository studentRepository, UserService userService, JwtUtil jwtUtil,
+                        BCryptPasswordEncoder bCryptPasswordEncoder)
 
     {
         this.userRepository=userRepository;
@@ -39,14 +41,10 @@ public class UserLoginController
         this.studentRepository = studentRepository;
         this.userService = userService;
         this.jwtUtil=jwtUtil;
+        this.bCryptPasswordEncoder = bCryptPasswordEncoder;
     }
 
-//    @PostMapping("/login")
-//    public ResponseEntity<?> login(@RequestBody LoginDetailsDTO loginDetailsDTO)
-//    {
-//        //TODO operacija da se provjeri postojanje usernamea i provjera passworda njegovog
-//        return null;
-//    }
+
     @PostMapping("/createAccount")//request body uzima json npr koji je poslan s requestom
     public ResponseEntity<?> createAccount(@RequestBody CreateAccountDTO createAccountDTO)
     {//na osnovu odredjenog enuma , ovisi kakav account kreiras
@@ -56,7 +54,7 @@ public class UserLoginController
                     .status(HttpStatus.BAD_REQUEST)
                     .body("Korisnicko ime vec postoji");
         }
-        User user=new User(createAccountDTO.getUsername(),createAccountDTO.getPassword()
+        User user=new User(createAccountDTO.getUsername(),bCryptPasswordEncoder.encode(createAccountDTO.getPassword())
         ,createAccountDTO.getName(),
                 createAccountDTO.getSurname(),
                 createAccountDTO.getEmail(),
