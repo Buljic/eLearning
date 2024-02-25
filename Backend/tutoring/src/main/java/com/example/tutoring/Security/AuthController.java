@@ -54,13 +54,6 @@ public class AuthController
             System.out.println("Nepostojuci user");
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Nepostojuci user");
         }
-//        if("testIme".equals(loginRequest.getUsername()) && "testPassword".equals(loginRequest.getPassword()))
-//        {
-//            String token=jwtUtil.generateToken(loginRequest.getUsername());
-//            return ResponseEntity.ok(new JwtResponse(token));//lakse poslije dodavati jos info , npr vrijeme isteka toke
-//            //-na i slicno , umjesto da samo string proslijedjujemo mada je i to moguce
-//        }
-//        else return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Neispravni kredencijali");
+
     }
 }
-//TODO koristi ovaj kontroler za loginovanje

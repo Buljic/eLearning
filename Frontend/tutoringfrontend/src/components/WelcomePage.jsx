@@ -26,13 +26,13 @@ const WelcomePage = () => {
             <h1>NAS USER {myUser.username}</h1>
             <h1>Dobrodošli, {user?.name}</h1>
             <ul>
-        {(user.accountType==='STUDENT')||(user.accountType==='OBOJE') && <li><Link to='/searchSubjects'>Trazi predmete</Link></li>}
+        {((user.accountType==='STUDENT')||(user.accountType==='OBOJE') )&& <li><Link to='/searchSubjects'>Trazi predmete</Link></li>}
         { (user.accountType==='OBOJE') && <li>Radi</li>}
         {(user.accountType==='STUDENT') && <li>STUDENT</li>}
         {(user.accountType==='PROFESOR')&&<li>PROFESOR</li>}
 {((user.accountType==='PROFESOR')||(user.accountType==='OBOJE')||(user.accountType==='PROFESOR'))&& <div><li><Link to="/requestSubjectsAsTutor">Registruj se za predmete</Link></li><br/></div>}
 
-        {(user.accountType==='STUDENT')||(user.accountType==='OBOJE')||(user.accountType==='PROFESOR') && <li><Link to="/attendedCourses">Kursevi koje pohadjas</Link></li>}
+        {((user.accountType==='STUDENT')||(user.accountType==='OBOJE')||(user.accountType==='PROFESOR') )&& <li><Link to="/attendedCourses">Kursevi koje pohadjas</Link></li>}
         <li><Link to="/userSearch">Pretraži usere</Link></li>
             </ul>
         </div>

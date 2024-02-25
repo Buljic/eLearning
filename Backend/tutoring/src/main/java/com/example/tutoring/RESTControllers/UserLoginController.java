@@ -10,6 +10,7 @@ import com.example.tutoring.Other.AccountType;
 import com.example.tutoring.Repositories.StudentRepository;
 import com.example.tutoring.Repositories.TutorRepository;
 import com.example.tutoring.Repositories.UserRepository;
+import com.example.tutoring.Security.EncriptionUtility;
 import com.example.tutoring.Security.JwtUtil;
 import com.example.tutoring.Services.UserService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -30,10 +31,11 @@ public class UserLoginController
     private final UserService userService;
     private final JwtUtil jwtUtil;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
+    private final EncriptionUtility encriptionUtility;
 
     UserLoginController(UserRepository userRepository, TutorRepository tutorRepository,
                         StudentRepository studentRepository, UserService userService, JwtUtil jwtUtil,
-                        BCryptPasswordEncoder bCryptPasswordEncoder)
+                        BCryptPasswordEncoder bCryptPasswordEncoder, EncriptionUtility encriptionUtility)
 
     {
         this.userRepository=userRepository;
@@ -42,6 +44,7 @@ public class UserLoginController
         this.userService = userService;
         this.jwtUtil=jwtUtil;
         this.bCryptPasswordEncoder = bCryptPasswordEncoder;
+        this.encriptionUtility = encriptionUtility;
     }
 
 
@@ -57,8 +60,8 @@ public class UserLoginController
         User user=new User(createAccountDTO.getUsername(),bCryptPasswordEncoder.encode(createAccountDTO.getPassword())
         ,createAccountDTO.getName(),
                 createAccountDTO.getSurname(),
-                createAccountDTO.getEmail(),
-                createAccountDTO.getPhoneNumber(),
+                encriptionUtility.encrypt(createAccountDTO.getEmail()),
+                encriptionUtility.encrypt(createAccountDTO.getPhoneNumber()),
                 createAccountDTO.getAccountType());
         userRepository.save(user);
         if(createAccountDTO.getAccountType()== AccountType.STUDENT)
