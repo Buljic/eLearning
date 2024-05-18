@@ -1,5 +1,6 @@
 package com.example.tutoring.Security;
 
+import com.example.tutoring.Entities.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
@@ -7,10 +8,13 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.util.Date;
+import java.util.Optional;
 
 //Znaci fakticki ova klasa tj bean se koristi za najbitniju logiku tj kreiranje
 //i verifikaciju samog jwta a ona sama po sebi nikako ne djeluje vec koristimo ovu klasu
@@ -18,17 +22,23 @@ import java.util.Date;
 @Component
 public class JwtUtil
 {
+    @Autowired
+    EncriptionUtility encriptionUtility;
+
     private SecretKey secretKey= Keys.secretKeyFor(SignatureAlgorithm.HS512);//generira secret key
 
-    public String generateToken(String username)
+
+    public String generateToken(Optional<User> user)
     {
         long nowMillis=System.currentTimeMillis();
         Date now=new Date(nowMillis);
-        long expMillis=nowMillis+3600000;//da token istekne za sat
+        long expMillis=nowMillis+7200000;//da token istekne za 2 sata
         Date exp=new Date(expMillis);
 
         return Jwts.builder()//jwts je klasa a builder staticka metoda koja vraca JwtsBuilder objekat
-                .setSubject(username)
+                .setSubject(user.get().getUsername())
+                .claim("username",user.get().getUsername())
+                .claim("role",user.get().getAccountType().toString())
                 .setIssuedAt(now)
                 .setExpiration(exp)
                 .signWith(secretKey)
@@ -72,8 +82,19 @@ public class JwtUtil
 
     public String getUsernameFromToken(String token)
     {
-        Jws<Claims> claimsJws=Jwts.parser().setSigningKey(secretKey).build().parseClaimsJws(token);
-        return claimsJws.getBody().getSubject();
+        Jws<Claims> claimsJws=Jwts.parser().
+                setSigningKey(secretKey)
+                .build()
+                .parseClaimsJws(token);
+        return claimsJws.getBody().get("username",String.class);
+    }
+    public String getRoleFromToken(String token)
+    {
+        Jws<Claims> claimsJws=Jwts.parser().
+                setSigningKey(secretKey)
+                .build()
+                .parseClaimsJws(token);
+        return claimsJws.getBody().get("role",String.class);
     }
 
 }

@@ -25,6 +25,7 @@ public class User
     private AccountType accountType;
 
 
+
     public Long getId()
     {
         return id;
@@ -121,5 +122,15 @@ public class User
     public void setEmail(String email)
     {
         this.email = email;
+    }
+
+    public AccountType getAccountType()
+    {
+        return accountType;
+    }
+
+    public void setAccountType(AccountType accountType)
+    {
+        this.accountType = accountType;
     }
 }
