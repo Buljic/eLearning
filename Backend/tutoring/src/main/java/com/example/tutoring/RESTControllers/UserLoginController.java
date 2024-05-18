@@ -105,6 +105,7 @@ public class UserLoginController
             String username= jwtUtil.getUsernameFromToken(token);
             System.out.println("------------------");
             UserDTO i=userService.getUserInfo(username);
+            System.out.println("Podaci iz welcome pagea");
                 System.out.println(i.getId());
                 System.out.println(i.getUsername());
                 System.out.println(i.getName());
@@ -116,7 +117,6 @@ public class UserLoginController
 
             return ResponseEntity.status(HttpStatus.OK).body(userService.getUserInfo(username));
         }else return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("NEISPRAVNO");
-
     }
 
 

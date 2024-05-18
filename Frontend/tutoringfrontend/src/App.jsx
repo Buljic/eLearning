@@ -18,13 +18,13 @@ import ChatGroup from "./components/ChatGroup.jsx";
 import AttendedSubjects from "./components/AttendedSubjects.jsx";
 import SearchUsers from "./components/SearchUsers.jsx";
 function App() {
-    const [myUser,setMyUser]=useState(null);
+    // const [myUser,setMyUser]=useState(null);
     return (
         <>
             {/*react fragment se zove i koristi za grupitanje*/}
             <Header />
         {/*   sve sto je izvan routes je stalno tu a unutar njega je dinamicko */}
-        <MyUserContext.Provider value={{myUser,setMyUser}}>
+        {/*<MyUserContext.Provider value={{myUser,setMyUser}}>*/}
             <Router>
 
             <Routes>
@@ -48,7 +48,7 @@ function App() {
             {/*    da navigira bilo koji nedefinirani path na login*/}
             </Routes>
         </Router>
-        </MyUserContext.Provider>
+        {/*</MyUserContext.Provider>*/}
         </>
     );
 }

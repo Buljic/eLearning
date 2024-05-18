@@ -5,6 +5,9 @@ import com.example.tutoring.DTOs.GenericDTOMapper;
 import com.example.tutoring.DTOs.StringNumber;
 import com.example.tutoring.DTOs.UserDTO;
 import com.example.tutoring.Entities.Tutor;
+import com.example.tutoring.Entities.User;
+import com.example.tutoring.Repositories.UserRepository;
+import com.example.tutoring.Security.EncriptionUtility;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -15,10 +18,12 @@ import java.util.List;
 public class UserService
 {
     private final JdbcTemplate jdbcTemplate;
+    private final EncriptionUtility encriptionUtility;
 
-    public UserService(JdbcTemplate jdbcTemplate)
+    public UserService(JdbcTemplate jdbcTemplate, EncriptionUtility encriptionUtility)
     {
         this.jdbcTemplate = jdbcTemplate;
+        this.encriptionUtility = encriptionUtility;
     }
 
 
@@ -79,11 +84,16 @@ public class UserService
                 " FROM user where LOWER(user.username) = LOWER(?) ; ";
         return jdbcTemplate.queryForObject(sql,new Object[]{username},new GenericDTOMapper());
     }
+
     public UserDTO getUserInfo(String username)
     {
         String sql="SELECT user.id, user.name , user.surname, user.username, user.account_type " +
-                " FROM user where LOWER(user.username) = LOWER (?) ; ";
-        return jdbcTemplate.queryForObject(sql,new Object[]{username},new BeanPropertyRowMapper<>(UserDTO.class));
+                ",user.email,user.phone_number FROM user where LOWER(user.username) = LOWER (?) ; ";
+        UserDTO userDTO= jdbcTemplate.queryForObject(sql,new Object[]{username},new BeanPropertyRowMapper<>(UserDTO.class));
+        userDTO.setEmail(encriptionUtility.decrypt(userDTO.getEmail()));
+        if(userDTO.getPhoneNumber()!=null) userDTO.setPhoneNumber(encriptionUtility.decrypt(userDTO.getPhoneNumber()));
+
+        return userDTO;
     }
 
     public List<GenericDTO> getTutorsForSubjectWithInfo(String subjectName)
@@ -93,6 +103,7 @@ public class UserService
                 " JOIN user ON tutor.id=user.id " +
                 " where  tutorsubject.subject_id = (SELECT subject.id AS sid FROM subject where subject.subject_name = ? ); ";
         return jdbcTemplate.query(sql,new Object[]{subjectName},new GenericDTOMapper());
+
     }
 
     public void insertIntoTutorSubjectRequest(String subject,String tutorUsername,String comment)
