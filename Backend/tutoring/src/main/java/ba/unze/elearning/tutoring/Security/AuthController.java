@@ -34,7 +34,7 @@ public class AuthController
             Optional<User> user=userRepository.findByUsername(loginRequest.getUsername());
             if(bCryptPasswordEncoder.matches(loginRequest.getPassword(),user.get().getPassword()))//loginRequest.getPassword().equals(user.get().getPassword()))//mozda da se provjeri ispresent ali i ne mora
             {
-                String token=jwtUtil.generateToken(loginRequest.getUsername());
+                String token=jwtUtil.generateToken(user);
 
                 //Kreiranje Http Cookie sa JWT tokenom
                 ResponseCookie jwtCookie=ResponseCookie.from("JWT",token)
