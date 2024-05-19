@@ -33,6 +33,7 @@ const WelcomePage = () => {
 {((user.accountType==='PROFESOR')||(user.accountType==='OBOJE')||(user.accountType==='PROFESOR'))&& <div><li><Link to="/requestSubjectsAsTutor">Registruj se za predmete</Link></li><br/></div>}
 
         {((user.accountType==='STUDENT')||(user.accountType==='OBOJE')||(user.accountType==='PROFESOR') )&& <li><Link to="/attendedCourses">Kursevi koje pohadjas</Link></li>}
+                {(user.accountType==='PROFESOR')&& <li><Link to="/createGroup">Napravi grupu</Link></li>}
         <li><Link to="/userSearch">Pretraži usere</Link></li>
             </ul>
         </div>

@@ -61,7 +61,7 @@ const Subjects = () => {
             }
         }
         getPopularSubjects();
-    },[]);
+    },[popularSubjects]);
 
 
 
