@@ -78,9 +78,6 @@ public class UserLoginController
             user.setTutorProfile(tutor);
             tutorRepository.save(tutor);
             System.out.println("Kreiran novi profesor:" + tutor.getUser().getName() );
-        }else if(createAccountDTO.getAccountType()==AccountType.KORISNIK)
-        {
-
         }
         else {
             Student student=new Student();
