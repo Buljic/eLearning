@@ -9,7 +9,7 @@ function LoginForm() {
     const [password, setPassword] = useState('');
     const navigate = useNavigate();
     const [message, setMessage] = useState('');
-    const {myUser,setMyUser}=useContext(MyUserContext);
+    // const {myUser,setMyUser}=useContext(MyUserContext);
 
 console.log("SAMO JEDNOM MOLIM TE");
     const handleLogin = async (event) => {
