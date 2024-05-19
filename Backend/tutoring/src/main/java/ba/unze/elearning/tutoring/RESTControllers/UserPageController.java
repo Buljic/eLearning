@@ -145,4 +145,10 @@ public class UserPageController
     {
         return ResponseEntity.status(HttpStatus.OK).body(userService.getSearchedUsers(searchTerm));
     }
+
+    @PostMapping("/createGroup")
+    public ResponseEntity<?> createGroup(@RequestBody GenericDTO request)
+    {
+        return ResponseEntity.status(HttpStatus.OK).body("Ok je ");
+    }
 }

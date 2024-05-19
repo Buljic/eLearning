@@ -17,6 +17,7 @@ import MyUserContext from "./minicomponents/Context/MyUserContext.js";
 import ChatGroup from "./components/ChatGroup.jsx";
 import AttendedSubjects from "./components/AttendedSubjects.jsx";
 import SearchUsers from "./components/SearchUsers.jsx";
+import CreateGroup from "./components/CreateGroup.jsx";
 function App() {
     // const [myUser,setMyUser]=useState(null);
     return (
@@ -25,7 +26,7 @@ function App() {
             <Header />
         {/*   sve sto je izvan routes je stalno tu a unutar njega je dinamicko */}
         {/*<MyUserContext.Provider value={{myUser,setMyUser}}>*/}
-            <Router>
+        <Router>
 
             <Routes>
                 <Route path="/login" element={<LoginForm />} />
@@ -41,7 +42,7 @@ function App() {
                 <Route path="/attendedCourses" element={<AttendedSubjects/>}/>
 
                 <Route path="/chatGroup/:objectGroup" element={<ChatGroup/>}/>
-
+                <Route path="/createGroup" element={<CreateGroup/>}/>
                 {/*<Route path="/tutorsFor/:subject" element={<tutorsForSubject/>}> </Route>*/}
                 <Route path="/" element={<Homepage />}></Route>
                 <Route path="*" element={<Navigate to="/" replace/>}/>
