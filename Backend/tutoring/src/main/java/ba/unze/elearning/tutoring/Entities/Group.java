@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import jdk.jfr.Name;
 
 import java.util.Date;
+import java.util.List;
+
 //todo dodaj usergroup tabelu
 @Entity
 @Table (name = "group_table")
@@ -18,11 +20,29 @@ public class Group
     @ManyToOne
     @JoinColumn(name = "subject_id")
     private Subject subject;
+    //mi proizvoljno ime dajemo
     @ManyToOne
     @JoinColumn(name = "headtutor_id")
     private Tutor tutor;
 
     private String group_name;
+
+    private String topic;
+
+    private String description;
+
+    private Date startDate;
+
+    private Date endDate;
+
+    private int hoursPerWeek;
+
+    private double price;
+
+    private int maxStudents;
+    //da utjecu promjene groupa na groupsubject
+    @OneToMany(mappedBy = "group", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<GroupSubject> groupSubjects;
 
     public Long getGroup_id()
     {
