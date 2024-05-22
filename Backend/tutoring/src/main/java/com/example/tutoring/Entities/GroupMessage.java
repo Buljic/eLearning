@@ -9,6 +9,7 @@ public class GroupMessage
 {
     @EmbeddedId
     private GroupMessageId id;
+
     @ManyToOne
     @MapsId("sender")
     @JoinColumn(name="sender")
