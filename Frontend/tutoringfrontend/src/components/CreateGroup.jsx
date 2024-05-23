@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import useFetchSubjects from '../customHooks/useFetchSubjects.js';
+import useFetchSubjects from "../customHooks/useFetchSubjects.js";
 
 const CreateGroup = () => {
     const [groupName, setGroupName] = useState(''); // max 31 chars
@@ -11,6 +11,10 @@ const CreateGroup = () => {
     const [hoursPerWeek, setHoursPerWeek] = useState(0);
     const [price, setPrice] = useState(0);
     const { subjects, loading, error } = useFetchSubjects();
+    const [maxStudents, setMaxStudents] = useState(0);
+    const storedUser = sessionStorage.getItem('myUser');
+    const myUser = JSON.parse(storedUser);
+    const tutorId = myUser.id;
 
     useEffect(() => {
         const today = new Date();
@@ -37,6 +41,10 @@ const CreateGroup = () => {
 
     const handleSubjectChange = (index, value) => {
         const newChosenSubjects = [...chosenSubjects];
+        if (newChosenSubjects.includes(value)) {
+            alert('Ne možete dodati isti predmet više puta.');
+            return;
+        }
         newChosenSubjects[index] = value;
         setChosenSubjects(newChosenSubjects);
     };
@@ -52,7 +60,8 @@ const CreateGroup = () => {
             new Date(endDate) >= new Date(startDate) &&
             new Date(endDate) >= new Date(new Date(startDate).setDate(new Date(startDate).getDate() + 7)) &&
             hoursPerWeek > 0 &&
-            price > 0
+            price > 0 &&
+            maxStudents > 0
         );
     };
 
@@ -62,6 +71,9 @@ const CreateGroup = () => {
             alert('Sva polja moraju biti popunjena prema pravilima.');
             return;
         }
+
+        console.log('Chosen Subjects: ', chosenSubjects);
+
         const groupData = {
             groupName,
             topic,
@@ -70,8 +82,13 @@ const CreateGroup = () => {
             startDate,
             endDate,
             hoursPerWeek,
-            price
+            price,
+            tutorId,
+            maxStudents
         };
+
+        console.log('Group Data: ', groupData);
+
         try {
             const response = await fetch('http://localhost:8080/api/createGroup', {
                 method: 'POST',
@@ -162,7 +179,9 @@ const CreateGroup = () => {
                     type="date"
                     value={endDate}
                     onChange={(e) => setEndDate(e.target.value)}
-                    min={new Date(startDate ? new Date(startDate).setDate(new Date(startDate).getDate() + 7) : new Date().setDate(new Date().getDate() + 14)).toISOString().split('T')[0]}
+                    min={new Date(
+                        startDate ? new Date(startDate).setDate(new Date(startDate).getDate() + 7) : new Date().setDate(
+                            new Date().getDate() + 14)).toISOString().split('T')[0]}
                     required
                 />
                 {new Date(endDate) <= new Date(startDate) && (
@@ -175,6 +194,15 @@ const CreateGroup = () => {
                     type="number"
                     value={hoursPerWeek}
                     onChange={(e) => setHoursPerWeek(e.target.value)}
+                    required
+                />
+            </div>
+            <div>
+                <label>Maksimalan broj studenata:</label>
+                <input
+                    type="number"
+                    value={maxStudents}
+                    onChange={(e) => setMaxStudents(e.target.value)}
                     required
                 />
             </div>

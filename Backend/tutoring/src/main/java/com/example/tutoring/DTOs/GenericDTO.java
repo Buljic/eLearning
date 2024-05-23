@@ -39,7 +39,11 @@ public class GenericDTO
     }
 
     public Integer getInt(String key) {
-        return (Integer) properties.get(key);
+        return properties.containsKey(key) ? Integer.parseInt((String) properties.get(key)) : null;
+    }
+
+    public Long getLong(String key) {
+        return properties.containsKey(key) ? Long.parseLong((String) properties.get(key)) : null;
     }
 
     //KORISTI SE da mozemo ispisivati dto normalno
