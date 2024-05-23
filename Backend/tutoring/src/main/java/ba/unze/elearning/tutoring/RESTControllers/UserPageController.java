@@ -118,7 +118,7 @@ public class UserPageController
         {
             System.out.println("jesteWWWWWW");
         }
-        if(((String)user.getProperty("account_type")) .equals(/*AccountType.*/"OBOJE"))
+        if(((String)user.getProperty("account_type")) .equals(/*AccountType.*/"PROFESOR"))
         {
             //TODO moze se implementovati kao recenzije za neki predmet npr i badges ili nesto slicno a za to se treba napraviti nova baza
              //TODO IMPLEMENTUJ PRIKAZIVANJE I SUBJECTA KAO <String<String,Object>> struktura
@@ -127,9 +127,10 @@ public class UserPageController
             System.out.println("ISPISANI PREDMETI"+ subjects);
             return ResponseEntity.status(HttpStatus.OK).body(user);
         }
-        System.out.println("moj user je"+ user);
+        System.out.println("Trazeni user je "+ user);
         return ResponseEntity.status(HttpStatus.OK).body(user);
     }
+
     @GetMapping("/getAttendedGroups")
     public ResponseEntity<?> getAttendedCourses(@RequestParam Long userId){
         System.out.println(userId+"OVO JE NAS USER");

@@ -25,8 +25,12 @@ const UserInfo=()=>{
     // }
 
     return (<div>
-        <p>Ime tutora je {userInfo.username}</p>
-        <Link to={`/chatTo/${userInfo.id}`}><h3>Zakaži termin</h3></Link>
+        <p>Ime korisnika je {userInfo.username}</p>
+        <p>Vrsta korisnika : {userInfo.account_type}</p>
+        <p>Broj telefona : {userInfo.phone_number}</p>
+        <p>Email : {userInfo.email}</p>
+
+        <Link to={`/chatTo/${userInfo.id}`}><h3>Dopisivanje</h3></Link>
         {/*//TODO username ili id*/}
         {userInfo && userInfo.subjects && userInfo.subjects.map((subject, index) => (
             <div key={index} id="subjectPresent">
