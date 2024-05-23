@@ -25,6 +25,10 @@ public class GenericDTO
     {
         this.properties.put(key,value);
     }
+    //cisto radi cisce sintakse iako isto radi kao i addProperty
+    public void setProperty(String key, Object value) {
+        this.properties.put(key, value);
+    }
 
     public Object getProperty(String key)
     {

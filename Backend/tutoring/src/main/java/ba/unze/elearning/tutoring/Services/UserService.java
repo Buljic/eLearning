@@ -83,9 +83,23 @@ public class UserService
 
     public GenericDTO getUserInfoExtended(String username)
     {
-        String sql="SELECT user.id, user.name , user.surname, user.username, user.account_type, user.phone_number, user.email " +
+        String sql = "SELECT user.id, user.name, user.surname, user.username, user.account_type, user.phone_number, user.email " +
                 " FROM user where LOWER(user.username) = LOWER(?) ; ";
-        return jdbcTemplate.queryForObject(sql,new Object[]{username},new GenericDTOMapper());
+        GenericDTO genericDTO = jdbcTemplate.queryForObject(sql, new Object[]{username}, new GenericDTOMapper());
+
+        // Dekripcija emaila
+        String email = (String)genericDTO.getProperty("email");
+        if (email != null) {
+            genericDTO.setProperty("email",encriptionUtility.decrypt(email));
+        }
+
+        // Dekripcija broja telefona
+        String phoneNumber = (String)genericDTO.getProperty("phone_number");
+        if (phoneNumber != null) {
+            genericDTO.setProperty("phone_number",encriptionUtility.decrypt(phoneNumber));
+        }
+
+        return genericDTO;
     }
 
     public UserDTO getUserInfo(String username)
