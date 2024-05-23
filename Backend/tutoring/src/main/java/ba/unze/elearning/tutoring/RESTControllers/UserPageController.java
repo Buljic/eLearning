@@ -149,6 +149,13 @@ public class UserPageController
     @PostMapping("/createGroup")
     public ResponseEntity<?> createGroup(@RequestBody GenericDTO request)
     {
-        return ResponseEntity.status(HttpStatus.OK).body("Ok je ");
+        System.out.println("Doslo je do njega");
+        try {
+            System.out.println("Request data: " + request.getProperties());
+            userService.createGroup(request);
+            return ResponseEntity.status(HttpStatus.OK).body("Grupa uspješno kreirana");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
     }
 }
