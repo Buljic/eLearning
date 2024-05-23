@@ -189,20 +189,12 @@ const CreateGroup = () => {
                 )}
             </div>
             <div>
-                <label>Sati po Sedmici:</label>
-                <input
-                    type="number"
-                    value={hoursPerWeek}
-                    onChange={(e) => setHoursPerWeek(e.target.value)}
-                    required
-                />
-            </div>
-            <div>
                 <label>Maksimalan broj studenata:</label>
                 <input
                     type="number"
                     value={maxStudents}
-                    onChange={(e) => setMaxStudents(e.target.value)}
+                    onChange={(e) => setMaxStudents(Math.max(0, e.target.value))}
+                    min="1"
                     required
                 />
             </div>
@@ -211,7 +203,18 @@ const CreateGroup = () => {
                 <input
                     type="number"
                     value={price}
-                    onChange={(e) => setPrice(e.target.value)}
+                    onChange={(e) => setPrice(Math.max(0, e.target.value))}
+                    min="0"
+                    required
+                />
+            </div>
+            <div>
+                <label>Sati po Sedmici:</label>
+                <input
+                    type="number"
+                    value={hoursPerWeek}
+                    onChange={(e) => setHoursPerWeek(Math.max(0, e.target.value))}
+                    min="2"
                     required
                 />
             </div>
