@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 const GroupResults = ({ isSearching, groups }) => {
     return (
@@ -8,7 +9,7 @@ const GroupResults = ({ isSearching, groups }) => {
                 <ul>
                     {groups.map((group, index) => (
                         <li key={index}>
-                            <h3>{group.group_name}</h3>
+                            <h3><Link to={`/groupDetails/${group.group_id}`}>{group.group_name}</Link></h3>
                             <p>Opis: {group.description}</p>
                             <p>Datum početka: {group.start_date}</p>
                             <p>Datum završetka: {group.end_date}</p>
