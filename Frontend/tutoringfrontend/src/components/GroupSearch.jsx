@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
-import GroupFilterForm from './GroupFilterForm';
-import GroupResults from './GroupResults';
+import React, { useState, useEffect } from 'react';
+import GroupFilterForm from "../minicomponents/GroupFilterForm.jsx";
+
+import Pagination from "../minicomponents/Pagination.jsx";
+import GroupResults from "../minicomponents/GroupResult.jsx";
 
 const GroupSearch = () => {
     const [isSearching, setIsSearching] = useState(false);
@@ -8,13 +10,21 @@ const GroupSearch = () => {
     const [filters, setFilters] = useState({
         group_name: '',
         topic: '',
-        start_date: '',
-        end_date: '',
-        hours_per_week: '',
-        price: '',
-        subjects: [],
-        max_students: ''
+        start_date_from: '',
+        start_date_to: '',
+        end_date_from: '',
+        end_date_to: '',
+        hours_per_week_from: '',
+        hours_per_week_to: '',
+        price_from: '',
+        price_to: '',
+        max_students_from: '',
+        max_students_to: '',
+        subjects: []
     });
+    const [page, setPage] = useState(0);
+    const [size, setSize] = useState(3); // Default veličina stranice
+    const [totalPages, setTotalPages] = useState(0);
 
     const handleFilterChange = (newFilters) => {
         setFilters(newFilters);
@@ -23,12 +33,13 @@ const GroupSearch = () => {
     const handleSubmit = async (event) => {
         event.preventDefault();
         setIsSearching(true);
-        getSearchedGroups();
+        setPage(0); // Resetovanje na prvu stranicu pri novoj pretrazi
+        getSearchedGroups(0);
     };
 
-    const getSearchedGroups = async () => {
+    const getSearchedGroups = async (pageToFetch = page) => {
         const queryParams = new URLSearchParams(filters).toString();
-        const response = await fetch(`http://localhost:8080/api/getGroups?${queryParams}`, {
+        const response = await fetch(`http://localhost:8080/api/getGroups?page=${pageToFetch}&size=${size}&${queryParams}`, {
             method: 'GET',
             credentials: 'include',
             headers: {
@@ -40,13 +51,22 @@ const GroupSearch = () => {
             return;
         }
         const data = await response.json();
-        setSearchedGroups(data);
+        setSearchedGroups(data.groups);
+        setTotalPages(Math.ceil(data.totalCount / size)); // Racunanje ukupnog broja stranice
+    };
+
+    const handlePageChange = (newPage) => {
+        setPage(newPage);
+        getSearchedGroups(newPage);
     };
 
     return (
         <div style={{ display: 'flex' }}>
             <GroupFilterForm filters={filters} onFilterChange={handleFilterChange} onSubmit={handleSubmit} />
-            <GroupResults isSearching={isSearching} groups={searchedGroups} />
+            <div style={{ flex: 2 }}>
+                <GroupResults isSearching={isSearching} groups={searchedGroups} />
+                <Pagination currentPage={page} totalPages={totalPages} onPageChange={handlePageChange} />
+            </div>
         </div>
     );
 };

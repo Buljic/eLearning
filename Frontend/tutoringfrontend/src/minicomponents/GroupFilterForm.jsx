@@ -1,7 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import useFetchSubjects from "../customHooks/useFetchSubjects.js";
 
 const GroupFilterForm = ({ filters, onFilterChange, onSubmit }) => {
     const [subjects, setSubjects] = useState(['']);
+    const { subjects: allSubjects, loading, error } = useFetchSubjects();
+
+    useEffect(() => {
+        if (subjects.length === 1 && subjects[0] === '') {
+            onFilterChange({ ...filters, subjects: [] });
+        } else {
+            onFilterChange({ ...filters, subjects });
+        }
+    }, [subjects]);
 
     const handleAddSubject = () => {
         if (subjects.length < 5) {
@@ -12,14 +22,12 @@ const GroupFilterForm = ({ filters, onFilterChange, onSubmit }) => {
     const handleRemoveSubject = (index) => {
         const newSubjects = subjects.filter((_, i) => i !== index);
         setSubjects(newSubjects);
-        onFilterChange({ ...filters, subjects: newSubjects });
     };
 
     const handleSubjectChange = (index, value) => {
         const newSubjects = [...subjects];
         newSubjects[index] = value;
         setSubjects(newSubjects);
-        onFilterChange({ ...filters, subjects: newSubjects });
     };
 
     const handleChange = (e) => {
@@ -49,47 +57,82 @@ const GroupFilterForm = ({ filters, onFilterChange, onSubmit }) => {
                 />
             </div>
             <div>
-                <label>Datum Početka:</label>
+                <label>Datum Početka (Od):</label>
                 <input
                     type="date"
-                    name="start_date"
-                    value={filters.start_date}
+                    name="start_date_from"
+                    value={filters.start_date_from}
                     onChange={handleChange}
                 />
-            </div>
-            <div>
-                <label>Datum Završetka:</label>
+                <label>Datum Početka (Do):</label>
                 <input
                     type="date"
-                    name="end_date"
-                    value={filters.end_date}
+                    name="start_date_to"
+                    value={filters.start_date_to}
                     onChange={handleChange}
                 />
             </div>
             <div>
-                <label>Sati po Sedmici:</label>
+                <label>Datum Završetka (Od):</label>
                 <input
-                    type="number"
-                    name="hours_per_week"
-                    value={filters.hours_per_week}
+                    type="date"
+                    name="end_date_from"
+                    value={filters.end_date_from}
+                    onChange={handleChange}
+                />
+                <label>Datum Završetka (Do):</label>
+                <input
+                    type="date"
+                    name="end_date_to"
+                    value={filters.end_date_to}
                     onChange={handleChange}
                 />
             </div>
             <div>
-                <label>Cijena (BAM):</label>
+                <label>Sati po Sedmici (Od):</label>
                 <input
                     type="number"
-                    name="price"
-                    value={filters.price}
+                    name="hours_per_week_from"
+                    value={filters.hours_per_week_from}
+                    onChange={handleChange}
+                />
+                <label>Sati po Sedmici (Do):</label>
+                <input
+                    type="number"
+                    name="hours_per_week_to"
+                    value={filters.hours_per_week_to}
                     onChange={handleChange}
                 />
             </div>
             <div>
-                <label>Maksimalan broj studenata:</label>
+                <label>Cijena (Od):</label>
                 <input
                     type="number"
-                    name="max_students"
-                    value={filters.max_students}
+                    name="price_from"
+                    value={filters.price_from}
+                    onChange={handleChange}
+                />
+                <label>Cijena (Do):</label>
+                <input
+                    type="number"
+                    name="price_to"
+                    value={filters.price_to}
+                    onChange={handleChange}
+                />
+            </div>
+            <div>
+                <label>Maksimalan broj studenata (Od):</label>
+                <input
+                    type="number"
+                    name="max_students_from"
+                    value={filters.max_students_from}
+                    onChange={handleChange}
+                />
+                <label>Maksimalan broj studenata (Do):</label>
+                <input
+                    type="number"
+                    name="max_students_to"
+                    value={filters.max_students_to}
                     onChange={handleChange}
                 />
             </div>
@@ -97,12 +140,16 @@ const GroupFilterForm = ({ filters, onFilterChange, onSubmit }) => {
                 <label>Predmeti:</label>
                 {subjects.map((subject, index) => (
                     <div key={index}>
-                        <input
-                            type="text"
+                        <select
                             value={subject}
                             onChange={(e) => handleSubjectChange(index, e.target.value)}
-                            placeholder="Predmet"
-                        />
+                            required={subjects.length > 1 || (subjects.length === 1 && subjects[0] !== '')}
+                        >
+                            <option value="">Izaberi predmet</option>
+                            {allSubjects.map((sub) => (
+                                <option key={sub} value={sub}>{sub}</option>
+                            ))}
+                        </select>
                         {subjects.length > 1 && (
                             <button type="button" onClick={() => handleRemoveSubject(index)}>Ukloni</button>
                         )}
