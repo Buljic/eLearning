@@ -15,14 +15,14 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
+
 @Service
 public class UserService
 {
     private final JdbcTemplate jdbcTemplate;
     private final EncriptionUtility encriptionUtility;
-
+    //named parameter jos mozda
     public UserService(JdbcTemplate jdbcTemplate, EncriptionUtility encriptionUtility)
     {
         this.jdbcTemplate = jdbcTemplate;
@@ -231,6 +231,204 @@ public class UserService
         } catch (Exception e) {
             throw new Exception("Greška pri kreiranju grupe: " + e.getMessage());
         }
+    }
+
+//    public List<GenericDTO> getFilteredGroups(Map<String, String> filters)
+//    {
+//        StringBuilder sql = new StringBuilder("SELECT * FROM group_table WHERE 1=1");
+//
+//        List<Object> params = new ArrayList<>();
+//
+//        if (filters.containsKey("group_name")) {
+//            sql.append(" AND group_name LIKE ?");
+//            params.add("%" + filters.get("group_name") + "%");
+//        }
+//
+//        if (filters.containsKey("topic")) {
+//            sql.append(" AND topic LIKE ?");
+//            params.add("%" + filters.get("topic") + "%");
+//        }
+//
+//        if (filters.containsKey("start_date")) {
+//            sql.append(" AND start_date >= ?");
+//            params.add(filters.get("start_date"));
+//        }
+//
+//        if (filters.containsKey("end_date")) {
+//            sql.append(" AND end_date <= ?");
+//            params.add(filters.get("end_date"));
+//        }
+//
+//        if (filters.containsKey("hours_per_week")) {
+//            sql.append(" AND hours_per_week = ?");
+//            params.add(Integer.parseInt(filters.get("hours_per_week")));
+//        }
+//
+//        if (filters.containsKey("price")) {
+//            sql.append(" AND price <= ?");
+//            params.add(Double.parseDouble(filters.get("price")));
+//        }
+//
+//        if (filters.containsKey("max_students")) {
+//            sql.append(" AND max_students = ?");
+//            params.add(Integer.parseInt(filters.get("max_students")));
+//        }
+//
+//        // Handle subjects
+//        if (filters.containsKey("subjects")) {
+//            String[] subjects = filters.get("subjects").split(",");
+//            sql.append(" AND group_id IN (SELECT group_id FROM group_subject WHERE subject_id IN (SELECT id FROM subject WHERE subject_name IN (");
+//            for (int i = 0; i < subjects.length; i++) {
+//                sql.append("?");
+//                if (i < subjects.length - 1) {
+//                    sql.append(",");
+//                }
+//                params.add(subjects[i]);
+//            }
+//            sql.append(")))");
+//        }
+//
+//        return jdbcTemplate.query(sql.toString(), params.toArray(), new GenericDTOMapper());
+//    }
+public List<GenericDTO> getFilteredGroups(GenericDTO filters, int page, int size) {
+    StringBuilder sql = new StringBuilder("SELECT * FROM group_table WHERE 1=1");
+    List<Object> params = new ArrayList<>();
+
+    // Dodavanje filtera
+    if (filters.getString("group_name") != null && !filters.getString("group_name").isEmpty()) {
+        sql.append(" AND group_name LIKE ?");
+        params.add("%" + filters.getString("group_name") + "%");
+    }
+    if (filters.getString("topic") != null && !filters.getString("topic").isEmpty()) {
+        sql.append(" AND topic LIKE ?");
+        params.add("%" + filters.getString("topic") + "%");
+    }
+    if (filters.getString("start_date_from") != null && !filters.getString("start_date_from").isEmpty()) {
+        sql.append(" AND start_date >= ?");
+        params.add(LocalDate.parse(filters.getString("start_date_from")));
+    }
+    if (filters.getString("start_date_to") != null && !filters.getString("start_date_to").isEmpty()) {
+        sql.append(" AND start_date <= ?");
+        params.add(LocalDate.parse(filters.getString("start_date_to")));
+    }
+    if (filters.getString("end_date_from") != null && !filters.getString("end_date_from").isEmpty()) {
+        sql.append(" AND end_date >= ?");
+        params.add(LocalDate.parse(filters.getString("end_date_from")));
+    }
+    if (filters.getString("end_date_to") != null && !filters.getString("end_date_to").isEmpty()) {
+        sql.append(" AND end_date <= ?");
+        params.add(LocalDate.parse(filters.getString("end_date_to")));
+    }
+    if (filters.getInt("hours_per_week_from") != null) {
+        sql.append(" AND hours_per_week >= ?");
+        params.add(filters.getInt("hours_per_week_from"));
+    }
+    if (filters.getInt("hours_per_week_to") != null) {
+        sql.append(" AND hours_per_week <= ?");
+        params.add(filters.getInt("hours_per_week_to"));
+    }
+    if (filters.getDouble("price_from") != null) {
+        sql.append(" AND price >= ?");
+        params.add(filters.getDouble("price_from"));
+    }
+    if (filters.getDouble("price_to") != null) {
+        sql.append(" AND price <= ?");
+        params.add(filters.getDouble("price_to"));
+    }
+    if (filters.getInt("max_students_from") != null) {
+        sql.append(" AND max_students >= ?");
+        params.add(filters.getInt("max_students_from"));
+    }
+    if (filters.getInt("max_students_to") != null) {
+        sql.append(" AND max_students <= ?");
+        params.add(filters.getInt("max_students_to"));
+    }
+    if (filters.getProperties().containsKey("subjects")) {
+        List<String> subjects = filters.getList("subjects");
+        if (!subjects.isEmpty() && subjects.stream().noneMatch(String::isEmpty)) {
+            sql.append(" AND group_id IN (SELECT group_id FROM group_subject WHERE subject_id IN (SELECT id FROM subject WHERE subject_name IN (");
+            String placeholders = String.join(",", Collections.nCopies(subjects.size(), "?"));
+            sql.append(placeholders);
+            sql.append(")))");
+            params.addAll(subjects);
+        }
+    }
+
+    sql.append(" LIMIT ? OFFSET ?");
+    params.add(size);
+    params.add(page * size);
+
+    System.out.println("Executing query: " + sql.toString());
+    System.out.println("With params: " + params);
+
+    return jdbcTemplate.query(sql.toString(), params.toArray(), new GenericDTOMapper());
+}
+
+    public int getTotalCount(GenericDTO filters) {
+        StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM group_table WHERE 1=1");
+        List<Object> params = new ArrayList<>();
+
+        // Dodavanje filtera
+        if (filters.getString("group_name") != null && !filters.getString("group_name").isEmpty()) {
+            sql.append(" AND group_name LIKE ?");
+            params.add("%" + filters.getString("group_name") + "%");
+        }
+        if (filters.getString("topic") != null && !filters.getString("topic").isEmpty()) {
+            sql.append(" AND topic LIKE ?");
+            params.add("%" + filters.getString("topic") + "%");
+        }
+        if (filters.getString("start_date_from") != null && !filters.getString("start_date_from").isEmpty()) {
+            sql.append(" AND start_date >= ?");
+            params.add(LocalDate.parse(filters.getString("start_date_from")));
+        }
+        if (filters.getString("start_date_to") != null && !filters.getString("start_date_to").isEmpty()) {
+            sql.append(" AND start_date <= ?");
+            params.add(LocalDate.parse(filters.getString("start_date_to")));
+        }
+        if (filters.getString("end_date_from") != null && !filters.getString("end_date_from").isEmpty()) {
+            sql.append(" AND end_date >= ?");
+            params.add(LocalDate.parse(filters.getString("end_date_from")));
+        }
+        if (filters.getString("end_date_to") != null && !filters.getString("end_date_to").isEmpty()) {
+            sql.append(" AND end_date <= ?");
+            params.add(LocalDate.parse(filters.getString("end_date_to")));
+        }
+        if (filters.getInt("hours_per_week_from") != null) {
+            sql.append(" AND hours_per_week >= ?");
+            params.add(filters.getInt("hours_per_week_from"));
+        }
+        if (filters.getInt("hours_per_week_to") != null) {
+            sql.append(" AND hours_per_week <= ?");
+            params.add(filters.getInt("hours_per_week_to"));
+        }
+        if (filters.getDouble("price_from") != null) {
+            sql.append(" AND price >= ?");
+            params.add(filters.getDouble("price_from"));
+        }
+        if (filters.getDouble("price_to") != null) {
+            sql.append(" AND price <= ?");
+            params.add(filters.getDouble("price_to"));
+        }
+        if (filters.getInt("max_students_from") != null) {
+            sql.append(" AND max_students >= ?");
+            params.add(filters.getInt("max_students_from"));
+        }
+        if (filters.getInt("max_students_to") != null) {
+            sql.append(" AND max_students <= ?");
+            params.add(filters.getInt("max_students_to"));
+        }
+        if (filters.getProperties().containsKey("subjects")) {
+            List<String> subjects = filters.getList("subjects");
+            if (!subjects.isEmpty()) {
+                sql.append(" AND group_id IN (SELECT group_id FROM group_subject WHERE subject_id IN (SELECT id FROM subject WHERE subject_name IN (");
+                String placeholders = String.join(",", Collections.nCopies(subjects.size(), "?"));
+                sql.append(placeholders);
+                sql.append(")))");
+                params.addAll(subjects);
+            }
+        }
+
+        return jdbcTemplate.queryForObject(sql.toString(), params.toArray(), Integer.class);
     }
 
 }

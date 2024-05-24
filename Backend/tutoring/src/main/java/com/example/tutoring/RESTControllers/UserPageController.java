@@ -11,7 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import java.util.*;
 
 @RestController
 @RequestMapping("/api")
@@ -159,4 +159,47 @@ public class UserPageController
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
     }
+
+    @GetMapping("/getGroups")
+    public ResponseEntity<?> getGroups(@RequestParam Map<String, String> filters,
+                                       @RequestParam int page,
+                                       @RequestParam int size) {
+        try {
+            Map<String, Object> convertedFilters = new HashMap<>();
+            for (Map.Entry<String, String> entry : filters.entrySet()) {
+                String key = entry.getKey();
+                String value = entry.getValue();
+
+                if (key.equals("subjects")) {
+                    if (value.isEmpty()) {
+                        convertedFilters.put(key, Collections.emptyList());
+                    } else {
+                        List<String> subjects = Arrays.asList(value.split(","));
+                        convertedFilters.put(key, subjects);
+                    }
+                } else if (key.endsWith("_from") || key.endsWith("_to") || key.equals("start_date") || key.equals("end_date")) {
+                    convertedFilters.put(key, value);
+                } else if (key.equals("price") || key.equals("price_from") || key.equals("price_to")) {
+                    convertedFilters.put(key, Double.parseDouble(value));
+                } else if (key.equals("max_students") || key.equals("max_students_from") || key.equals("max_students_to") ||
+                        key.equals("hours_per_week") || key.equals("hours_per_week_from") || key.equals("hours_per_week_to")) {
+                    convertedFilters.put(key, Integer.parseInt(value));
+                } else {
+                    convertedFilters.put(key, value);
+                }
+            }
+
+            GenericDTO filterDTO = new GenericDTO(convertedFilters);
+            List<GenericDTO> groups = userService.getFilteredGroups(filterDTO, page, size);
+            int totalCount = userService.getTotalCount(filterDTO);
+            Map<String, Object> response = new HashMap<>();
+            response.put("groups", groups);
+            response.put("totalCount", totalCount);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error fetching groups");
+        }
+    }
+
 }

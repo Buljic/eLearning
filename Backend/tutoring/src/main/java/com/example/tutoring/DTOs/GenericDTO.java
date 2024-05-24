@@ -3,51 +3,63 @@ package com.example.tutoring.DTOs;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 @JsonSerialize (using = GenericDTOSerializer.class)
 @JsonDeserialize (using = GenericDTODeserializer.class)
 public class GenericDTO
 {
-    private Map<String,Object> properties=new HashMap<>();
+    private Map<String, Object> properties = new HashMap<>();
 
-    public GenericDTO()
-    {
-    }
+    public GenericDTO() {}
 
-    public GenericDTO(Map<String, Object> properties)
-    {
+    public GenericDTO(Map<String, Object> properties) {
         this.properties = properties;
     }
 
-    public void addProperty(String key, Object value)
-    {
-        this.properties.put(key,value);
+    public void addProperty(String key, Object value) {
+        this.properties.put(key, value);
     }
+
+    public Object getProperty(String key) {
+        return this.properties.get(key);
+    }
+
+    public Map<String, Object> getProperties() {
+        return properties;
+    }
+
+    public String getString(String key) {
+        Object value = properties.get(key);
+        return value instanceof String ? (String) value : null;
+    }
+
+    public Integer getInt(String key) {
+        String value = getString(key);
+        return (value != null && !value.isEmpty()) ? Integer.parseInt(value) : null;
+    }
+
+    public Long getLong(String key) {
+        String value = getString(key);
+        return (value != null && !value.isEmpty()) ? Long.parseLong(value) : null;
+    }
+
     //cisto radi cisce sintakse iako isto radi kao i addProperty
     public void setProperty(String key, Object value) {
         this.properties.put(key, value);
     }
 
-    public Object getProperty(String key)
-    {
-        return this.properties.get(key);
-    }
-    public Map<String,Object> getProperties(){
-        return properties;
-}
-
-    public String getString(String key) {
-        return (String) properties.get(key);
+    public Double getDouble(String key) {
+        String value = getString(key);
+        return (value != null && !value.isEmpty()) ? Double.parseDouble(value) : null;
     }
 
-    public Integer getInt(String key) {
-        return properties.containsKey(key) ? Integer.parseInt((String) properties.get(key)) : null;
-    }
-
-    public Long getLong(String key) {
-        return properties.containsKey(key) ? Long.parseLong((String) properties.get(key)) : null;
+    public List<String> getList(String key) {
+        Object value = properties.get(key);
+        return value instanceof List ? (List<String>) value : Collections.emptyList();
     }
 
     //KORISTI SE da mozemo ispisivati dto normalno
