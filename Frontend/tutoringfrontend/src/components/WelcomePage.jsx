@@ -34,6 +34,7 @@ const WelcomePage = () => {
 
         {((user.accountType==='STUDENT')||(user.accountType==='OBOJE')||(user.accountType==='PROFESOR') )&& <li><Link to="/attendedCourses">Kursevi koje pohadjas</Link></li>}
                 {(user.accountType==='PROFESOR')&& <li><Link to="/createGroup">Napravi grupu</Link></li>}
+                {(user.accountType==='PROFESOR')&& <li><Link to="/groupRequests">Pristigli zahtijevi</Link></li>}
         <li><Link to="/userSearch">Pretraži usere</Link></li>
                 <li><Link to="/groupSearch">Pretraži grupe</Link></li>
             </ul>
