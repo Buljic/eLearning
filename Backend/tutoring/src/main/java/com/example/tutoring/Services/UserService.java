@@ -8,6 +8,8 @@ import com.example.tutoring.Entities.Tutor;
 import com.example.tutoring.Entities.User;
 import com.example.tutoring.Repositories.UserRepository;
 import com.example.tutoring.Security.EncriptionUtility;
+import com.example.tutoring.Security.JwtUtil;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
@@ -22,11 +24,16 @@ public class UserService
 {
     private final JdbcTemplate jdbcTemplate;
     private final EncriptionUtility encriptionUtility;
+    private final UserRepository userRepository;
+    private final JwtUtil jwtUtil;
     //named parameter jos mozda
-    public UserService(JdbcTemplate jdbcTemplate, EncriptionUtility encriptionUtility)
+    public UserService(JdbcTemplate jdbcTemplate, EncriptionUtility encriptionUtility, UserRepository userRepository,
+                       JwtUtil jwtUtil)
     {
         this.jdbcTemplate = jdbcTemplate;
         this.encriptionUtility = encriptionUtility;
+        this.userRepository = userRepository;
+        this.jwtUtil = jwtUtil;
     }
 
 
@@ -290,79 +297,79 @@ public class UserService
 //
 //        return jdbcTemplate.query(sql.toString(), params.toArray(), new GenericDTOMapper());
 //    }
-public List<GenericDTO> getFilteredGroups(GenericDTO filters, int page, int size) {
-    StringBuilder sql = new StringBuilder("SELECT * FROM group_table WHERE 1=1");
-    List<Object> params = new ArrayList<>();
+    public List<GenericDTO> getFilteredGroups(GenericDTO filters, int page, int size) {
+        StringBuilder sql = new StringBuilder("SELECT * FROM group_table WHERE 1=1");
+        List<Object> params = new ArrayList<>();
 
-    // Dodavanje filtera
-    if (filters.getString("group_name") != null && !filters.getString("group_name").isEmpty()) {
-        sql.append(" AND group_name LIKE ?");
-        params.add("%" + filters.getString("group_name") + "%");
-    }
-    if (filters.getString("topic") != null && !filters.getString("topic").isEmpty()) {
-        sql.append(" AND topic LIKE ?");
-        params.add("%" + filters.getString("topic") + "%");
-    }
-    if (filters.getString("start_date_from") != null && !filters.getString("start_date_from").isEmpty()) {
-        sql.append(" AND start_date >= ?");
-        params.add(LocalDate.parse(filters.getString("start_date_from")));
-    }
-    if (filters.getString("start_date_to") != null && !filters.getString("start_date_to").isEmpty()) {
-        sql.append(" AND start_date <= ?");
-        params.add(LocalDate.parse(filters.getString("start_date_to")));
-    }
-    if (filters.getString("end_date_from") != null && !filters.getString("end_date_from").isEmpty()) {
-        sql.append(" AND end_date >= ?");
-        params.add(LocalDate.parse(filters.getString("end_date_from")));
-    }
-    if (filters.getString("end_date_to") != null && !filters.getString("end_date_to").isEmpty()) {
-        sql.append(" AND end_date <= ?");
-        params.add(LocalDate.parse(filters.getString("end_date_to")));
-    }
-    if (filters.getInt("hours_per_week_from") != null) {
-        sql.append(" AND hours_per_week >= ?");
-        params.add(filters.getInt("hours_per_week_from"));
-    }
-    if (filters.getInt("hours_per_week_to") != null) {
-        sql.append(" AND hours_per_week <= ?");
-        params.add(filters.getInt("hours_per_week_to"));
-    }
-    if (filters.getDouble("price_from") != null) {
-        sql.append(" AND price >= ?");
-        params.add(filters.getDouble("price_from"));
-    }
-    if (filters.getDouble("price_to") != null) {
-        sql.append(" AND price <= ?");
-        params.add(filters.getDouble("price_to"));
-    }
-    if (filters.getInt("max_students_from") != null) {
-        sql.append(" AND max_students >= ?");
-        params.add(filters.getInt("max_students_from"));
-    }
-    if (filters.getInt("max_students_to") != null) {
-        sql.append(" AND max_students <= ?");
-        params.add(filters.getInt("max_students_to"));
-    }
-    if (filters.getProperties().containsKey("subjects")) {
-        List<String> subjects = filters.getList("subjects");
-        if (!subjects.isEmpty() && subjects.stream().noneMatch(String::isEmpty)) {
-            sql.append(" AND group_id IN (SELECT group_id FROM group_subject WHERE subject_id IN (SELECT id FROM subject WHERE subject_name IN (");
-            String placeholders = String.join(",", Collections.nCopies(subjects.size(), "?"));
-            sql.append(placeholders);
-            sql.append(")))");
-            params.addAll(subjects);
+        // Dodavanje filtera
+        if (filters.getString("group_name") != null && !filters.getString("group_name").isEmpty()) {
+            sql.append(" AND group_name LIKE ?");
+            params.add("%" + filters.getString("group_name") + "%");
         }
+        if (filters.getString("topic") != null && !filters.getString("topic").isEmpty()) {
+            sql.append(" AND topic LIKE ?");
+            params.add("%" + filters.getString("topic") + "%");
+        }
+        if (filters.getString("start_date_from") != null && !filters.getString("start_date_from").isEmpty()) {
+            sql.append(" AND start_date >= ?");
+            params.add(LocalDate.parse(filters.getString("start_date_from")));
+        }
+        if (filters.getString("start_date_to") != null && !filters.getString("start_date_to").isEmpty()) {
+            sql.append(" AND start_date <= ?");
+            params.add(LocalDate.parse(filters.getString("start_date_to")));
+        }
+        if (filters.getString("end_date_from") != null && !filters.getString("end_date_from").isEmpty()) {
+            sql.append(" AND end_date >= ?");
+            params.add(LocalDate.parse(filters.getString("end_date_from")));
+        }
+        if (filters.getString("end_date_to") != null && !filters.getString("end_date_to").isEmpty()) {
+            sql.append(" AND end_date <= ?");
+            params.add(LocalDate.parse(filters.getString("end_date_to")));
+        }
+        if (filters.getInt("hours_per_week_from") != null) {
+            sql.append(" AND hours_per_week >= ?");
+            params.add(filters.getInt("hours_per_week_from"));
+        }
+        if (filters.getInt("hours_per_week_to") != null) {
+            sql.append(" AND hours_per_week <= ?");
+            params.add(filters.getInt("hours_per_week_to"));
+        }
+        if (filters.getDouble("price_from") != null) {
+            sql.append(" AND price >= ?");
+            params.add(filters.getDouble("price_from"));
+        }
+        if (filters.getDouble("price_to") != null) {
+            sql.append(" AND price <= ?");
+            params.add(filters.getDouble("price_to"));
+        }
+        if (filters.getInt("max_students_from") != null) {
+            sql.append(" AND max_students >= ?");
+            params.add(filters.getInt("max_students_from"));
+        }
+        if (filters.getInt("max_students_to") != null) {
+            sql.append(" AND max_students <= ?");
+            params.add(filters.getInt("max_students_to"));
+        }
+        if (filters.getProperties().containsKey("subjects")) {
+            List<String> subjects = filters.getList("subjects");
+            if (!subjects.isEmpty() && subjects.stream().noneMatch(String::isEmpty)) {
+                sql.append(" AND group_id IN (SELECT group_id FROM group_subject WHERE subject_id IN (SELECT id FROM subject WHERE subject_name IN (");
+                String placeholders = String.join(",", Collections.nCopies(subjects.size(), "?"));
+                sql.append(placeholders);
+                sql.append(")))");
+                params.addAll(subjects);
+            }
+        }
+
+        sql.append(" LIMIT ? OFFSET ?");
+        params.add(size);
+        params.add(page * size);
+
+        System.out.println("Executing query: " + sql.toString());
+        System.out.println("With params: " + params);
+
+        return jdbcTemplate.query(sql.toString(), params.toArray(), new GenericDTOMapper());
     }
-
-    sql.append(" LIMIT ? OFFSET ?");
-    params.add(size);
-    params.add(page * size);
-
-    System.out.println("Executing query: " + sql.toString());
-    System.out.println("With params: " + params);
-
-    return jdbcTemplate.query(sql.toString(), params.toArray(), new GenericDTOMapper());
-}
 
     public int getTotalCount(GenericDTO filters) {
         StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM group_table WHERE 1=1");
@@ -429,6 +436,20 @@ public List<GenericDTO> getFilteredGroups(GenericDTO filters, int page, int size
         }
 
         return jdbcTemplate.queryForObject(sql.toString(), params.toArray(), Integer.class);
+    }
+
+    public User findUserByUsername(String username) {
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+    }
+
+    public User getCurrentUser(HttpServletRequest request) {
+        String token = jwtUtil.extractJwtFromCookie(request);
+        if (token == null) {
+            throw new RuntimeException("Token not found");
+        }
+        String username = jwtUtil.getUsernameFromToken(token);
+        return findUserByUsername(username);
     }
 
 }

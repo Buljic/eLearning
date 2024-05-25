@@ -12,13 +12,21 @@ const GroupDetails = () => {
     useEffect(() => {
         const fetchGroupDetails = async () => {
             try {
-                const response = await fetch(`http://localhost:8080/api/groups/${groupId}`);
+                const response = await fetch(`http://localhost:8080/api/groups/${groupId}`, {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                });
                 if (!response.ok) {
                     throw new Error('Failed to fetch group details');
                 }
                 const data = await response.json();
                 setGroup(data);
+                console.log("Group data fetched: ", data);
             } catch (err) {
+                console.error("Error fetching group details: ", err);
                 setError(err.message);
             }
         };
@@ -26,7 +34,7 @@ const GroupDetails = () => {
     }, [groupId]);
 
     const handleRequestAccess = async () => {
-        if (myUser.role !== 'STUDENT') {
+        if (myUser.accountType !== 'STUDENT') {
             setMessage('Only students can request access to groups');
             return;
         }
@@ -41,8 +49,11 @@ const GroupDetails = () => {
             if (!response.ok) {
                 throw new Error('Failed to request access');
             }
+            const data = await response.text();
+            console.log("Request access response: ", data);
             setMessage('Access requested successfully');
         } catch (err) {
+            console.error("Error requesting access: ", err);
             setError(err.message);
         }
     };
@@ -59,13 +70,13 @@ const GroupDetails = () => {
         <div>
             <h1>{group.group_name}</h1>
             <p>{group.description}</p>
-            <p>Start Date: {group.start_date}</p>
-            <p>End Date: {group.end_date}</p>
-            <p>Hours per Week: {group.hours_per_week}</p>
+            <p>Start Date: {group.startDate}</p>
+            <p>End Date: {group.endDate}</p>
+            <p>Hours per Week: {group.hoursPerWeek}</p>
             <p>Price: {group.price} BAM</p>
-            <p>Max Students: {group.max_students}</p>
+            <p>Max Students: {group.maxStudents}</p>
             <p>Topic: {group.topic}</p>
-            {myUser.role === 'STUDENT' && group.start_date >= new Date().toISOString().split('T')[0] && (
+            {myUser.accountType === 'STUDENT' && group.startDate >= new Date().toISOString().split('T')[0] && (
                 <button onClick={handleRequestAccess}>Request Access</button>
             )}
             {message && <p>{message}</p>}
