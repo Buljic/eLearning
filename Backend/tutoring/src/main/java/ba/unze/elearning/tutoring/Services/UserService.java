@@ -36,6 +36,11 @@ public class UserService
         this.jwtUtil = jwtUtil;
     }
 
+    public Long getUserIdFromToken(String token) {
+        String username = jwtUtil.getUsernameFromToken(token);
+        String userIdSql = "SELECT id FROM user WHERE username = ?;";
+        return jdbcTemplate.queryForObject(userIdSql, new Object[]{username}, Long.class);
+    }
 
     public List<StringNumber> findMostTutorSubjects()
     {//'-' se koristi da bi se izbjeglo ono 12 i 3 moze biti 1 i 23 ili 12 i 3 i slicno

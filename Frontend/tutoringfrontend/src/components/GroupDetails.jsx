@@ -76,7 +76,7 @@ const GroupDetails = () => {
             <p>Price: {group.price} BAM</p>
             <p>Max Students: {group.maxStudents}</p>
             <p>Topic: {group.topic}</p>
-            {myUser.accountType === 'STUDENT' && group.startDate >= new Date().toISOString().split('T')[0] && (
+            {myUser.accountType === 'STUDENT' && new Date(group.startDate) > new Date() && (
                 <button onClick={handleRequestAccess}>Request Access</button>
             )}
             {message && <p>{message}</p>}
