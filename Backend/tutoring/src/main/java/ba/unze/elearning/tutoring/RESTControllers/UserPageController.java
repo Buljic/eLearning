@@ -224,7 +224,13 @@ public class UserPageController
             groupService.requestAccess(groupId, userId);
             return ResponseEntity.ok("Zahtjev za pristup je uspješno poslan.");
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+            if (e.getMessage().contains("Već ste poslali zahtjev za ovu grupu.")) {
+                return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+            } else if (e.getMessage().contains("Grupa je već počela, ne možete se pridružiti.")) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+            } else {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Došlo je do greške. Pokušajte ponovo kasnije.");
+            }
         }
     }
 

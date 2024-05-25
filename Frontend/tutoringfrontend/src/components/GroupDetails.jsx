@@ -34,27 +34,22 @@ const GroupDetails = () => {
     }, [groupId]);
 
     const handleRequestAccess = async () => {
-        if (myUser.accountType !== 'STUDENT') {
-            setMessage('Only students can request access to groups');
-            return;
-        }
         try {
             const response = await fetch(`http://localhost:8080/api/groups/${groupId}/request-access`, {
                 method: 'POST',
                 credentials: 'include',
                 headers: {
                     'Content-Type': 'application/json',
-                },
+                }
             });
             if (!response.ok) {
-                throw new Error('Failed to request access');
+                const errorMessage = await response.text();
+                throw new Error(errorMessage);
             }
-            const data = await response.text();
-            console.log("Request access response: ", data);
-            setMessage('Access requested successfully');
-        } catch (err) {
-            console.error("Error requesting access: ", err);
-            setError(err.message);
+            alert('Zahtjev za pristup je uspješno poslan.');
+        } catch (error) {
+            console.error('Error requesting access:', error);
+            alert(`Error requesting access: ${error.message}`);
         }
     };
 
