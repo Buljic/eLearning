@@ -83,4 +83,94 @@ public class Group
     {
         this.tutor = tutor;
     }
+
+    public String getTopic()
+    {
+        return topic;
+    }
+
+    public void setTopic(String topic)
+    {
+        this.topic = topic;
+    }
+
+    public String getDescription()
+    {
+        return description;
+    }
+
+    public void setDescription(String description)
+    {
+        this.description = description;
+    }
+
+    public Date getStartDate()
+    {
+        return startDate;
+    }
+
+    public void setStartDate(Date startDate)
+    {
+        this.startDate = startDate;
+    }
+
+    public Date getEndDate()
+    {
+        return endDate;
+    }
+
+    public void setEndDate(Date endDate)
+    {
+        this.endDate = endDate;
+    }
+
+    public int getHoursPerWeek()
+    {
+        return hoursPerWeek;
+    }
+
+    public void setHoursPerWeek(int hoursPerWeek)
+    {
+        this.hoursPerWeek = hoursPerWeek;
+    }
+
+    public double getPrice()
+    {
+        return price;
+    }
+
+    public void setPrice(double price)
+    {
+        this.price = price;
+    }
+
+    public int getMaxStudents()
+    {
+        return maxStudents;
+    }
+
+    public void setMaxStudents(int maxStudents)
+    {
+        this.maxStudents = maxStudents;
+    }
+
+    public List<GroupSubject> getGroupSubjects()
+    {
+        return groupSubjects;
+    }
+
+    public void setGroupSubjects(List<GroupSubject> groupSubjects)
+    {
+        this.groupSubjects = groupSubjects;
+    }
+
+    public String getGroup_name()
+    {
+        return group_name;
+    }
+
+    public void setGroup_name(String group_name)
+    {
+        this.group_name = group_name;
+    }
 }

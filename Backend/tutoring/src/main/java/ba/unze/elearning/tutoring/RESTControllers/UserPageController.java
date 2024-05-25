@@ -2,15 +2,19 @@ package ba.unze.elearning.tutoring.RESTControllers;
 
 import ba.unze.elearning.tutoring.DTOs.GenericDTO;
 import ba.unze.elearning.tutoring.DTOs.StringNumber;
+import ba.unze.elearning.tutoring.Entities.Group;
+import ba.unze.elearning.tutoring.Entities.User;
 import ba.unze.elearning.tutoring.Other.AccountType;
 import ba.unze.elearning.tutoring.Repositories.SubjectRepository;
 import ba.unze.elearning.tutoring.Security.JwtUtil;
+import ba.unze.elearning.tutoring.Services.GroupService;
 import ba.unze.elearning.tutoring.Services.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.*;
 
 @RestController
@@ -20,13 +24,16 @@ public class UserPageController
     private final SubjectRepository subjectRepository;
     private final UserService userService;
     private final JwtUtil jwtUtil;
+    private final GroupService groupService;
 
     //Mora biti bean kako bi bila injektovana negdje
-    UserPageController(SubjectRepository subjectRepository, UserService userService, JwtUtil jwtUtil)
+    UserPageController(SubjectRepository subjectRepository, UserService userService, JwtUtil jwtUtil,
+                       GroupService groupService)
     {
         this.subjectRepository = subjectRepository;
         this.userService = userService;
         this.jwtUtil = jwtUtil;
+        this.groupService = groupService;
     }
 
     @GetMapping ("/allSubjects")
@@ -199,6 +206,49 @@ public class UserPageController
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error fetching groups");
+        }
+    }
+
+    @PostMapping("/groups/{groupId}/request-access")
+    public ResponseEntity<?> requestAccess(@PathVariable Long groupId, HttpServletRequest request) {
+        String token = jwtUtil.extractJwtFromCookie(request);
+        if (token == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
+        }
+        String role = jwtUtil.getRoleFromToken(token);
+        if (!"STUDENT".equals(role)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Only students can request access to groups");
+        }
+        User user = userService.getCurrentUser(request);
+        Group group = groupService.findGroupById(groupId);
+        if (group.getStartDate().before(new Date())) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Cannot request access to past groups");
+        }
+        groupService.requestAccess(group, user);
+        return ResponseEntity.ok("Access requested successfully");
+    }
+
+    @GetMapping("/groups/{groupId}")
+    public ResponseEntity<?> getGroupDetails(@PathVariable Long groupId, HttpServletRequest request) {
+        try {
+            String token = jwtUtil.extractJwtFromCookie(request);
+            if (token == null) {
+                System.out.println("JWT token not found in the request.");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
+            }
+            String role = jwtUtil.getRoleFromToken(token);
+            if (role == null || role.isEmpty()) {
+                System.out.println("Invalid JWT token.");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid JWT token");
+            }
+            Group group = groupService.findGroupById(groupId);
+            if (group == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Group not found");
+            }
+            return ResponseEntity.ok(group);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Internal Server Error");
         }
     }
 
