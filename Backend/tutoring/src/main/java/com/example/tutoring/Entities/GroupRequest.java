@@ -32,6 +32,11 @@ public class GroupRequest {
         return id;
     }
 
+    public void setId(GroupRequestId id)
+    {
+        this.id = id;
+    }
+
     public RequestStatus getStatus()
     {
         return status;
