@@ -211,21 +211,21 @@ public class UserPageController
 
     @PostMapping("/groups/{groupId}/request-access")
     public ResponseEntity<?> requestAccess(@PathVariable Long groupId, HttpServletRequest request) {
-        String token = jwtUtil.extractJwtFromCookie(request);
-        if (token == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
+        try {
+            String token = jwtUtil.extractJwtFromCookie(request);
+            if (token == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Neispravan ili nedostajući JWT");
+            }
+            String accountType = jwtUtil.getRoleFromToken(token); // Iako je accountType, koristimo getRoleFromToken
+            if (!"STUDENT".equals(accountType)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Samo studenti mogu tražiti pristup grupama.");
+            }
+            Long userId = userService.getUserIdFromToken(token); // Pretpostavimo da postoji metoda u UserService
+            groupService.requestAccess(groupId, userId);
+            return ResponseEntity.ok("Zahtjev za pristup je uspješno poslan.");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
-        String role = jwtUtil.getRoleFromToken(token);
-        if (!"STUDENT".equals(role)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Only students can request access to groups");
-        }
-        User user = userService.getCurrentUser(request);
-        Group group = groupService.findGroupById(groupId);
-        if (group.getStartDate().before(new Date())) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Cannot request access to past groups");
-        }
-        groupService.requestAccess(group, user);
-        return ResponseEntity.ok("Access requested successfully");
     }
 
     @GetMapping("/groups/{groupId}")
