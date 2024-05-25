@@ -19,4 +19,14 @@ public class GroupRequestId implements Serializable
     {
         return groupId;
     }
+
+    public void setUserId(Long userId)
+    {
+        this.userId = userId;
+    }
+
+    public void setGroupId(Long groupId)
+    {
+        this.groupId = groupId;
+    }
 }
