@@ -10,6 +10,17 @@ public class GroupRequestId implements Serializable
     private Long userId;
     private Long groupId;
 
+    public GroupRequestId(Long userId, Long groupId)
+    {
+        this.userId = userId;
+        this.groupId = groupId;
+    }
+
+    public GroupRequestId()
+    {
+
+    }
+
     public Long getUserId()
     {
         return userId;
