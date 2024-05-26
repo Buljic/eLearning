@@ -8,6 +8,7 @@ const GroupRequests = () => {
     const [totalPages, setTotalPages] = useState(0);
     const [page, setPage] = useState(0);
     const [popupOpen, setPopupOpen] = useState(false);
+    const [popupAction, setPopupAction] = useState('');
     const [selectedRequest, setSelectedRequest] = useState(null);
     const navigate = useNavigate();
 
@@ -28,7 +29,7 @@ const GroupRequests = () => {
             return;
         }
         const data = await response.json();
-        setRequests(data.requests);
+        setRequests(data.requests.filter(request => request.status !== 'ACCEPTED'));
         setTotalPages(data.totalPages);
     };
 
@@ -59,6 +60,7 @@ const GroupRequests = () => {
             console.log("Problem s odobravanjem zahtjeva");
             return;
         }
+        closePopup();
         fetchRequests();
     };
 
@@ -74,15 +76,17 @@ const GroupRequests = () => {
             console.log("Problem s odbijanjem zahtjeva");
             return;
         }
+        closePopup();
         fetchRequests();
     };
 
-    const openApprovePopup = (request) => {
+    const openPopup = (request, action) => {
         setSelectedRequest(request);
+        setPopupAction(action);
         setPopupOpen(true);
     };
 
-    const closeApprovePopup = () => {
+    const closePopup = () => {
         setSelectedRequest(null);
         setPopupOpen(false);
     };
@@ -100,8 +104,8 @@ const GroupRequests = () => {
                         )}
                         {request.status === 'PENDING' && (
                             <>
-                                <button onClick={() => openApprovePopup(request)}>Odobri</button>
-                                <button onClick={() => handleReject(request.id.groupId, request.id.userId)}>Odbij</button>
+                                <button onClick={() => openPopup(request, 'approve')}>Odobri</button>
+                                <button onClick={() => openPopup(request, 'reject')}>Odbij</button>
                             </>
                         )}
                         {request.status === 'ACCEPTED' && (
@@ -120,12 +124,16 @@ const GroupRequests = () => {
                 ))}
             </div>
 
-            <Popup open={popupOpen} closeOnDocumentClick onClose={closeApprovePopup}>
+            <Popup open={popupOpen} closeOnDocumentClick onClose={closePopup}>
                 <div>
-                    <h2>Odobri zahtjev</h2>
-                    <p>Da li ste sigurni da želite odobriti ovaj zahtjev?</p>
-                    <button onClick={() => handleApprove(selectedRequest.id.groupId, selectedRequest.id.userId)}>Da</button>
-                    <button onClick={closeApprovePopup}>Ne</button>
+                    <h2>{popupAction === 'approve' ? 'Odobri zahtjev' : 'Odbij zahtjev'}</h2>
+                    <p>Da li ste sigurni da želite {popupAction === 'approve' ? 'odobriti' : 'odbiti'} ovaj zahtjev?</p>
+                    {popupAction === 'approve' ? (
+                        <button onClick={() => handleApprove(selectedRequest.id.groupId, selectedRequest.id.userId)}>Da</button>
+                    ) : (
+                        <button onClick={() => handleReject(selectedRequest.id.groupId, selectedRequest.id.userId)}>Da</button>
+                    )}
+                    <button onClick={closePopup}>Ne</button>
                 </div>
             </Popup>
         </div>

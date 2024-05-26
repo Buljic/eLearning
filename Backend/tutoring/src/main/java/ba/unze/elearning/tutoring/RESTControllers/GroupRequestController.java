@@ -39,27 +39,24 @@ public class GroupRequestController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
         }
 
-        List<GroupRequest> requests = groupRequestService.findAllRequests(page, size);
-        int totalRequests = groupRequestService.getTotalRequests();
-        int totalPages = (int) Math.ceil((double) totalRequests / size);
+        String tutorUsername = jwtUtil.getUsernameFromToken(token);
+        Map<String, Object> result = groupRequestService.getRequests(tutorUsername, page, size);
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("requests", requests);
-        response.put("totalPages", totalPages);
-
-        return ResponseEntity.status(HttpStatus.OK).body(response);
+        return ResponseEntity.status(HttpStatus.OK).body(result);
     }
 
     @PostMapping("/{groupId}/{userId}/accept")
-    public ResponseEntity<?> acceptRequest(
-            @PathVariable Long groupId,
-            @PathVariable Long userId,
-            HttpServletRequest request
-    ) {
+    public ResponseEntity<?> acceptRequest(@PathVariable Long groupId,
+                                           @PathVariable Long userId,
+                                           HttpServletRequest request) {
         String token = jwtUtil.extractJwtFromCookie(request);
-        String username = jwtUtil.getUsernameFromToken(token);
-        if (!jwtUtil.getRoleFromToken(token).equals("PROFESOR")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Niste ovlašteni za ovu radnju.");
+        if (token != null) {
+            String role = jwtUtil.getRoleFromToken(token);
+            if (!role.equals("PROFESOR")) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access denied");
+            }
+        } else {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
         }
 
         groupRequestService.acceptRequest(groupId, userId);
@@ -67,35 +64,39 @@ public class GroupRequestController {
     }
 
     @PostMapping("/{groupId}/{userId}/approve")
-    public ResponseEntity<?> approveRequest(
-            @PathVariable Long groupId,
-            @PathVariable Long userId,
-            HttpServletRequest request
-    ) {
+    public ResponseEntity<?> approveRequest(@PathVariable Long groupId,
+                                            @PathVariable Long userId,
+                                            HttpServletRequest request) {
         String token = jwtUtil.extractJwtFromCookie(request);
-        String username = jwtUtil.getUsernameFromToken(token);
-        if (!jwtUtil.getRoleFromToken(token).equals("PROFESOR")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Niste ovlašteni za ovu radnju.");
+        if (token != null) {
+            String role = jwtUtil.getRoleFromToken(token);
+            if (!role.equals("PROFESOR")) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access denied");
+            }
+        } else {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
         }
 
         try {
             groupRequestService.approveRequest(groupId, userId);
             return ResponseEntity.status(HttpStatus.OK).body("Zahtjev uspješno odobren.");
         } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
         }
     }
 
     @PostMapping("/{groupId}/{userId}/reject")
-    public ResponseEntity<?> rejectRequest(
-            @PathVariable Long groupId,
-            @PathVariable Long userId,
-            HttpServletRequest request
-    ) {
+    public ResponseEntity<?> rejectRequest(@PathVariable Long groupId,
+                                           @PathVariable Long userId,
+                                           HttpServletRequest request) {
         String token = jwtUtil.extractJwtFromCookie(request);
-        String username = jwtUtil.getUsernameFromToken(token);
-        if (!jwtUtil.getRoleFromToken(token).equals("PROFESOR")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Niste ovlašteni za ovu radnju.");
+        if (token != null) {
+            String role = jwtUtil.getRoleFromToken(token);
+            if (!role.equals("PROFESOR")) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access denied");
+            }
+        } else {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
         }
 
         groupRequestService.rejectRequest(groupId, userId);
