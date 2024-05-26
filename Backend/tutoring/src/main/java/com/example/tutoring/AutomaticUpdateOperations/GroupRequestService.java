@@ -110,10 +110,8 @@ public class GroupRequestService {
                     return request;
                 }
         );
-
         for (GroupRequest request : pendingRequests) {
-            jdbcTemplate.update("UPDATE group_requests SET status = 'REJECTED' WHERE user_id = ? AND group_id = ?",
-                    request.getId().getUserId(), request.getId().getGroupId());
+            jdbcTemplate.update("UPDATE group_requests SET status = 'REJECTED' WHERE user_id = ? AND group_id = ?", request.getId().getUserId(), request.getId().getGroupId());
             sendAutomatedMessage(request.getId().getUserId(), "Vaš zahtjev za grupu " + request.getId().getGroupId() + " je odbijen jer niste platili na vrijeme.");
         }
     }
@@ -126,18 +124,32 @@ public class GroupRequestService {
 
     public Map<String, Object> getRequests(String tutorUsername, int page, int size) {
         List<GroupRequest> requests = jdbcTemplate.query(
-                "SELECT gr.*, g.group_name, u.username " +
-                        "FROM group_requests gr " +
+                "SELECT gr.*, g.group_name, u.username FROM group_requests gr " +
                         "JOIN group_table g ON gr.group_id = g.group_id " +
                         "JOIN user u ON gr.user_id = u.id " +
-                        "WHERE g.headtutor_id = (SELECT id FROM user WHERE username = ?) " +
+                        "WHERE gr.status != 'REJECTED' AND gr.status != 'ACCEPTED' " +
+                        "AND g.headtutor_id = (SELECT id FROM user WHERE username = ?) " +
                         "LIMIT ? OFFSET ?",
                 new Object[]{tutorUsername, size, page * size},
-                new GroupRequestMapper()
+                (rs, rowNum) -> {
+                    GroupRequest request = new GroupRequest();
+                    GroupRequestId id = new GroupRequestId();
+                    id.setUserId(rs.getLong("user_id"));
+                    id.setGroupId(rs.getLong("group_id"));
+                    request.setId(id);
+                    request.setStatus(RequestStatus.valueOf(rs.getString("status")));
+                    request.setRequestDate(rs.getDate("request_date").toLocalDate());
+                    request.setGroupName(rs.getString("group_name"));
+                    request.setUsername(rs.getString("username"));
+                    return request;
+                }
         );
 
         int totalRequests = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM group_requests WHERE group_id IN (SELECT group_id FROM group_table WHERE headtutor_id = (SELECT id FROM user WHERE username = ?))",
+                "SELECT COUNT(*) FROM group_requests gr " +
+                        "JOIN group_table g ON gr.group_id = g.group_id " +
+                        "WHERE gr.status != 'REJECTED' AND gr.status != 'ACCEPTED' " +
+                        "AND g.headtutor_id = (SELECT id FROM user WHERE username = ?)",
                 new Object[]{tutorUsername},
                 Integer.class
         );
@@ -151,15 +163,8 @@ public class GroupRequestService {
     }
 
     public void acceptRequest(Long groupId, Long userId) {
-        jdbcTemplate.update("UPDATE group_requests SET status = 'PENDING' WHERE user_id = ? AND group_id = ?",
-                userId, groupId);
+        jdbcTemplate.update("UPDATE group_requests SET status = 'PENDING' WHERE user_id = ? AND group_id = ?", userId, groupId);
         sendAutomatedMessage(userId, "Vaš zahtjev za grupu " + groupId + " je prihvaćen.");
-    }
-
-    public void rejectRequest(Long groupId, Long userId) {
-        jdbcTemplate.update("UPDATE group_requests SET status = 'REJECTED' WHERE user_id = ? AND group_id = ?",
-                userId, groupId);
-        sendAutomatedMessage(userId, "Vaš zahtjev za grupu " + groupId + " je odbijen.");
     }
 
     public void approveRequest(Long groupId, Long userId) {
@@ -175,28 +180,16 @@ public class GroupRequestService {
                 Integer.class
         );
 
-        if (currentAccepted < maxStudents) {
-            jdbcTemplate.update("UPDATE group_requests SET status = 'ACCEPTED' WHERE user_id = ? AND group_id = ?",
-                    userId, groupId);
-            sendAutomatedMessage(userId, "Vaš zahtjev za grupu " + groupId + " je odobren.");
-        } else {
-            throw new RuntimeException("Grupa je popunjena. Nije moguće prihvatiti zahtjev.");
+        if (currentAccepted >= maxStudents) {
+            throw new RuntimeException("Nema dovoljno mjesta u grupi za prihvaćanje zahtjeva.");
         }
+
+        jdbcTemplate.update("UPDATE group_requests SET status = 'ACCEPTED' WHERE user_id = ? AND group_id = ?", userId, groupId);
+        sendAutomatedMessage(userId, "Vaš zahtjev za grupu " + groupId + " je odobren.");
     }
 
-    public List<GroupRequest> findAllRequests(int page, int size) {
-        String sql = "SELECT gr.*, g.group_name, u.username " +
-                "FROM group_requests gr " +
-                "JOIN group_table g ON gr.group_id = g.group_id " +
-                "JOIN user u ON gr.user_id = u.id " +
-                "WHERE gr.status != 'REJECTED' " +
-                "ORDER BY FIELD(gr.status, 'PENDING', 'REQUESTED', 'ACCEPTED') ASC " +
-                "LIMIT ? OFFSET ?";
-        return jdbcTemplate.query(sql, new Object[]{size, page * size}, new GroupRequestMapper());
-    }
-
-    public int getTotalRequests() {
-        String sql = "SELECT COUNT(*) FROM group_requests WHERE status != 'REJECTED'";
-        return jdbcTemplate.queryForObject(sql, Integer.class);
+    public void rejectRequest(Long groupId, Long userId) {
+        jdbcTemplate.update("UPDATE group_requests SET status = 'REJECTED' WHERE user_id = ? AND group_id = ?", userId, groupId);
+        sendAutomatedMessage(userId, "Vaš zahtjev za grupu " + groupId + " je odbijen.");
     }
 }
