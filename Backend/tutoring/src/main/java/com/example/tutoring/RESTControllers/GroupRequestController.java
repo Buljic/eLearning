@@ -39,8 +39,15 @@ public class GroupRequestController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
         }
 
-        Map<String, Object> requests = groupRequestService.getRequests(jwtUtil.getUsernameFromToken(token), page, size);
-        return ResponseEntity.status(HttpStatus.OK).body(requests);
+        List<GroupRequest> requests = groupRequestService.findAllRequests(page, size);
+        int totalRequests = groupRequestService.getTotalRequests();
+        int totalPages = (int) Math.ceil((double) totalRequests / size);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("requests", requests);
+        response.put("totalPages", totalPages);
+
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     @PostMapping("/{groupId}/{userId}/accept")
@@ -59,6 +66,26 @@ public class GroupRequestController {
         return ResponseEntity.status(HttpStatus.OK).body("Zahtjev uspješno prihvaćen.");
     }
 
+    @PostMapping("/{groupId}/{userId}/approve")
+    public ResponseEntity<?> approveRequest(
+            @PathVariable Long groupId,
+            @PathVariable Long userId,
+            HttpServletRequest request
+    ) {
+        String token = jwtUtil.extractJwtFromCookie(request);
+        String username = jwtUtil.getUsernameFromToken(token);
+        if (!jwtUtil.getRoleFromToken(token).equals("PROFESOR")) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Niste ovlašteni za ovu radnju.");
+        }
+
+        try {
+            groupRequestService.approveRequest(groupId, userId);
+            return ResponseEntity.status(HttpStatus.OK).body("Zahtjev uspješno odobren.");
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+    }
+
     @PostMapping("/{groupId}/{userId}/reject")
     public ResponseEntity<?> rejectRequest(
             @PathVariable Long groupId,
@@ -73,22 +100,6 @@ public class GroupRequestController {
 
         groupRequestService.rejectRequest(groupId, userId);
         return ResponseEntity.status(HttpStatus.OK).body("Zahtjev uspješno odbijen.");
-    }
-
-    @PostMapping("/{groupId}/{userId}/approve")
-    public ResponseEntity<?> approveRequest(
-            @PathVariable Long groupId,
-            @PathVariable Long userId,
-            HttpServletRequest request
-    ) {
-        String token = jwtUtil.extractJwtFromCookie(request);
-        String username = jwtUtil.getUsernameFromToken(token);
-        if (!jwtUtil.getRoleFromToken(token).equals("PROFESOR")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Niste ovlašteni za ovu radnju.");
-        }
-
-        groupRequestService.approveRequest(groupId, userId);
-        return ResponseEntity.status(HttpStatus.OK).body("Zahtjev uspješno odobren.");
     }
 }
 
