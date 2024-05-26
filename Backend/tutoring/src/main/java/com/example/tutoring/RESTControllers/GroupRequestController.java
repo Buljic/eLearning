@@ -40,7 +40,6 @@ public class GroupRequestController {
         }
 
         Map<String, Object> requests = groupRequestService.getRequests(jwtUtil.getUsernameFromToken(token), page, size);
-
         return ResponseEntity.status(HttpStatus.OK).body(requests);
     }
 
@@ -51,7 +50,8 @@ public class GroupRequestController {
             HttpServletRequest request
     ) {
         String token = jwtUtil.extractJwtFromCookie(request);
-        if (token == null || !jwtUtil.getRoleFromToken(token).equals("PROFESOR")) {
+        String username = jwtUtil.getUsernameFromToken(token);
+        if (!jwtUtil.getRoleFromToken(token).equals("PROFESOR")) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Niste ovlašteni za ovu radnju.");
         }
 
@@ -66,12 +66,29 @@ public class GroupRequestController {
             HttpServletRequest request
     ) {
         String token = jwtUtil.extractJwtFromCookie(request);
-        if (token == null || !jwtUtil.getRoleFromToken(token).equals("PROFESOR")) {
+        String username = jwtUtil.getUsernameFromToken(token);
+        if (!jwtUtil.getRoleFromToken(token).equals("PROFESOR")) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Niste ovlašteni za ovu radnju.");
         }
 
         groupRequestService.rejectRequest(groupId, userId);
         return ResponseEntity.status(HttpStatus.OK).body("Zahtjev uspješno odbijen.");
+    }
+
+    @PostMapping("/{groupId}/{userId}/approve")
+    public ResponseEntity<?> approveRequest(
+            @PathVariable Long groupId,
+            @PathVariable Long userId,
+            HttpServletRequest request
+    ) {
+        String token = jwtUtil.extractJwtFromCookie(request);
+        String username = jwtUtil.getUsernameFromToken(token);
+        if (!jwtUtil.getRoleFromToken(token).equals("PROFESOR")) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Niste ovlašteni za ovu radnju.");
+        }
+
+        groupRequestService.approveRequest(groupId, userId);
+        return ResponseEntity.status(HttpStatus.OK).body("Zahtjev uspješno odobren.");
     }
 }
 
