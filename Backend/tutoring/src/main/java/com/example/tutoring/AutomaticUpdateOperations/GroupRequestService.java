@@ -163,9 +163,25 @@ public class GroupRequestService {
     }
 
     public void approveRequest(Long groupId, Long userId) {
-        jdbcTemplate.update("UPDATE group_requests SET status = 'ACCEPTED' WHERE user_id = ? AND group_id = ?",
-                userId, groupId);
-        sendAutomatedMessage(userId, "Vaš zahtjev za grupu " + groupId + " je odobren.");
+        int currentAccepted = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM group_requests WHERE group_id = ? AND status = 'ACCEPTED'",
+                new Object[]{groupId},
+                Integer.class
+        );
+
+        int maxStudents = jdbcTemplate.queryForObject(
+                "SELECT max_students FROM group_table WHERE group_id = ?",
+                new Object[]{groupId},
+                Integer.class
+        );
+
+        if (currentAccepted < maxStudents) {
+            jdbcTemplate.update("UPDATE group_requests SET status = 'ACCEPTED' WHERE user_id = ? AND group_id = ?",
+                    userId, groupId);
+            sendAutomatedMessage(userId, "Vaš zahtjev za grupu " + groupId + " je odobren.");
+        } else {
+            throw new RuntimeException("Grupa je popunjena. Nije moguće prihvatiti zahtjev.");
+        }
     }
 
     public List<GroupRequest> findAllRequests(int page, int size) {
@@ -173,12 +189,14 @@ public class GroupRequestService {
                 "FROM group_requests gr " +
                 "JOIN group_table g ON gr.group_id = g.group_id " +
                 "JOIN user u ON gr.user_id = u.id " +
+                "WHERE gr.status != 'REJECTED' " +
+                "ORDER BY FIELD(gr.status, 'PENDING', 'REQUESTED', 'ACCEPTED') ASC " +
                 "LIMIT ? OFFSET ?";
         return jdbcTemplate.query(sql, new Object[]{size, page * size}, new GroupRequestMapper());
     }
 
     public int getTotalRequests() {
-        String sql = "SELECT COUNT(*) FROM group_requests";
+        String sql = "SELECT COUNT(*) FROM group_requests WHERE status != 'REJECTED'";
         return jdbcTemplate.queryForObject(sql, Integer.class);
     }
 }
