@@ -1,15 +1,15 @@
 package com.example.tutoring.WebSocket;
 
-public class GroupMessage
+public class GroupMessageDTO
 {
     private String message_text;
     private Long sender;
-    GroupMessage(String message_text,Long sender)
+    GroupMessageDTO(String message_text, Long sender)
     {
         this.message_text=message_text;
         this.sender=sender;
     }
-    GroupMessage(){}
+    GroupMessageDTO(){}
 
     public String getMessage_text()
     {
