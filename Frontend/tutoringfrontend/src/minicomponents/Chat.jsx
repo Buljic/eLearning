@@ -1,9 +1,6 @@
-import React, {useEffect, useRef, useState} from "react";
-
-import SockJS from 'sockjs-client';
-import Stomp from 'stompjs';
-import {act} from "react-dom/test-utils";
-
+import React, { useEffect, useRef, useState } from "react";
+import SockJS from "sockjs-client";
+import Stomp from "stompjs";
 
 function determineEndpoints(isGroupChat, chatId, myUserId) {
     if (isGroupChat) {
@@ -13,7 +10,6 @@ function determineEndpoints(isGroupChat, chatId, myUserId) {
             baseEndpoint: `${chatId}`
         };
     } else {
-
         const isMyUserIdLess = myUserId < chatId;
         const base = isMyUserIdLess ? `${myUserId}/${chatId}` : `${chatId}/${myUserId}`;
         return {
@@ -24,53 +20,40 @@ function determineEndpoints(isGroupChat, chatId, myUserId) {
     }
 }
 
-const Chat=({chatId,isGroupChat})=>{//ako je group chat onda proslijedujemo groupchatid a inace samo id te osobe
+const Chat = ({ chatId, isGroupChat }) => {
+    const storedUser = sessionStorage.getItem("myUser");
+    const myUser = JSON.parse(storedUser);
 
-    const storedUser=sessionStorage.getItem('myUser');
-    const myUser=JSON.parse(storedUser);
+    const stompClient = useRef(null);
+    const [ourEndpointToReceive, setOurEndpointToReceive] = useState("");
+    const [ourEndpointToSend, setOurEndpointToSend] = useState("");
+    const [baseEndpoint, setBaseEndpoint] = useState("");
+    const [messages, setMessages] = useState([]);
+    const [page, setPage] = useState(0);
 
-    const stompClient=useRef(null);
-    const[ourEndpointToReceive,setOurEndpointToReceive]=useState('');
-    const[ourEndpointToSend,setOurEndpointToSend]=useState('');
-    const[baseEndpoint,setBaseEndpoint]=useState('');//TODO skrati s 3 varijable na jednu i koristi ovu
+    const appendMessage = (messageBody, isGroupChat) => {
+        let chatBox = document.getElementById("chatBox");
+        let messageElement = document.createElement("div");
 
+        messageElement.innerText = messageBody.message_text;
 
-
-
-    useEffect(() => {
-        const allEndpoints = determineEndpoints(isGroupChat, chatId, myUser.id);
-        setOurEndpointToReceive(allEndpoints.receiveEndpoint);
-        setOurEndpointToSend(allEndpoints.sendEndpoint);
-        setBaseEndpoint(allEndpoints.baseEndpoint);
-
-        // Odredjivanje pravog endpointa na osnovu tipa chata
-        let socket;
         if (isGroupChat) {
-            socket = new SockJS('http://localhost:8080/api/chatGroup');
+            messageElement.className = messageBody.sender !== myUser.id ? "received-message" : "sent-message";
         } else {
-            socket = new SockJS('http://localhost:8080/api/chatTo');
+            messageElement.className = messageBody.user2 === myUser.id ? "received-message" : "sent-message";
         }
-        stompClient.current = Stomp.over(socket);
 
-        let subscription;
-        let activeConnection = false;
+        chatBox.appendChild(messageElement);
+    };
 
-        stompClient.current.connect({}, function (frame) {
-            console.log('Povezano: ' + frame);
-            activeConnection = true;
-
-            subscription = stompClient.current.subscribe(allEndpoints.receiveEndpoint, (messageOutput) => {
-                appendMessage(messageOutput.body, isGroupChat);
-            });
-        });
-
-        async function fetchPreviousMessages() {
-            let fetchEndpoint = '';
-            if (isGroupChat) {
-                fetchEndpoint = `http://localhost:8080/api/${chatId}/getOldGroupMessages`;
-            } else {
-                fetchEndpoint = `http://localhost:8080/api/${myUser.id}/${chatId}/getOldDirectMessages`;
-            }
+    const fetchPreviousMessages = async () => {
+        let fetchEndpoint = '';
+        if (isGroupChat) {
+            fetchEndpoint = `http://localhost:8080/api/${chatId}/getOldGroupMessages?page=${page}&size=10`;
+        } else {
+            fetchEndpoint = `http://localhost:8080/api/${myUser.id}/${chatId}/getOldDirectMessages?page=${page}&size=10`;
+        }
+        try {
             const response = await fetch(fetchEndpoint, {
                 method: 'GET',
                 credentials: 'include',
@@ -83,85 +66,88 @@ const Chat=({chatId,isGroupChat})=>{//ako je group chat onda proslijedujemo grou
                 return;
             }
             const poruke = await response.json();
+            console.log("Fetched messages: ", poruke);
             poruke.reverse();
-            poruke.forEach(poruka => {
-                appendMessage(JSON.stringify(poruka), isGroupChat);
-            });
+            setMessages(prevMessages => [...poruke, ...prevMessages]);
+            setPage(prevPage => prevPage + 1);
+        } catch (error) {
+            console.log("Greška prilikom dohvatanja starih poruka: ", error);
         }
+    };
+
+    useEffect(() => {
+        const allEndpoints = determineEndpoints(isGroupChat, chatId, myUser.id);
+        setOurEndpointToReceive(allEndpoints.receiveEndpoint);
+        setOurEndpointToSend(allEndpoints.sendEndpoint);
+        setBaseEndpoint(allEndpoints.baseEndpoint);
+
+        let socket;
+        if (isGroupChat) {
+            socket = new SockJS("http://localhost:8080/api/chatGroup");
+        } else {
+            socket = new SockJS("http://localhost:8080/api/chatTo");
+        }
+        stompClient.current = Stomp.over(socket);
+
+        let activeConnection = false;
+
+        stompClient.current.connect({}, function (frame) {
+            console.log("Povezano: " + frame);
+            activeConnection = true;
+
+            stompClient.current.subscribe(allEndpoints.receiveEndpoint, (messageOutput) => {
+                appendMessage(JSON.parse(messageOutput.body), isGroupChat);
+            });
+        });
 
         fetchPreviousMessages();
 
         return () => {
             if (activeConnection && stompClient.current) {
                 stompClient.current.disconnect(() => {
-                    console.log('Diskonektovan!');
+                    console.log("Diskonektovan!");
                 });
             }
         };
     }, [chatId, isGroupChat, myUser.id]);
 
-    function appendMessage(neformatiranaPoruka, isGroupChat) {
-        const messageBody = JSON.parse(neformatiranaPoruka);
-        let chatBox = document.getElementById('chatBox');
-        let messageElement = document.createElement('div');
-
-        messageElement.innerText = messageBody.message_text;
-
-        if (isGroupChat) {
-            messageElement.className = messageBody.sender !== myUser.id ? 'received-message' : 'sent-message';
-        } else {
-            messageElement.className = messageBody.user2 === myUser.id ? 'received-message' : 'sent-message';
-        }
-
-        chatBox.appendChild(messageElement);
-    }
-
-    function sendMessage()
-    {
-        if(!isGroupChat)
-        {
-
-        let messageElement = document.getElementById('messageInput');
-        let messageText = messageElement.value; //value se koristi za input field a ne innerText(on za <p> i sl)
-        if (messageText.trim() !== '')//da nije prazno
-        {
-            console.log(messageText+"OVO JE PORUKA");
-            const chatMessage={
-                message_text:messageText,
-                user2:chatId
-            };
-            stompClient.current.send(ourEndpointToSend, {}, JSON.stringify(chatMessage)/*JSON.stringify(messageText,chatId)*/);
+    const sendMessage = () => {
+        let messageElement = document.getElementById("messageInput");
+        let messageText = messageElement.value;
+        if (messageText.trim() !== "") {
+            if (!isGroupChat) {
+                const chatMessage = {
+                    message_text: messageText,
+                    user2: chatId
+                };
+                stompClient.current.send(ourEndpointToSend, {}, JSON.stringify(chatMessage));
+            } else {
+                const chatMessage = {
+                    message_text: messageText,
+                    sender: myUser.id
+                };
+                stompClient.current.send(ourEndpointToSend, {}, JSON.stringify(chatMessage));
+            }
             messageElement.value = '';
         }
-    }else{
-            let messageElement = document.getElementById('messageInput');
-            let messageText = messageElement.value; //value se koristi za input field a ne innerText(on za <p> i sl)
-            if (messageText.trim() !== '')//da nije prazno
-            {
-                console.log(messageText+"OVO JE PORUKA ZA GROUP");
-                const chatMessage={
-                    message_text:messageText,
-                    sender:myUser.id
-                };
-                stompClient.current.send(ourEndpointToSend, {}, JSON.stringify(chatMessage)/*JSON.stringify(messageText,chatId)*/);
-                messageElement.value = '';
-                console.log(ourEndpointToReceive+"OVO JE TAJ ENDPOINT");
-            }
-        }
-    }
+    };
 
     return (
         <div>
             <h1>Dopisivanje {myUser.id} sa {chatId}</h1>
 
             <div id="chatBox">
+                {messages.map((msg, index) => (
+                    <div key={index} className={msg.id.user1 === myUser.id ? 'sent-message' : 'received-message'}>
+                        {msg.messageText}
+                    </div>
+                ))}
             </div>
-            {/*TODO POSTAVI KONFIGURACIJU POSTO RADIMO S VITEOM*/}
-
-                <div className="input-area">
-                    <input type="text" id="messageInput" />
-                    <button type="submit" onClick={sendMessage}>Slanje</button>
-                </div>
+            <div className="input-area">
+                <input type="text" id="messageInput" />
+                <button type="submit" onClick={sendMessage}>Slanje</button>
+            </div>
+            <button onClick={fetchPreviousMessages}>Učitaj više</button>
         </div>
     );
 }

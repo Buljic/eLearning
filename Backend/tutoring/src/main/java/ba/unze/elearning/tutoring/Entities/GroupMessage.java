@@ -24,6 +24,10 @@ public class GroupMessage
 
    public GroupMessage(){}
 
+    public GroupMessage(GroupMessageId id, String messageText)
+    {
+    }
+
     public String getMessage_text()
     {
         return message_text;
