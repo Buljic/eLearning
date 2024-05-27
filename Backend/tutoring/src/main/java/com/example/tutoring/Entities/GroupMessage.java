@@ -22,7 +22,10 @@ public class GroupMessage
 
     private String message_text;
 
-   public GroupMessage(){}
+    @Transient
+    private String senderName;
+
+    public GroupMessage(){}
 
     public GroupMessage(GroupMessageId id, String messageText)
     {
@@ -66,5 +69,15 @@ public class GroupMessage
     public GroupMessageId getId()
     {
         return id;
+    }
+
+    public String getSenderName()
+    {
+        return senderName;
+    }
+
+    public void setSenderName(String senderName)
+    {
+        this.senderName = senderName;
     }
 }
