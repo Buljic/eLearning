@@ -22,6 +22,9 @@ public class DirectMessage
 
     private String messageText;
 
+    @Transient
+    private String senderName;
+
     public DirectMessage() {}
     public DirectMessage(DirectMessageId id, String messageText)
     {
@@ -43,5 +46,15 @@ public class DirectMessage
     public void setMessageText(String messageText)
     {
         this.messageText = messageText;
+    }
+
+    public String getSenderName()
+    {
+        return senderName;
+    }
+
+    public void setSenderName(String senderName)
+    {
+        this.senderName = senderName;
     }
 }
