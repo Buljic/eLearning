@@ -7,6 +7,7 @@ import com.example.tutoring.Repositories.DirectMessageRepository;
 import com.example.tutoring.Repositories.UserRepository;
 import com.example.tutoring.Security.JwtUtil;
 import com.example.tutoring.Services.MessageService;
+import com.example.tutoring.Services.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -121,11 +122,14 @@ public class ChatController {
     private final MessageService messageService;
     private final JwtUtil jwtUtil;
     private final SimpMessagingTemplate template;
+    private final UserService userService;
 
-    public ChatController(MessageService messageService, JwtUtil jwtUtil, SimpMessagingTemplate template) {
+    public ChatController(MessageService messageService, JwtUtil jwtUtil, SimpMessagingTemplate template,
+                          UserService userService) {
         this.messageService = messageService;
         this.jwtUtil = jwtUtil;
         this.template = template;
+        this.userService = userService;
     }
 
     @GetMapping("/{user1}/{user2}/getOldDirectMessages")
@@ -143,10 +147,6 @@ public class ChatController {
         }
 
         List<DirectMessage> messages = messageService.getOldDirectMessages(user1, user2, page, size);
-        System.out.println("Fetched " + messages.size() + " direct messages from the database.");
-        for (DirectMessage message : messages) {
-            System.out.println("Message: " + message.getMessageText());
-        }
         return ResponseEntity.ok(messages);
     }
 
@@ -165,40 +165,32 @@ public class ChatController {
         }
 
         List<GroupMessage> messages = messageService.getOldGroupMessages(groupId, page, size);
-        System.out.println("Fetched " + messages.size() + " group messages from the database.");
-        for (GroupMessage message : messages) {
-            System.out.println("Message: " + message.getMessage_text());
-        }
         return ResponseEntity.ok(messages);
     }
 
-        @MessageMapping("/{user1}/{user2}")//ima 'app' prefix   //mozda da se Principal nekako nastima da rjesi ovaj problem s servletom
+    @MessageMapping("/{user1}/{user2}")
     public void processMessageFromClient(@Payload ChatMessage chatMessage, @DestinationVariable String user1,
-                                         @DestinationVariable String user2
-            /*, HttpServletRequest request*/)
-    {
-        System.out.println(chatMessage.getMessage_text()+" OVO JE PORUKA NA BACKENDU "+ user1+" "+user2);
-        //DirectMessageId id=new DirectMessageId(Long.parseLong(user1),Long.parseLong(user2), LocalDateTime.now());
-
-        if(user1.equals(chatMessage.getUser2().toString()))//receiver treba biti na drugom mjestu tj kao user2
-        {
-            messageService.saveDirectMessage(Long.parseLong(user2), Long.parseLong(user1), chatMessage.getMessage_text());
-        }else messageService.saveDirectMessage(Long.parseLong(user1), Long.parseLong(user2), chatMessage.getMessage_text());
-        System.out.println("USPJESNO");
-        template.convertAndSend("/queue/"+user1+'/'+user2,chatMessage);
+                                         @DestinationVariable String user2) {
+        if (user1 == null || user2 == null) {
+            System.err.println("User IDs must not be null");
+            return;
+        }
+        if (user1.equals(chatMessage.getUser2().toString())) {
+            messageService.saveDirectMessage(Long.parseLong(user2), Long.parseLong(user1), chatMessage.getMessage_text(), chatMessage.getSenderName());
+        } else {
+            messageService.saveDirectMessage(Long.parseLong(user1), Long.parseLong(user2), chatMessage.getMessage_text(), chatMessage.getSenderName());
+        }
+        template.convertAndSend("/queue/" + user1 + '/' + user2, chatMessage);
     }
-
 
     @MessageMapping("/{groupId}")
-    public void processMessageFromGroup(@DestinationVariable Long groupId, @Payload GroupMessageDTO groupMessage)
-    {
-        System.out.println("OVO JE GROUP PORUKA"+groupMessage.getMessage_text()+" "+groupMessage.getSender()+" sa group"+groupId);
-        messageService.saveGroupMessage(groupId,groupMessage.getSender(),groupMessage.getMessage_text());
-        template.convertAndSend("/queue/"+groupId.toString(),groupMessage);
-        System.out.println("Provjera da li uopste postoji ovo ovdje");
-        System.out.println("/queue/"+groupId);
+    public void processMessageFromGroup(@DestinationVariable Long groupId, @Payload GroupMessage groupMessage) {
+        if (groupId == null || groupMessage.getId().getSender() == null) {
+            System.err.println("Group ID and sender ID must not be null");
+            return;
+        }
+        messageService.saveGroupMessage(groupId, groupMessage.getId().getSender(), groupMessage.getMessage_text(), groupMessage.getSenderName());
+        template.convertAndSend("/queue/" + groupId.toString(), groupMessage);
     }
-
-
 }
 

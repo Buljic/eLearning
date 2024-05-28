@@ -14,6 +14,7 @@ import jakarta.transaction.Transactional;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -40,6 +41,10 @@ public class UserService
         String username = jwtUtil.getUsernameFromToken(token);
         String userIdSql = "SELECT id FROM user WHERE username = ?;";
         return jdbcTemplate.queryForObject(userIdSql, new Object[]{username}, Long.class);
+    }
+
+    public User getUserById(Long id) {
+        return userRepository.findById(id).orElseThrow(() -> new UsernameNotFoundException("User not found"));
     }
 
     public List<StringNumber> findMostTutorSubjects()

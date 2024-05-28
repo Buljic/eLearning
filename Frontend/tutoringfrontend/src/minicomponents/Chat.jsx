@@ -80,6 +80,7 @@ const Chat = ({ chatId, isGroupChat }) => {
             text: messageBody.message_text,
             time: messageTime,
             sender: messageBody.senderName || (messageBody.id ? messageBody.id.user1 : myUser.id),
+            senderId: messageBody.senderId || (messageBody.id ? messageBody.id.user1 : myUser.id),
             user1: messageBody.id ? messageBody.id.user1 : myUser.id,
             user2: messageBody.id ? messageBody.id.user2 : chatId,
         };
@@ -121,6 +122,7 @@ const Chat = ({ chatId, isGroupChat }) => {
                     text: msg.messageText,
                     time: format(new Date(msg.id.time), "yyyy-MM-dd HH:mm:ss"),
                     sender: msg.senderName,
+                    senderId: msg.id.user1,
                     user1: msg.id.user1,
                     user2: msg.id.user2,
                 }));
@@ -141,7 +143,8 @@ const Chat = ({ chatId, isGroupChat }) => {
         if (messageText.trim() !== "") {
             const chatMessage = {
                 message_text: messageText,
-                sender: myUser.id,
+                senderId: myUser.id,
+                senderName: myUser.username,
                 user2: !isGroupChat ? chatId : undefined,
             };
             stompClient.current.send(ourEndpointToSend, {}, JSON.stringify(chatMessage));
@@ -151,15 +154,15 @@ const Chat = ({ chatId, isGroupChat }) => {
 
     return (
         <div>
-            <h1>Dopisivanje {myUser.id} sa {chatId}</h1>
+            <h1>Dopisivanje {myUser.username} sa {chatId}</h1>
 
             <button onClick={fetchPreviousMessages}>Učitaj više</button>
 
             <div id="chatBox">
                 {messages.map((msg, index) => (
-                    <div key={index} className={msg.user1 === myUser.id ? 'sent-message' : 'received-message'}>
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: msg.user1 === myUser.id ? 'flex-end' : 'flex-start', marginBottom: '10px' }}>
-                            <span style={{ backgroundColor: msg.user1 === myUser.id ? '#b3e5fc' : '#f1f1f1', borderRadius: '10px', padding: '10px', maxWidth: '70%' }}>
+                    <div key={index} className={msg.senderId === myUser.id ? 'sent-message' : 'received-message'}>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: msg.senderId === myUser.id ? 'flex-end' : 'flex-start', marginBottom: '10px' }}>
+                            <span style={{ backgroundColor: msg.senderId === myUser.id ? '#b3e5fc' : '#f1f1f1', borderRadius: '10px', padding: '10px', maxWidth: '70%' }}>
                                 <b>{msg.text}</b>
                                 <br />
                                 <span style={{ fontSize: '10px', color: 'gray', textAlign: 'right' }}><i>{msg.time}</i></span>
