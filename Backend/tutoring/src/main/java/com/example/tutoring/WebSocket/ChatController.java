@@ -2,7 +2,9 @@ package com.example.tutoring.WebSocket;
 
 import com.example.tutoring.DTOs.GenericDTO;
 import com.example.tutoring.Entities.DirectMessage;
+import com.example.tutoring.Entities.Embeddeds.GroupMessageId;
 import com.example.tutoring.Entities.GroupMessage;
+import com.example.tutoring.Entities.User;
 import com.example.tutoring.Repositories.DirectMessageRepository;
 import com.example.tutoring.Repositories.UserRepository;
 import com.example.tutoring.Security.JwtUtil;
@@ -18,6 +20,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 //@Controller //ne treba nam restcontrollerovdje jer koristimo @Messagemappiong
@@ -150,23 +153,40 @@ public class ChatController {
         return ResponseEntity.ok(messages);
     }
 
-    @GetMapping("/{groupId}/getOldGroupMessages")
-    public ResponseEntity<?> getOldGroupMessages(HttpServletRequest request, @PathVariable Long groupId,
-                                                 @RequestParam(defaultValue = "0") int page,
-                                                 @RequestParam(defaultValue = "10") int size) {
-        String token = jwtUtil.extractJwtFromCookie(request);
-        if (token != null) {
-            String role = jwtUtil.getRoleFromToken(token);
-            if (!role.equals("STUDENT") && !role.equals("PROFESOR")) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access denied");
-            }
-        } else {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
+//    @GetMapping("/{groupId}/getOldGroupMessages")
+//    public ResponseEntity<?> getOldGroupMessages(HttpServletRequest request, @PathVariable Long groupId,
+//                                                 @RequestParam(defaultValue = "0") int page,
+//                                                 @RequestParam(defaultValue = "10") int size) {
+//        String token = jwtUtil.extractJwtFromCookie(request);
+//        if (token != null) {
+//            String role = jwtUtil.getRoleFromToken(token);
+//            if (!role.equals("STUDENT") && !role.equals("PROFESOR")) {
+//                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access denied");
+//            }
+//        } else {
+//            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
+//        }
+//
+//        List<GroupMessage> messages = messageService.getOldGroupMessages(groupId, page, size);
+//        return ResponseEntity.ok(messages);
+//    }
+@GetMapping("/{groupId}/getOldGroupMessages")
+public ResponseEntity<?> getOldGroupMessages(HttpServletRequest request, @PathVariable Long groupId,
+                                             @RequestParam(defaultValue = "0") int page,
+                                             @RequestParam(defaultValue = "10") int size) {
+    String token = jwtUtil.extractJwtFromCookie(request);
+    if (token != null) {
+        String role = jwtUtil.getRoleFromToken(token);
+        if (!role.equals("STUDENT") && !role.equals("PROFESOR")) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access denied");
         }
-
-        List<GroupMessage> messages = messageService.getOldGroupMessages(groupId, page, size);
-        return ResponseEntity.ok(messages);
+    } else {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
     }
+
+    List<GenericDTO> messages = messageService.getOldGroupMessages(groupId, page, size);
+    return ResponseEntity.ok(messages);
+}
 
     @MessageMapping("/{user1}/{user2}")
     public void processMessageFromClient(@Payload ChatMessage chatMessage, @DestinationVariable String user1,
@@ -183,14 +203,28 @@ public class ChatController {
         template.convertAndSend("/queue/" + user1 + '/' + user2, chatMessage);
     }
 
-    @MessageMapping("/{groupId}")
-    public void processMessageFromGroup(@DestinationVariable Long groupId, @Payload GroupMessage groupMessage) {
-        if (groupId == null || groupMessage.getId().getSender() == null) {
-            System.err.println("Group ID and sender ID must not be null");
-            return;
-        }
-        messageService.saveGroupMessage(groupId, groupMessage.getId().getSender(), groupMessage.getMessage_text(), groupMessage.getSenderName());
-        template.convertAndSend("/queue/" + groupId.toString(), groupMessage);
+//    @MessageMapping("/{groupId}")
+//    public void processMessageFromGroup(@DestinationVariable Long groupId, @Payload GroupMessage groupMessage) {
+//        if (groupId == null || groupMessage.getId().getSender() == null) {
+//            System.err.println("Group ID and sender ID must not be null");
+//            return;
+//        }
+//        messageService.saveGroupMessage(groupId, groupMessage.getId().getSender(), groupMessage.getMessage_text(), groupMessage.getSenderName());
+//        template.convertAndSend("/queue/" + groupId.toString(), groupMessage);
+//    }
+@MessageMapping("/{groupId}")
+public void processMessageFromGroup(@DestinationVariable Long groupId, @Payload ChatMessage groupMessage) {
+    System.out.println("Processing group message from groupId: " + groupId);
+    System.out.println("ChatMessage: " + groupMessage);
+
+    // Proveri da li su svi podaci prisutni pre nego što pokušaš da sačuvaš poruku
+    if (groupMessage.getSenderId() == null || groupMessage.getMessage_text() == null) {
+        System.out.println("Missing senderId or messageText in the message");
+        return;
     }
+
+    messageService.saveGroupMessage(groupId, groupMessage.getSenderId(), groupMessage.getMessage_text());
+    template.convertAndSend("/queue/" + groupId.toString(), groupMessage);
+}
 }
 

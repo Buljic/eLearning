@@ -8,6 +8,7 @@ public class ChatMessage
     //Ovo se moze koristiti u slucaju ako koristimo jedan endpoint , da razlikuje od koga stize poruka
     private Long senderId;
     private String senderName;
+
     public ChatMessage(String message_text, Long user2)
     {
         this.message_text = message_text;
