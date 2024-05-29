@@ -4,6 +4,7 @@ import Chat from "../minicomponents/Chat.jsx";
 import Lessons from "../minicomponents/Lessons.jsx";
 import Assignments from "../minicomponents/Assignments.jsx";
 import VideoCall from "../minicomponents/VideoCall.jsx";
+import ChatForGroup from "../minicomponents/ChatForGroup.jsx";
 
 const GroupOverview = () => {
     const { groupId } = useParams();
@@ -12,7 +13,7 @@ const GroupOverview = () => {
     const renderTabContent = () => {
         switch (activeTab) {
             case "chat":
-                return <Chat chatId={groupId} isGroupChat={true} />;
+                return <ChatForGroup chatId={groupId} isGroupChat={true} />;
             case "lessons":
                 return <Lessons groupId={groupId} />;
             case "assignments":

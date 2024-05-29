@@ -31,6 +31,10 @@ public class GroupMessage
     {
     }
 
+    public GroupMessage(GroupMessageId groupMessageId, User sender, String messageText, String senderName)
+    {
+    }
+
     public String getMessage_text()
     {
         return message_text;
@@ -79,5 +83,12 @@ public class GroupMessage
     public void setSenderName(String senderName)
     {
         this.senderName = senderName;
+    }
+
+    public Long getSenderId() {
+        if (user != null) {
+            return user.getId();
+        }
+        return null; // or throw an exception
     }
 }

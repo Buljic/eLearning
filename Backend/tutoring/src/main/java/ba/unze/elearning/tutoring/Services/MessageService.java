@@ -91,23 +91,99 @@ public void saveDirectMessage(Long user1, Long user2, String message, String sen
         );
     }
 
-    public void saveGroupMessage(Long group, Long sender, String message, String senderName) {
-        String sql = "INSERT INTO group_message(group_id, sender, time, message_text) VALUES (?, ?, ?, ?)";
-        jdbcTemplate.update(sql, group, sender, LocalDateTime.now(), message);
+//    public void saveGroupMessage(Long group, Long sender, String message, String senderName) {
+//        String sql = "INSERT INTO group_message(group_id, sender, time, message_text) VALUES (?, ?, ?, ?)";
+//        jdbcTemplate.update(sql, group, sender, LocalDateTime.now(), message);
+//    }
+//
+//    public List<GroupMessage> getOldGroupMessages(Long groupId, int page, int size) {
+//        return jdbcTemplate.query(
+//                "SELECT gm.*, u.username AS sender_name FROM group_message gm " +
+//                        "JOIN user u ON gm.sender = u.id " +
+//                        "WHERE gm.group_id = ? ORDER BY gm.time DESC LIMIT ? OFFSET ?",
+//                new Object[]{groupId, size, page * size},
+//                (rs, rowNum) -> {
+//                    GroupMessageId id = new GroupMessageId(rs.getLong("group_id"), rs.getLong("sender"), rs.getTimestamp("time").toLocalDateTime());
+//                    GroupMessage message = new GroupMessage(id, rs.getString("message_text"));
+//                    message.setSenderName(rs.getString("sender_name"));
+//                    return message;
+//                }
+//        );
+//    }
+
+//    public void saveGroupMessage(Long groupId, Long senderId, String message) {
+//        String sql = "INSERT INTO group_message(group_id, sender, time, message_text) VALUES (?, ?, ?, ?)";
+//        jdbcTemplate.update(sql, groupId, senderId, LocalDateTime.now(), message);
+//    }
+//
+//    public List<GroupMessage> getOldGroupMessages(Long groupId, int page, int size) {
+//        String sql = "SELECT gm.*, u.username AS sender_name FROM group_message gm " +
+//                "JOIN user u ON gm.sender = u.id " +
+//                "WHERE gm.group_id = ? ORDER BY gm.time DESC LIMIT ? OFFSET ?";
+//        return jdbcTemplate.query(sql, new Object[]{groupId, size, page * size},
+//                (rs, rowNum) -> {
+//                    GroupMessageId id = new GroupMessageId(rs.getLong("group_id"), rs.getLong("sender"), rs.getTimestamp("time").toLocalDateTime());
+//                    GroupMessage message = new GroupMessage(id, rs.getString("message_text"));
+//                    message.setSenderName(rs.getString("sender_name"));
+//                    return message;
+//                }
+//        );
+//    }
+//public void saveGroupMessage(Long group, Long sender, String message) {
+//    String sql = "INSERT INTO group_message(group_id, sender, time, message_text) VALUES (?, ?, ?, ?)";
+//    jdbcTemplate.update(sql, group, sender, LocalDateTime.now(), message);
+//}
+//
+//    public List<GroupMessage> getOldGroupMessages(Long groupId, int page, int size) {
+//        return jdbcTemplate.query(
+//                "SELECT gm.*, u.username AS sender_name FROM group_message gm " +
+//                        "JOIN user u ON gm.sender = u.id " +
+//                        "WHERE gm.group_id = ? ORDER BY gm.time DESC LIMIT ? OFFSET ?",
+//                new Object[]{groupId, size, page * size},
+//                (rs, rowNum) -> {
+//                    GroupMessageId id = new GroupMessageId(rs.getLong("group_id"), rs.getLong("sender"), rs.getTimestamp("time").toLocalDateTime());
+//                    GroupMessage message = new GroupMessage(id, rs.getString("message_text"));
+//                    message.setSenderName(rs.getString("sender_name"));
+//                    return message;
+//                }
+//        );
+//    }
+public void saveGroupMessage(Long group, Long sender, String message) {
+    System.out.println("Saving group message. Group: " + group + ", Sender: " + sender + ", Message: " + message);
+
+    GroupMessage groupMessage = new GroupMessage();
+    GroupMessageId groupMessageId = new GroupMessageId();
+    groupMessageId.setGroup(group);
+    groupMessageId.setSender(sender);
+    groupMessageId.setTime(LocalDateTime.now());
+
+    groupMessage.setId(groupMessageId);
+    groupMessage.setMessage_text(message);
+
+    System.out.println("GroupMessage to save: " + groupMessage);
+
+    String sql = "INSERT INTO group_message(group_id, sender, time, message_text) VALUES (?, ?, ?, ?)";
+    jdbcTemplate.update(sql, new Object[]{group, sender, LocalDateTime.now(), message});
+}
+
+    public List<GenericDTO> getOldGroupMessages(Long groupId, int page, int size) {
+        String sql = "SELECT gm.*, u.username AS sender_name " +
+                "FROM group_message gm " +
+                "JOIN user u ON gm.sender = u.id " +
+                "WHERE gm.group_id = ? " +
+                "ORDER BY gm.time DESC LIMIT ? OFFSET ?";
+        List<GenericDTO> messages = jdbcTemplate.query(sql, new Object[]{groupId, size, page * size}, (rs, rowNum) -> {
+            GenericDTO message = new GenericDTO();
+            message.addProperty("group_id", rs.getLong("group_id"));
+            message.addProperty("senderId", rs.getLong("sender"));
+            message.addProperty("time", rs.getTimestamp("time").toLocalDateTime());
+            message.addProperty("message_text", rs.getString("message_text"));
+            message.addProperty("sender_name", rs.getString("sender_name"));
+            System.out.println("Fetched group message: " + message.toString());
+            return message;
+        });
+
+        return messages;
     }
 
-    public List<GroupMessage> getOldGroupMessages(Long groupId, int page, int size) {
-        return jdbcTemplate.query(
-                "SELECT gm.*, u.username AS sender_name FROM group_message gm " +
-                        "JOIN user u ON gm.sender = u.id " +
-                        "WHERE gm.group_id = ? ORDER BY gm.time DESC LIMIT ? OFFSET ?",
-                new Object[]{groupId, size, page * size},
-                (rs, rowNum) -> {
-                    GroupMessageId id = new GroupMessageId(rs.getLong("group_id"), rs.getLong("sender"), rs.getTimestamp("time").toLocalDateTime());
-                    GroupMessage message = new GroupMessage(id, rs.getString("message_text"));
-                    message.setSenderName(rs.getString("sender_name"));
-                    return message;
-                }
-        );
-    }
 }
