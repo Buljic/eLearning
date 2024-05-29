@@ -3,6 +3,7 @@ package com.example.tutoring.Entities;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table (name = "lessons")
@@ -18,6 +19,27 @@ public class Lesson {
     private String title;
     private String content;
     private LocalDateTime createdAt = LocalDateTime.now();
+    @Transient
+    private List<String> fileNames;
+
+    public Lesson()
+    {
+    }
+
+    public Lesson(Long lessonId)
+    {
+        this.id = lessonId;
+    }
+
+    public List<String> getFileNames()
+    {
+        return fileNames;
+    }
+
+    public void setFileNames(List<String> fileNames)
+    {
+        this.fileNames = fileNames;
+    }
 
     public Long getId()
     {
