@@ -44,6 +44,15 @@ public class Group
     @OneToMany(mappedBy = "group", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<GroupSubject> groupSubjects;
 
+    public Group()
+    {
+    }
+
+    public Group(Long groupId)
+    {
+        this.group_id=groupId;
+    }
+
     public Long getGroup_id()
     {
         return group_id;
