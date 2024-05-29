@@ -21,6 +21,7 @@ import CreateGroup from "./components/CreateGroup.jsx";
 import GroupSearch from "./components/GroupSearch.jsx";
 import GroupDetails from "./components/GroupDetails.jsx";
 import GroupRequests from "./components/GroupRequests.jsx";
+import GroupOverview from "./components/GroupOverview.jsx";
 function App() {
     // const [myUser,setMyUser]=useState(null);
     return (
@@ -44,10 +45,13 @@ function App() {
 
                 <Route path="/attendedCourses" element={<AttendedSubjects/>}/>
                 <Route path="/groupSearch" element={<GroupSearch/>}/>
-                <Route path="/chatGroup/:objectGroup" element={<ChatGroup/>}/>
+
                 <Route path="/createGroup" element={<CreateGroup/>}/>
                 <Route path="/groupDetails/:groupId" element={<GroupDetails />} />
                 <Route path="/groupRequests" element={<GroupRequests />} />
+
+                <Route path="/chatGroup/:objectGroup" element={<ChatGroup/>}/>
+                <Route path="/group/:groupId" element={<GroupOverview />} />
                 {/*<Route path="/tutorsFor/:subject" element={<tutorsForSubject/>}> </Route>*/}
                 <Route path="/" element={<Homepage />}></Route>
                 <Route path="*" element={<Navigate to="/" replace/>}/>
