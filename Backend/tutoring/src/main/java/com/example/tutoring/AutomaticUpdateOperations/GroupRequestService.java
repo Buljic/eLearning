@@ -2,6 +2,7 @@ package com.example.tutoring.AutomaticUpdateOperations;
 
 import com.example.tutoring.Entities.Embeddeds.GroupRequestId;
 import com.example.tutoring.Entities.GroupRequest;
+import com.example.tutoring.Other.CustomGroupRequestMapper;
 import com.example.tutoring.Other.GroupRequestMapper;
 import com.example.tutoring.Other.RequestStatus;
 import com.example.tutoring.WebSocket.ChatMessage;
@@ -93,6 +94,11 @@ public class GroupRequestService {
 //        result.put("totalPages", (int) Math.ceil((double) total / size));
 //        return result;
 //    }
+
+    public List<GroupRequest> getAcceptedGroupRequests() {
+        String sql = "SELECT gr.*, u.username FROM group_requests gr JOIN user u ON gr.user_id = u.id WHERE status = 'ACCEPTED' AND request_date <= CURRENT_DATE";
+        return jdbcTemplate.query(sql, new CustomGroupRequestMapper());
+    }
 
     @Scheduled(cron = "0 0 0 * * ?")
     public void updateRequestStatuses() {

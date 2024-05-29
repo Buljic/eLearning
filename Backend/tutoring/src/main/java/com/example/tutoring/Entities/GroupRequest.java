@@ -33,6 +33,14 @@ public class GroupRequest {
     @Transient
     private String username;
 
+    public Long getUserId() {
+        return id.getUserId();
+    }
+
+    public Long getGroupId() {
+        return id.getGroupId();
+    }
+
     public String getUsername()
     {
         return username;
