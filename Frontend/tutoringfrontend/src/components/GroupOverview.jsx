@@ -1,17 +1,18 @@
 import React, { useState } from "react";
+import { useParams } from "react-router-dom";
 import Chat from "../minicomponents/Chat.jsx";
 import Lessons from "../minicomponents/Lessons.jsx";
 import Assignments from "../minicomponents/Assignments.jsx";
 import VideoCall from "../minicomponents/VideoCall.jsx";
 
-
-const GroupOverview = ({ groupId, isGroupChat }) => {
+const GroupOverview = () => {
+    const { groupId } = useParams();
     const [activeTab, setActiveTab] = useState("chat");
 
     const renderTabContent = () => {
         switch (activeTab) {
             case "chat":
-                return <Chat chatId={groupId} isGroupChat={isGroupChat} />;
+                return <Chat chatId={groupId} isGroupChat={true} />;
             case "lessons":
                 return <Lessons groupId={groupId} />;
             case "assignments":
@@ -19,7 +20,7 @@ const GroupOverview = ({ groupId, isGroupChat }) => {
             case "videoCall":
                 return <VideoCall groupId={groupId} />;
             default:
-                return <Chat chatId={groupId} isGroupChat={isGroupChat} />;
+                return <Chat chatId={groupId} isGroupChat={true} />;
         }
     };
 
