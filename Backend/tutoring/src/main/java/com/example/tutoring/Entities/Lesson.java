@@ -3,6 +3,7 @@ package com.example.tutoring.Entities;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -22,6 +23,9 @@ public class Lesson {
     @Transient
     private List<String> fileNames;
 
+    @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Material> materials = new ArrayList<>();
+
     public Lesson()
     {
     }
@@ -29,6 +33,16 @@ public class Lesson {
     public Lesson(Long lessonId)
     {
         this.id = lessonId;
+    }
+
+    public List<Material> getMaterials()
+    {
+        return materials;
+    }
+
+    public void setMaterials(List<Material> materials)
+    {
+        this.materials = materials;
     }
 
     public List<String> getFileNames()

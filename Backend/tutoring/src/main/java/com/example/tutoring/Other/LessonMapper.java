@@ -11,8 +11,7 @@ import java.sql.SQLException;
 public class LessonMapper implements RowMapper<Lesson>
 {
     @Override
-    public Lesson mapRow(ResultSet rs, int rowNum) throws SQLException
-    {
+    public Lesson mapRow(ResultSet rs, int rowNum) throws SQLException {
         Lesson lesson = new Lesson();
         lesson.setId(rs.getLong("id"));
         lesson.setTitle(rs.getString("title"));

@@ -1,15 +1,15 @@
 import React, { useState } from "react";
 
 const UploadLessonFile = ({ lessonId }) => {
-    const [selectedFile, setSelectedFile] = useState(null);
+    const [file, setFile] = useState(null);
 
-    const handleFileChange = (event) => {
-        setSelectedFile(event.target.files[0]);
+    const handleFileChange = (e) => {
+        setFile(e.target.files[0]);
     };
 
     const handleUpload = async () => {
         const formData = new FormData();
-        formData.append("file", selectedFile);
+        formData.append("file", file);
 
         const response = await fetch(`http://localhost:8080/api/lessons/${lessonId}/upload`, {
             method: "POST",
