@@ -3,6 +3,7 @@ package com.example.tutoring.Entities;
 import jakarta.persistence.*;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
@@ -12,7 +13,7 @@ public class Assignment {
     private Long id;
     private String name;
     private String description;
-    private LocalDate dueDate;
+    private LocalDateTime dueDateTime;
     private Integer points;
     private String imageUrl;
 
@@ -62,14 +63,14 @@ public class Assignment {
         this.description = description;
     }
 
-    public LocalDate getDueDate()
+    public LocalDateTime getDueDateTime()
     {
-        return dueDate;
+        return dueDateTime;
     }
 
-    public void setDueDate(LocalDate dueDate)
+    public void setDueDateTime(LocalDateTime dueDateTime)
     {
-        this.dueDate = dueDate;
+        this.dueDateTime = dueDateTime;
     }
 
     public Integer getPoints()

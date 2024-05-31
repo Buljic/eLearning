@@ -1,6 +1,9 @@
 package com.example.tutoring.Entities;
 
+import com.example.tutoring.Other.SubmissionStatus;
 import jakarta.persistence.*;
+
+import java.time.LocalDateTime;
 
 @Entity
 public class AssignmentSubmission {
@@ -10,6 +13,10 @@ public class AssignmentSubmission {
     private String fileUrl;
     private String feedback;
     private Integer grade;
+    private LocalDateTime submissionTime;
+
+    @Enumerated(EnumType.STRING)
+    private SubmissionStatus status;
 
     @ManyToOne
     @JoinColumn(name = "assignment_id")
@@ -37,6 +44,26 @@ public class AssignmentSubmission {
     public void setFileUrl(String fileUrl)
     {
         this.fileUrl = fileUrl;
+    }
+
+    public LocalDateTime getSubmissionTime()
+    {
+        return submissionTime;
+    }
+
+    public void setSubmissionTime(LocalDateTime submissionTime)
+    {
+        this.submissionTime = submissionTime;
+    }
+
+    public SubmissionStatus getStatus()
+    {
+        return status;
+    }
+
+    public void setStatus(SubmissionStatus status)
+    {
+        this.status = status;
     }
 
     public String getFeedback()

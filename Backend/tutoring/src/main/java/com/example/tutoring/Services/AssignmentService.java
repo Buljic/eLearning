@@ -18,12 +18,12 @@ public class AssignmentService {
     }
 
     public List<Assignment> getAssignmentsByGroupId(Long groupId) {
-        String sql = "SELECT * FROM assignments WHERE group_id = ? ORDER BY due_date DESC";
+        String sql = "SELECT * FROM assignment WHERE group_id = ? ORDER BY due_date DESC";
         return jdbcTemplate.query(sql, new Object[]{groupId}, new AssignmentMapper());
     }
 
     public void saveAssignment(Assignment assignment) {
-        String sql = "INSERT INTO assignments (name, description, due_date, points, image_url, group_id) VALUES (?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO assignment (name, description, due_date, points, image_url, group_id) VALUES (?, ?, ?, ?, ?, ?)";
         jdbcTemplate.update(sql, assignment.getName(), assignment.getDescription(), assignment.getDueDate(), assignment.getPoints(), assignment.getImageUrl(), assignment.getGroup().getGroup_id());
     }
 
