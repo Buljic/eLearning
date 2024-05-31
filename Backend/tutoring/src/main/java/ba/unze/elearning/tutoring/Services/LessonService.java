@@ -52,6 +52,10 @@ public class LessonService {
     }
 
     public void saveMaterial(Material material) {
+        String fileName = material.getFileName();
+        String relativePath = "/uploads/" + fileName;
+        material.setFileUrl(relativePath); //Relativni path
+
         String sql = "INSERT INTO materials (lesson_id, file_name, file_type, file_url) VALUES (?, ?, ?, ?)";
         System.out.println("Saving material with lessonId: " + material.getLesson().getId());
         jdbcTemplate.update(sql, material.getLesson().getId(), material.getFileName(), material.getFileType(), material.getFileUrl());

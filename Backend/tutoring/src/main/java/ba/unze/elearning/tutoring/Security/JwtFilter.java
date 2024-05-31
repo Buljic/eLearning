@@ -33,10 +33,10 @@ public class JwtFilter extends GenericFilterBean
 
         //Ovdje navodis sve endpointe koje ce jwt filter ignorirati tj sve one za koje frontend moze slati zahtjev a nije potrebna
         //registracija
-        List<String> ignoredEndpointsBy = Arrays.asList("/api/login", "/api/createAccount", "/", "chatTo");
+        List<String> ignoredEndpointsBy = Arrays.asList("/api/login", "/api/createAccount", "/", "chatTo","/uploads","Screenshot","png");
 
         // Preskacete provjeru JWT-a za login endpoint
-        if (ignoredEndpointsBy.contains(requestURI))
+        if (requestURI.toLowerCase().contains("/uploads") || ignoredEndpointsBy.contains(requestURI) || requestURI.contains("Screen"))
         {  //TODO IGNORE NAPRAVI
             chain.doFilter(request, response);
             return;
