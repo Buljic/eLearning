@@ -23,6 +23,15 @@ public class Assignment {
     @OneToMany(mappedBy = "assignment", cascade = CascadeType.ALL)
     private List<AssignmentSubmission> submissions;
 
+    public Assignment(Long assignmentId)
+    {
+        this.id=assignmentId;
+    }
+
+    public Assignment()
+    {
+    }
+
     public Long getId()
     {
         return id;
