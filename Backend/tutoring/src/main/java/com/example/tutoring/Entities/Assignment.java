@@ -1,5 +1,7 @@
 package com.example.tutoring.Entities;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 
 import java.time.LocalDate;
@@ -13,6 +15,8 @@ public class Assignment {
     private Long id;
     private String name;
     private String description;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm")
+    @JsonProperty ("dueDateTime")
     private LocalDateTime dueDateTime;
     private Integer points;
     private String imageUrl;

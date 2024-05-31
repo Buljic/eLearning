@@ -1,14 +1,18 @@
 package com.example.tutoring.RESTControllers;
 
 
+import com.example.tutoring.DTOs.AssignmentRequest;
 import com.example.tutoring.Entities.Assignment;
 import com.example.tutoring.Entities.AssignmentSubmission;
+import com.example.tutoring.Entities.Group;
 import com.example.tutoring.Entities.User;
 import com.example.tutoring.Security.JwtUtil;
 import com.example.tutoring.Services.AssignmentService;
 import com.example.tutoring.Services.StorageService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.exc.InvalidDefinitionException;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -18,19 +22,22 @@ import org.springframework.beans.factory.annotation.Value;
 import java.util.List;
 
 @RestController
-@RequestMapping ("/api")
+@RequestMapping("/api")
 public class AssignmentController {
     private final AssignmentService assignmentService;
     private final JwtUtil jwtUtil;
     private final StorageService storageService;
+    private final ObjectMapper objectMapper;
 
     @Value("${file.upload-dir}")
     private String uploadDir;
 
-    public AssignmentController(AssignmentService assignmentService, JwtUtil jwtUtil, StorageService storageService) {
+    @Autowired
+    public AssignmentController(AssignmentService assignmentService, JwtUtil jwtUtil, StorageService storageService, ObjectMapper objectMapper) {
         this.assignmentService = assignmentService;
         this.jwtUtil = jwtUtil;
         this.storageService = storageService;
+        this.objectMapper = objectMapper;
     }
 
     @PostMapping(value = "/assignments", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -39,15 +46,29 @@ public class AssignmentController {
         if (token != null) {
             String role = jwtUtil.getRoleFromToken(token);
             if (role.equals("PROFESOR")) {
-                Assignment assignment;
+                AssignmentRequest assignmentRequest;
                 try {
-                    assignment = new ObjectMapper().readValue(assignmentData, Assignment.class);
+                    System.out.println("Received JSON: " + assignmentData);
+                    assignmentRequest = objectMapper.readValue(assignmentData, AssignmentRequest.class);
+                    Assignment assignment = new Assignment();
+                    assignment.setName(assignmentRequest.getName());
+                    assignment.setDescription(assignmentRequest.getDescription());
+                    assignment.setDueDateTime(assignmentRequest.getDueDateTime());
+                    assignment.setPoints(assignmentRequest.getPoints());
+
+                    Group group = new Group();
+                    group.setGroup_id(assignmentRequest.getGroup_id());
+                    assignment.setGroup(group);
+
                     if (!file.isEmpty()) {
                         String fileName = storageService.storeAssignment(file);
                         assignment.setImageUrl("/uploads/assignments/" + fileName);
                     }
                     assignmentService.saveAssignment(assignment);
                     return ResponseEntity.status(HttpStatus.CREATED).body("Assignment created successfully");
+                } catch (InvalidDefinitionException e) {
+                    e.printStackTrace();
+                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to parse assignment data: " + e.getMessage());
                 } catch (Exception e) {
                     e.printStackTrace();
                     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to create assignment");

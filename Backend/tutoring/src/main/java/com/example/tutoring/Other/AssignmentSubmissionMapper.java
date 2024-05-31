@@ -1,6 +1,8 @@
 package com.example.tutoring.Other;
 
+import com.example.tutoring.Entities.Assignment;
 import com.example.tutoring.Entities.AssignmentSubmission;
+import com.example.tutoring.Entities.User;
 import org.springframework.jdbc.core.RowMapper;
 
 import java.sql.ResultSet;
@@ -14,7 +16,17 @@ public class AssignmentSubmissionMapper implements RowMapper<AssignmentSubmissio
         submission.setFileUrl(rs.getString("file_url"));
         submission.setFeedback(rs.getString("feedback"));
         submission.setGrade(rs.getInt("grade"));
+        submission.setSubmissionTime(rs.getTimestamp("submission_time").toLocalDateTime());
+        submission.setStatus(SubmissionStatus.valueOf(rs.getString("status")));
+
+        Assignment assignment = new Assignment();
+        assignment.setId(rs.getLong("assignment_id"));
+        submission.setAssignment(assignment);
+
+        User student = new User();
+        student.setId(rs.getLong("user_id"));
+        submission.setStudent(student);
+
         return submission;
     }
 }
-
