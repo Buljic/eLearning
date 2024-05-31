@@ -179,7 +179,7 @@ public class LessonController {
                             material.setLesson(savedLesson);  // Ispravno postavljanje lessonId
                             material.setFileName(fileName);
                             material.setFileType(file.getContentType());
-                            material.setFileUrl("../uploads/" + fileName); // Dodavanje ../ ispred putanje
+                            material.setFileUrl("/uploads/" + fileName); // Postavljanje relativne putanje
                             lessonService.saveMaterial(material);
                             logger.info("Saving material with lessonId: " + material.getLesson().getId());
                         } catch (Exception e) {
@@ -230,7 +230,7 @@ public class LessonController {
             material.setLesson(lesson);  // Ispravno postavljanje lessonId
             material.setFileName(storedFileName);
             material.setFileType(file.getContentType());
-            material.setFileUrl("../uploads/" + storedFileName); // Dodavanje ../ ispred putanje
+            material.setFileUrl("/uploads/" + storedFileName); // Postavljanje relativne putanje
             lessonService.saveMaterial(material);
             logger.info("Saving material with lessonId: " + material.getLesson().getId());
             return ResponseEntity.status(HttpStatus.CREATED).body("File uploaded successfully");
