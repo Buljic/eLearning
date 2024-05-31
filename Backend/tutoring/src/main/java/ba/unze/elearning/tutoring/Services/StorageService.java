@@ -44,7 +44,12 @@ public class StorageService {
 
     public String storeAssignment(MultipartFile file) {
         try {
-            Path copyLocation = Paths.get(uploadDir + "/assignments/" + StringUtils.cleanPath(file.getOriginalFilename()));
+            Path assignmentDir = Paths.get(uploadDir, "assignments");
+            // Kreiraj direktorij ako ne postoji
+            if (!Files.exists(assignmentDir)) {
+                Files.createDirectories(assignmentDir);
+            }
+            Path copyLocation = assignmentDir.resolve(StringUtils.cleanPath(file.getOriginalFilename()));
             Files.copy(file.getInputStream(), copyLocation, StandardCopyOption.REPLACE_EXISTING);
             return file.getOriginalFilename();
         } catch (Exception e) {
@@ -54,7 +59,12 @@ public class StorageService {
 
     public String storeAssignmentSubmission(MultipartFile file) {
         try {
-            Path copyLocation = Paths.get(uploadDir + "/assignmentsubmits/" + StringUtils.cleanPath(file.getOriginalFilename()));
+            Path submissionDir = Paths.get(uploadDir, "assignmentsubmits");
+            // Kreiraj direktorij ako ne postoji
+            if (!Files.exists(submissionDir)) {
+                Files.createDirectories(submissionDir);
+            }
+            Path copyLocation = submissionDir.resolve(StringUtils.cleanPath(file.getOriginalFilename()));
             Files.copy(file.getInputStream(), copyLocation, StandardCopyOption.REPLACE_EXISTING);
             return file.getOriginalFilename();
         } catch (Exception e) {

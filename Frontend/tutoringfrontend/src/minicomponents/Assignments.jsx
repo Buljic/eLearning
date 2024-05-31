@@ -1,9 +1,15 @@
 import React, { useState, useEffect } from "react";
 import AssignmentCreateModal from "./AssignmentCreateModal";
 
-const Assignments = ({ groupId }) => {
+const Assignments = ({ groupId, onSelectAssignment }) => {
     const [assignments, setAssignments] = useState([]);
     const [showCreateModal, setShowCreateModal] = useState(false);
+    const storedUser = sessionStorage.getItem("myUser");
+    const myUser = JSON.parse(storedUser);
+
+    useEffect(() => {
+        fetchAssignments();
+    }, []);
 
     const fetchAssignments = async () => {
         const response = await fetch(`http://localhost:8080/api/${groupId}/assignments`, {
@@ -21,10 +27,6 @@ const Assignments = ({ groupId }) => {
         }
     };
 
-    useEffect(() => {
-        fetchAssignments();
-    }, []);
-
     const handleCreateAssignment = () => {
         setShowCreateModal(true);
     };
@@ -34,20 +36,40 @@ const Assignments = ({ groupId }) => {
         fetchAssignments(); // Refresh assignments after creating a new one
     };
 
+    const getStatusStyle = (status) => {
+        switch (status) {
+            case "MISSING":
+                return { color: "red" };
+            case "SUBMITTED":
+                return { color: "green" };
+            case "LATE":
+                return { color: "yellow" };
+            default:
+                return {};
+        }
+    };
+
     return (
         <div>
             <h2>Zadaci</h2>
-            <button onClick={handleCreateAssignment}>Novi zadatak</button>
+            {myUser.accountType === 'PROFESOR' && (
+                <button onClick={handleCreateAssignment}>Novi zadatak</button>
+            )}
             <AssignmentCreateModal show={showCreateModal} handleClose={handleCloseCreateModal} groupId={groupId} />
             <ul>
                 {assignments.length > 0 ? (
                     assignments.map((assignment) => (
-                        <li key={assignment.id}>
+                        <li key={assignment.id} onClick={() => onSelectAssignment(assignment)}>
                             <h3>{assignment.name}</h3>
                             <p>{assignment.description}</p>
-                            <p>Due Date: {assignment.dueDate}</p>
+                            <p>Due Date: {assignment.dueDateTime}</p>
                             <p>Points: {assignment.points}</p>
                             {assignment.imageUrl && <img src={`http://localhost:8080${assignment.imageUrl}`} alt={assignment.name} style={{ maxWidth: '200px', maxHeight: '200px' }} />}
+                            {assignment.submissions && assignment.submissions.length > 0 && assignment.submissions.map((submission) => (
+                                <div key={submission.id} style={getStatusStyle(submission.status)}>
+                                    <p>Status: {submission.status}</p>
+                                </div>
+                            ))}
                         </li>
                     ))
                 ) : (
