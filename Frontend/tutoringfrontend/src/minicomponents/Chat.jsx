@@ -78,10 +78,11 @@ const Chat = ({ chatId, isGroupChat }) => {
             : format(new Date(), "yyyy-MM-dd HH:mm:ss");
 
         const messageElement = {
-            id: messageBody.id,
+            id: messageBody.id ? messageBody.id.time : new Date().toISOString(),
             text: messageBody.message_text,
             time: messageTime,
-            sender: messageBody.senderName || (messageBody.id ? messageBody.id.user1 : myUser.id),
+            sender: messageBody.senderName || messageBody.sender_name,
+            senderId: messageBody.senderId || (messageBody.id ? messageBody.id.user1 : myUser.id),
             user1: messageBody.id ? messageBody.id.user1 : myUser.id,
             user2: messageBody.id ? messageBody.id.user2 : chatId,
         };
@@ -119,10 +120,11 @@ const Chat = ({ chatId, isGroupChat }) => {
                 setHasMoreMessages(false);
             } else {
                 const newMessages = messagesData.map(msg => ({
-                    id: msg.id,
+                    id: msg.id.time, // Using the time as a unique identifier
                     text: msg.messageText,
                     time: format(new Date(msg.id.time), "yyyy-MM-dd HH:mm:ss"),
-                    sender: msg.senderName,
+                    sender: msg.senderName || msg.sender_name,
+                    senderId: msg.id.user1,  // Assuming user1 is the senderId
                     user1: msg.id.user1,
                     user2: msg.id.user2,
                 }));
@@ -143,7 +145,7 @@ const Chat = ({ chatId, isGroupChat }) => {
         if (messageText.trim() !== "") {
             const chatMessage = {
                 message_text: messageText,
-                sender: myUser.id,
+                senderId: myUser.id,
                 senderName: myUser.username,  // Adding senderName
                 user2: !isGroupChat ? chatId : undefined,
             };
@@ -162,9 +164,9 @@ const Chat = ({ chatId, isGroupChat }) => {
 
             <div id="chatBox">
                 {messages.map((msg, index) => (
-                    <div key={index} className={msg.user1 === myUser.id ? 'sent-message' : 'received-message'}>
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: msg.user1 === myUser.id ? 'flex-end' : 'flex-start', marginBottom: '10px' }}>
-                            <span style={{ backgroundColor: msg.user1 === myUser.id ? '#b3e5fc' : '#f1f1f1', borderRadius: '10px', padding: '10px', maxWidth: '70%' }}>
+                    <div key={index} className={msg.senderId === myUser.id ? 'sent-message' : 'received-message'}>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: msg.senderId === myUser.id ? 'flex-end' : 'flex-start', marginBottom: '10px' }}>
+                            <span style={{ backgroundColor: msg.senderId === myUser.id ? '#b3e5fc' : '#f1f1f1', borderRadius: '10px', padding: '10px', maxWidth: '70%' }}>
                                 <b>{msg.text}</b>
                                 <br />
                                 <span style={{ fontSize: '10px', color: 'gray', textAlign: 'right' }}><i>{msg.time}</i></span>

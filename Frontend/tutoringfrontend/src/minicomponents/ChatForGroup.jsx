@@ -79,7 +79,7 @@ const Chat = ({ chatId, isGroupChat }) => {
             id: messageBody.group_id || messageBody.id,
             text: messageBody.message_text,
             time: messageTime,
-            sender: messageBody.sender_name,
+            sender: messageBody.sender_name || messageBody.senderName,
             user1: messageBody.senderId,
             user2: chatId,
         };

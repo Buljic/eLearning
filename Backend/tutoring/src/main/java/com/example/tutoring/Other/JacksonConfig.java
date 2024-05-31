@@ -11,12 +11,12 @@ import org.springframework.context.annotation.Configuration;
 public class JacksonConfig {
     private static final Logger logger = LoggerFactory.getLogger(JacksonConfig.class);
 
-    @Bean
-    public ObjectMapper objectMapper() {
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.findAndRegisterModules(); // Automatski registrira sve dostupne module
-        logger.info("Jackson ObjectMapper configured with JavaTimeModule");
-        return objectMapper;
-    }
+//    @Bean
+//    public ObjectMapper objectMapper() {
+//        ObjectMapper objectMapper = new ObjectMapper();
+//        objectMapper.findAndRegisterModules(); // Automatski registrira sve dostupne module
+//        logger.info("Jackson ObjectMapper configured with JavaTimeModule");
+//        return objectMapper;
+//    }
 }
 

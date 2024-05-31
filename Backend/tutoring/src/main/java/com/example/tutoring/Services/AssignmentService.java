@@ -30,33 +30,22 @@ public class AssignmentService {
     }
 
     public void saveSubmission(AssignmentSubmission submission) {
-        LocalDateTime now = LocalDateTime.now();
-        LocalDateTime dueDateTime = submission.getAssignment().getDueDateTime();
-
-        if (now.isBefore(dueDateTime) || now.isEqual(dueDateTime)) {
-            submission.setStatus(SubmissionStatus.SUBMITTED);
-        } else {
-            submission.setStatus(SubmissionStatus.LATE);
-        }
-
-        submission.setSubmissionTime(now);
-
-        String sql = "INSERT INTO assignment_submissions (file_url, feedback, grade, assignment_id, user_id, status, submission_time) VALUES (?, ?, ?, ?, ?, ?, ?)";
-        jdbcTemplate.update(sql, submission.getFileUrl(), submission.getFeedback(), submission.getGrade(), submission.getAssignment().getId(), submission.getStudent().getId(), submission.getStatus().name(), submission.getSubmissionTime());
+        String sql = "INSERT INTO assignment_submission (file_url, feedback, grade, assignment_id, user_id, submission_time, status) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        jdbcTemplate.update(sql, submission.getFileUrl(), submission.getFeedback(), submission.getGrade(), submission.getAssignment().getId(), submission.getStudent().getId(), submission.getSubmissionTime(), submission.getStatus().name());
     }
 
     public List<AssignmentSubmission> getSubmissionsByAssignmentId(Long assignmentId) {
-        String sql = "SELECT * FROM assignment_submissions WHERE assignment_id = ?";
+        String sql = "SELECT * FROM assignment_submission WHERE assignment_id = ?";
         return jdbcTemplate.query(sql, new Object[]{assignmentId}, new AssignmentSubmissionMapper());
     }
 
     public void updateSubmission(AssignmentSubmission submission) {
-        String sql = "UPDATE assignment_submissions SET feedback = ?, grade = ?, status = ?, submission_time = ? WHERE id = ?";
-        jdbcTemplate.update(sql, submission.getFeedback(), submission.getGrade(), submission.getStatus().name(), submission.getSubmissionTime(), submission.getId());
+        String sql = "UPDATE assignment_submission SET feedback = ?, grade = ?, status = ? WHERE id = ?";
+        jdbcTemplate.update(sql, submission.getFeedback(), submission.getGrade(), submission.getStatus().name(), submission.getId());
     }
 
     public AssignmentSubmission getSubmissionById(Long submissionId) {
-        String sql = "SELECT * FROM assignment_submissions WHERE id = ?";
+        String sql = "SELECT * FROM assignment_submission WHERE id = ?";
         return jdbcTemplate.queryForObject(sql, new Object[]{submissionId}, new AssignmentSubmissionMapper());
     }
 }
