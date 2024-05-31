@@ -15,7 +15,8 @@ const AssignmentCreateModal = ({ show, handleClose, groupId }) => {
             name,
             description,
             dueDate,
-            points
+            points: parseInt(points), // Ensure points is sent as an integer
+            group: { id: groupId } // Ensure groupId is included in the assignment
         }));
         if (file) {
             formData.append('file', file);

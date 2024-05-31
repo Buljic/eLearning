@@ -1,14 +1,9 @@
 import React, { useState, useEffect } from "react";
-import AssignmentCreateModal from "./AssignmentCreateModal.jsx";
-
+import AssignmentCreateModal from "./AssignmentCreateModal";
 
 const Assignments = ({ groupId }) => {
     const [assignments, setAssignments] = useState([]);
     const [showCreateModal, setShowCreateModal] = useState(false);
-
-    useEffect(() => {
-        fetchAssignments();
-    }, [fetchAssignments]);
 
     const fetchAssignments = async () => {
         const response = await fetch(`http://localhost:8080/api/${groupId}/assignments`, {
@@ -25,6 +20,10 @@ const Assignments = ({ groupId }) => {
             console.error("Failed to fetch assignments");
         }
     };
+
+    useEffect(() => {
+        fetchAssignments();
+    }, []);
 
     const handleCreateAssignment = () => {
         setShowCreateModal(true);
@@ -60,4 +59,3 @@ const Assignments = ({ groupId }) => {
 };
 
 export default Assignments;
-
