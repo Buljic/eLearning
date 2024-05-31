@@ -24,6 +24,10 @@ public class User
     @Enumerated(EnumType.STRING)
     private AccountType accountType;
 
+    public User(String username)
+    {
+        this.username=username;
+    }
 
 
     public Long getId()

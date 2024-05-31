@@ -24,7 +24,7 @@ public class AssignmentService {
 
     public void saveAssignment(Assignment assignment) {
         String sql = "INSERT INTO assignments (name, description, due_date, points, image_url, group_id) VALUES (?, ?, ?, ?, ?, ?)";
-        jdbcTemplate.update(sql, assignment.getName(), assignment.getDescription(), assignment.getDueDate(), assignment.getPoints(), assignment.getImageUrl(), assignment.getGroup().getId());
+        jdbcTemplate.update(sql, assignment.getName(), assignment.getDescription(), assignment.getDueDate(), assignment.getPoints(), assignment.getImageUrl(), assignment.getGroup().getGroup_id());
     }
 
     public void saveSubmission(AssignmentSubmission submission) {
@@ -40,5 +40,10 @@ public class AssignmentService {
     public void updateSubmission(AssignmentSubmission submission) {
         String sql = "UPDATE assignment_submissions SET feedback = ?, grade = ? WHERE id = ?";
         jdbcTemplate.update(sql, submission.getFeedback(), submission.getGrade(), submission.getId());
+    }
+
+    public AssignmentSubmission getSubmissionById(Long submissionId) {
+        String sql = "SELECT * FROM assignment_submissions WHERE id = ?";
+        return jdbcTemplate.queryForObject(sql, new Object[]{submissionId}, new AssignmentSubmissionMapper());
     }
 }

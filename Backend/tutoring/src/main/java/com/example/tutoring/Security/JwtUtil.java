@@ -96,5 +96,4 @@ public class JwtUtil
                 .parseClaimsJws(token);
         return claimsJws.getBody().get("role",String.class);
     }
-
 }
