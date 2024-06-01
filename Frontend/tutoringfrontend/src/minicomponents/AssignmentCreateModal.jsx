@@ -14,7 +14,7 @@ const AssignmentCreateModal = ({ show, handleClose, groupId }) => {
             description,
             dueDateTime,
             points,
-            group_id: groupId, // promena ovde
+            group_id: groupId,
         };
 
         const formData = new FormData();
