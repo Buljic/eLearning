@@ -23,6 +23,8 @@ import GroupDetails from "./components/GroupDetails.jsx";
 import GroupRequests from "./components/GroupRequests.jsx";
 import GroupOverview from "./components/GroupOverview.jsx";
 import AssignmentSubmissions from "./minicomponents/AssignmentSubmissions.jsx";
+import SubmissionDetail from "./minicomponents/SubmissionDetail.jsx";
+import AssignmentDetail from "./minicomponents/AssignmentDetail.jsx";
 function App() {
     // const [myUser,setMyUser]=useState(null);
     return (
@@ -53,7 +55,11 @@ function App() {
 
                 <Route path="/chatGroup/:objectGroup" element={<ChatGroup/>}/>
                 <Route path="/group/:groupId" element={<GroupOverview />} />
+                {/*<Route path="/assignments/:assignmentId/submissions" element={<AssignmentSubmissions />} />*/}
+
+                <Route path="/assignments/:assignmentId" element={<AssignmentDetail />} />
                 <Route path="/assignments/:assignmentId/submissions" element={<AssignmentSubmissions />} />
+                <Route path="/assignments/:assignmentId/submissions/:submissionId" element={<SubmissionDetail />} />
                 {/*<Route path="/tutorsFor/:subject" element={<tutorsForSubject/>}> </Route>*/}
                 <Route path="/" element={<Homepage />}></Route>
                 <Route path="*" element={<Navigate to="/" replace/>}/>
