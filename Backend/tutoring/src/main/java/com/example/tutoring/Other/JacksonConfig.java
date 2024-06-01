@@ -1,6 +1,5 @@
 package com.example.tutoring.Other;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,5 +17,10 @@ public class JacksonConfig {
 //        logger.info("Jackson ObjectMapper configured with JavaTimeModule");
 //        return objectMapper;
 //    }
+@Bean
+public JavaTimeModule javaTimeModule() {
+    logger.info("Configuring JavaTimeModule for Jackson");
+    return new JavaTimeModule();
+}
 }
 

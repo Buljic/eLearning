@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
+import AssignmentCreateModal from "./AssignmentCreateModal";
 
 const AssignmentList = ({ isProfessor }) => {
     const { groupId } = useParams();
     const [assignments, setAssignments] = useState([]);
+    const [showModal, setShowModal] = useState(false);
 
     useEffect(() => {
         fetchAssignments();
@@ -26,9 +28,22 @@ const AssignmentList = ({ isProfessor }) => {
         }
     };
 
+    const handleOpenModal = () => {
+        setShowModal(true);
+    };
+
+    const handleCloseModal = () => {
+        setShowModal(false);
+        fetchAssignments(); // Refresh the list after creating a new assignment
+    };
+
     return (
         <div>
             <h1>Assignments</h1>
+            {isProfessor && (
+                <button onClick={handleOpenModal}>Create New Assignment</button>
+            )}
+            <AssignmentCreateModal show={showModal} handleClose={handleCloseModal} groupId={groupId} />
             <ul>
                 {assignments.map((assignment) => (
                     <li key={assignment.id}>
