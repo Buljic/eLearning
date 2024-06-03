@@ -4,8 +4,10 @@ import { useParams } from "react-router-dom";
 const AssignmentDetail = () => {
     const { assignmentId } = useParams();
     const [assignment, setAssignment] = useState(null);
-    const [submission, setSubmission] = useState(null);
-    const [file, setFile] = useState(null);
+    const [status, setStatus] = useState(null);
+    const [selectedFile, setSelectedFile] = useState(null);
+    const storedUser = sessionStorage.getItem("myUser");
+    const myUser = JSON.parse(storedUser);
 
     useEffect(() => {
         fetchAssignment();
@@ -22,32 +24,48 @@ const AssignmentDetail = () => {
         if (response.ok) {
             const data = await response.json();
             setAssignment(data);
-            const userSubmission = data.submissions.find(sub => sub.user.id === myUser.id);
-            setSubmission(userSubmission);
+            setStatus(getStatus(data));
         } else {
             console.error("Failed to fetch assignment");
         }
     };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+    const getStatus = (assignment) => {
+        if (!assignment.submissions) return "Missing";
+        const submission = assignment.submissions.find(sub => sub.student.id === myUser.id);
+        if (!submission) return "Missing";
+        if (new Date(submission.submissionTime) > new Date(assignment.dueDateTime)) return "Late";
+        return "Submitted";
+    };
+
+    const handleFileChange = (e) => {
+        setSelectedFile(e.target.files[0]);
+    };
+
+    const handleSubmit = async () => {
+        if (!selectedFile) {
+            alert("Please select a file to submit.");
+            return;
+        }
+
         const formData = new FormData();
-        formData.append("file", file);
+        formData.append("file", selectedFile);
 
         try {
             const response = await fetch(`http://localhost:8080/api/assignments/${assignmentId}/submit`, {
-                method: "POST",
+                method: 'POST',
+                credentials: 'include',
                 body: formData,
-                credentials: "include",
             });
-            if (!response.ok) {
-                throw new Error("Failed to submit assignment");
+            if (response.ok) {
+                alert("Assignment submitted successfully.");
+                fetchAssignment(); // Refresh assignment details
+            } else {
+                alert("Failed to submit assignment.");
             }
-            alert("Assignment submitted successfully!");
-            fetchAssignment(); // Refresh the assignment details
         } catch (error) {
-            console.error("Error submitting assignment:", error);
-            alert("Failed to submit assignment");
+            console.error("Failed to submit assignment", error);
+            alert("An error occurred while submitting the assignment.");
         }
     };
 
@@ -55,40 +73,36 @@ const AssignmentDetail = () => {
 
     return (
         <div>
-            <h2>{assignment.name}</h2>
+            <h1>{assignment.name}</h1>
             <p>{assignment.description}</p>
             <p>Due: {new Date(assignment.dueDateTime).toLocaleString()}</p>
             {assignment.imageUrl && <img src={`http://localhost:8080${assignment.imageUrl}`} alt={assignment.name} style={{ maxWidth: '200px', maxHeight: '200px' }} />}
-            <p>Status: <span style={{ color: getStatusColor(getStatus(assignment)) }}>{getStatus(assignment)}</span></p>
-            {submission && (
+            <p>Status: <span style={{ color: getStatusColor(status) }}>{status}</span></p>
+            {status === "Missing" && (
                 <div>
-                    <p>Submission Time: {new Date(submission.submissionTime).toLocaleString()}</p>
-                    <p>Grade: {submission.grade}</p>
-                    <p>Feedback: {submission.feedback}</p>
+                    <input type="file" onChange={handleFileChange} />
+                    <button onClick={handleSubmit}>Submit Assignment</button>
                 </div>
             )}
-            {getStatus(assignment) === "Missing" && (
-                <form onSubmit={handleSubmit}>
-                    <div>
-                        <label>File:</label>
-                        <input
-                            type="file"
-                            onChange={(e) => setFile(e.target.files[0])}
-                            required
-                        />
-                    </div>
-                    <button type="submit">Submit</button>
-                </form>
+            {assignment.submissions && assignment.submissions.length > 0 && (
+                <div>
+                    <h2>Submissions</h2>
+                    <ul>
+                        {assignment.submissions.map((submission) => (
+                            <li key={submission.id}>
+                                <p>{submission.student.username}</p>
+                                <p>{new Date(submission.submissionTime).toLocaleString()}</p>
+                                <p>Status: {submission.status}</p>
+                                {submission.fileUrl && <a href={`http://localhost:8080${submission.fileUrl}`} target="_blank" rel="noopener noreferrer">View Submission</a>}
+                                {submission.feedback && <p>Feedback: {submission.feedback}</p>}
+                                {submission.grade && <p>Grade: {submission.grade}</p>}
+                            </li>
+                        ))}
+                    </ul>
+                </div>
             )}
         </div>
     );
-};
-
-const getStatus = (assignment) => {
-    const submission = assignment.submissions.find(sub => sub.user.id === myUser.id);
-    if (!submission) return "Missing";
-    if (new Date(submission.submissionTime) > new Date(assignment.dueDateTime)) return "Late";
-    return "Submitted";
 };
 
 const getStatusColor = (status) => {

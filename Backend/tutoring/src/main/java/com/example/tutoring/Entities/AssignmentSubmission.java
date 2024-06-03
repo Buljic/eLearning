@@ -26,6 +26,10 @@ public class AssignmentSubmission {
     @JoinColumn (name = "user_id")
     private User student;
 
+    public AssignmentSubmission() {
+        this.submissionTime = LocalDateTime.now();
+    }
+
     public Long getId()
     {
         return id;
