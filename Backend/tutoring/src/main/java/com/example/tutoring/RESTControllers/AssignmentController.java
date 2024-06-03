@@ -183,4 +183,22 @@ public ResponseEntity<List<Assignment>> getAssignments(@PathVariable Long groupI
 //        }
 //    }
 
+    @GetMapping("/assignments/{assignmentId}/withSubmissions")
+    public ResponseEntity<Assignment> getAssignmentWithSubmissions(@PathVariable Long assignmentId, HttpServletRequest request) {
+        String token = jwtUtil.extractJwtFromCookie(request);
+        if (token != null && jwtUtil.validateToken(token)) {
+            String username = jwtUtil.getUsernameFromToken(token);
+            User user = userService.getUserByUsername(username);
+            if (user != null && user.getAccountType().equals(AccountType.STUDENT)) {
+                Assignment assignment = assignmentService.getAssignmentWithSubmissions(assignmentId, user.getId());
+                return ResponseEntity.ok(assignment);
+            } else {
+                Assignment assignment = assignmentService.getAssignmentById(assignmentId);
+                return ResponseEntity.ok(assignment);
+            }
+        } else {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+        }
+    }
+
 }

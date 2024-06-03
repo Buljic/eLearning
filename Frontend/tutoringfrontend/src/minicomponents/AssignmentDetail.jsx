@@ -14,7 +14,7 @@ const AssignmentDetail = () => {
     }, []);
 
     const fetchAssignment = async () => {
-        const response = await fetch(`http://localhost:8080/api/assignments/${assignmentId}`, {
+        const response = await fetch(`http://localhost:8080/api/assignments/${assignmentId}/withSubmissions`, {
             method: 'GET',
             credentials: 'include',
             headers: {
@@ -32,7 +32,7 @@ const AssignmentDetail = () => {
     };
 
     const getStatus = (assignment) => {
-        if (!assignment.submissions) return "Missing";
+        if (!assignment.submissions || assignment.submissions.length === 0) return "Missing";
         const submission = assignment.submissions.find(sub => sub.student.id === myUser.id);
         if (!submission) return "Missing";
         if (new Date(submission.submissionTime) > new Date(assignment.dueDateTime)) return "Late";
@@ -101,7 +101,7 @@ const AssignmentDetail = () => {
                     <p>Grade: {grade}</p>
                 </div>
             )}
-            {assignment.submissions && assignment.submissions.length > 0 && (
+            {myUser.accountType !== "STUDENT" && assignment.submissions && assignment.submissions.length > 0 && (
                 <div>
                     <h2>Submissions</h2>
                     <ul>

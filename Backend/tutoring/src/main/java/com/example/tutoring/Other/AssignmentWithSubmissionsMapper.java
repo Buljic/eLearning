@@ -11,12 +11,10 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class AssignmentWithSubmissionsMapper implements RowMapper<Assignment>
-{
+public class AssignmentWithSubmissionsMapper implements RowMapper<Assignment> {
 
     @Override
-    public Assignment mapRow(ResultSet rs, int rowNum) throws SQLException
-    {
+    public Assignment mapRow(ResultSet rs, int rowNum) throws SQLException {
         Assignment assignment = new Assignment();
         assignment.setId(rs.getLong("id"));
         assignment.setName(rs.getString("name"));
@@ -30,9 +28,9 @@ public class AssignmentWithSubmissionsMapper implements RowMapper<Assignment>
         assignment.setGroup(group);
 
         List<AssignmentSubmission> submissions = new ArrayList<>();
-        if (rs.getLong("asub.id") != 0) {
+        if (rs.getLong("asub_id") != 0) {
             AssignmentSubmission submission = new AssignmentSubmission();
-            submission.setId(rs.getLong("asub.id"));
+            submission.setId(rs.getLong("asub_id"));
             submission.setFeedback(rs.getString("feedback"));
             submission.setFileUrl(rs.getString("file_url"));
             submission.setGrade(rs.getInt("grade"));

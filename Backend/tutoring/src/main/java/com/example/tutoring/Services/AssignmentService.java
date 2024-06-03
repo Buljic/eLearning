@@ -113,11 +113,35 @@ public void saveSubmission(AssignmentSubmission submission) {
         return jdbcTemplate.queryForObject(sql, new Object[]{assignmentId}, new AssignmentMapper());
     }
 
+//    public List<Assignment> getAssignmentsByGroupIdWithSubmissionsForUser(Long groupId, Long userId) {
+//        String sql = "SELECT a.*, asub.* FROM assignment a " +
+//                "LEFT JOIN assignment_submission asub ON a.id = asub.assignment_id AND asub.user_id = ? " +
+//                "WHERE a.group_id = ? ORDER BY a.due_date_time DESC";
+//        return jdbcTemplate.query(sql, new Object[]{userId, groupId}, new AssignmentWithSubmissionsMapper());
+//    }
+//
+//
+//    public Assignment getAssignmentWithSubmissions(Long assignmentId, Long userId) {
+//        String sql = "SELECT a.*, asub.id AS asub_id, asub.feedback, asub.file_url, asub.grade, asub.status, asub.submission_time, asub.user_id " +
+//                "FROM assignment a " +
+//                "LEFT JOIN assignment_submission asub ON a.id = asub.assignment_id AND asub.user_id = ? " +
+//                "WHERE a.id = ?";
+//        return jdbcTemplate.queryForObject(sql, new Object[]{userId, assignmentId}, new AssignmentWithSubmissionsMapper());
+//    }
+
     public List<Assignment> getAssignmentsByGroupIdWithSubmissionsForUser(Long groupId, Long userId) {
-        String sql = "SELECT a.*, asub.* FROM assignment a " +
+        String sql = "SELECT a.*, asub.id AS asub_id, asub.feedback, asub.file_url, asub.grade, asub.status, asub.submission_time, asub.user_id " +
+                "FROM assignment a " +
                 "LEFT JOIN assignment_submission asub ON a.id = asub.assignment_id AND asub.user_id = ? " +
                 "WHERE a.group_id = ? ORDER BY a.due_date_time DESC";
         return jdbcTemplate.query(sql, new Object[]{userId, groupId}, new AssignmentWithSubmissionsMapper());
     }
 
+    public Assignment getAssignmentWithSubmissions(Long assignmentId, Long userId) {
+        String sql = "SELECT a.*, asub.id AS asub_id, asub.feedback, asub.file_url, asub.grade, asub.status, asub.submission_time, asub.user_id " +
+                "FROM assignment a " +
+                "LEFT JOIN assignment_submission asub ON a.id = asub.assignment_id AND asub.user_id = ? " +
+                "WHERE a.id = ?";
+        return jdbcTemplate.queryForObject(sql, new Object[]{userId, assignmentId}, new AssignmentWithSubmissionsMapper());
+    }
 }
