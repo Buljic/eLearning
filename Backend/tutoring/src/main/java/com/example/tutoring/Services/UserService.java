@@ -468,4 +468,10 @@ public class UserService
         String sql = "SELECT * FROM user WHERE username = ?";
         return jdbcTemplate.queryForObject(sql, new Object[]{username}, new UserMapper());
     }
+
+    public Optional<User> getUserFromToken(String token) {
+        String username = jwtUtil.getUsernameFromToken(token);
+        return userRepository.findByUsername(username);
+    }
+
 }
