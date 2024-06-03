@@ -6,6 +6,7 @@ import com.example.tutoring.DTOs.StringNumber;
 import com.example.tutoring.DTOs.UserDTO;
 import com.example.tutoring.Entities.Tutor;
 import com.example.tutoring.Entities.User;
+import com.example.tutoring.Other.UserMapper;
 import com.example.tutoring.Repositories.UserRepository;
 import com.example.tutoring.Security.EncriptionUtility;
 import com.example.tutoring.Security.JwtUtil;
@@ -463,4 +464,8 @@ public class UserService
         return findUserByUsername(username);
     }
 
+    public User getUserByUsername(String username) {
+        String sql = "SELECT * FROM user WHERE username = ?";
+        return jdbcTemplate.queryForObject(sql, new Object[]{username}, new UserMapper());
+    }
 }

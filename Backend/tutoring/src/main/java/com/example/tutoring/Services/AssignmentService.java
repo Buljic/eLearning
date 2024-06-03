@@ -4,6 +4,7 @@ import com.example.tutoring.Entities.Assignment;
 import com.example.tutoring.Entities.AssignmentSubmission;
 import com.example.tutoring.Other.AssignmentMapper;
 import com.example.tutoring.Other.AssignmentSubmissionMapper;
+import com.example.tutoring.Other.AssignmentWithSubmissionsMapper;
 import com.example.tutoring.Other.SubmissionStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -111,4 +112,12 @@ public void saveSubmission(AssignmentSubmission submission) {
         String sql = "SELECT * FROM assignment WHERE id = ?";
         return jdbcTemplate.queryForObject(sql, new Object[]{assignmentId}, new AssignmentMapper());
     }
+
+    public List<Assignment> getAssignmentsByGroupIdWithSubmissionsForUser(Long groupId, Long userId) {
+        String sql = "SELECT a.*, asub.* FROM assignment a " +
+                "LEFT JOIN assignment_submission asub ON a.id = asub.assignment_id AND asub.user_id = ? " +
+                "WHERE a.group_id = ? ORDER BY a.due_date_time DESC";
+        return jdbcTemplate.query(sql, new Object[]{userId, groupId}, new AssignmentWithSubmissionsMapper());
+    }
+
 }

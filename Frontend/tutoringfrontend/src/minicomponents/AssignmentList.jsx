@@ -5,7 +5,9 @@ import AssignmentCreateModal from "./AssignmentCreateModal";
 const AssignmentList = ({ isProfessor }) => {
     const { groupId } = useParams();
     const [assignments, setAssignments] = useState([]);
-    const [showCreateModal, setShowCreateModal] = useState(false);
+    const [showCreateModal, setShowCreateModal] = useState(false); // Definisanje state-a za modal
+    const storedUser = sessionStorage.getItem("myUser");
+    const myUser = JSON.parse(storedUser);
 
     useEffect(() => {
         fetchAssignments();
@@ -22,6 +24,7 @@ const AssignmentList = ({ isProfessor }) => {
         if (response.ok) {
             const data = await response.json();
             setAssignments(data || []);
+            console.log("Fetched assignments:", data);
         } else {
             console.error("Failed to fetch assignments");
             setAssignments([]);
@@ -30,7 +33,7 @@ const AssignmentList = ({ isProfessor }) => {
 
     const getStatus = (assignment) => {
         if (!assignment.submissions) return "Missing";
-        const submission = assignment.submissions.find(sub => sub.user.id === myUser.id);
+        const submission = assignment.submissions.find(sub => sub.student.id === myUser.id);
         if (!submission) return "Missing";
         if (new Date(submission.submissionTime) > new Date(assignment.dueDateTime)) return "Late";
         return "Submitted";

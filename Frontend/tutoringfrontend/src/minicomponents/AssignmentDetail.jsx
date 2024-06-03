@@ -25,6 +25,7 @@ const AssignmentDetail = () => {
             const data = await response.json();
             setAssignment(data);
             setStatus(getStatus(data));
+            console.log("Fetched assignment:", data);
         } else {
             console.error("Failed to fetch assignment");
         }
@@ -45,6 +46,11 @@ const AssignmentDetail = () => {
     const handleSubmit = async () => {
         if (!selectedFile) {
             alert("Please select a file to submit.");
+            return;
+        }
+
+        if (status === "Submitted" || status === "Late") {
+            alert("Assignment has already been submitted or is late.");
             return;
         }
 
@@ -71,6 +77,10 @@ const AssignmentDetail = () => {
 
     if (!assignment) return <div>Loading...</div>;
 
+    const submission = assignment.submissions ? assignment.submissions.find(sub => sub.student.id === myUser.id) : null;
+    const feedback = submission ? submission.feedback : "No feedback yet.";
+    const grade = submission ? submission.grade : "No grade yet.";
+
     return (
         <div>
             <h1>{assignment.name}</h1>
@@ -82,6 +92,13 @@ const AssignmentDetail = () => {
                 <div>
                     <input type="file" onChange={handleFileChange} />
                     <button onClick={handleSubmit}>Submit Assignment</button>
+                </div>
+            )}
+            {status !== "Missing" && (
+                <div>
+                    <h2>Feedback</h2>
+                    <p>{feedback}</p>
+                    <p>Grade: {grade}</p>
                 </div>
             )}
             {assignment.submissions && assignment.submissions.length > 0 && (

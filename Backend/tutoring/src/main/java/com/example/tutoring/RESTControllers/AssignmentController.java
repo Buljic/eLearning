@@ -6,9 +6,11 @@ import com.example.tutoring.Entities.Assignment;
 import com.example.tutoring.Entities.AssignmentSubmission;
 import com.example.tutoring.Entities.Group;
 import com.example.tutoring.Entities.User;
+import com.example.tutoring.Other.AccountType;
 import com.example.tutoring.Security.JwtUtil;
 import com.example.tutoring.Services.AssignmentService;
 import com.example.tutoring.Services.StorageService;
+import com.example.tutoring.Services.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.InvalidDefinitionException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -28,16 +30,18 @@ public class AssignmentController {
     private final JwtUtil jwtUtil;
     private final StorageService storageService;
     private final ObjectMapper objectMapper;
-
+    private final UserService userService;
     @Value("${file.upload-dir}")
     private String uploadDir;
 
     @Autowired
-    public AssignmentController(AssignmentService assignmentService, JwtUtil jwtUtil, StorageService storageService, ObjectMapper objectMapper) {
+    public AssignmentController(AssignmentService assignmentService, JwtUtil jwtUtil, StorageService storageService, ObjectMapper objectMapper,
+                                UserService userService) {
         this.assignmentService = assignmentService;
         this.jwtUtil = jwtUtil;
         this.storageService = storageService;
         this.objectMapper = objectMapper;
+        this.userService = userService;
     }
 
     @PostMapping(value = "/assignments", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -81,11 +85,29 @@ public class AssignmentController {
         }
     }
 
-    @GetMapping("/{groupId}/assignments")
-    public ResponseEntity<List<Assignment>> getAssignments(@PathVariable Long groupId) {
-        List<Assignment> assignments = assignmentService.getAssignmentsByGroupId(groupId);
+//    @GetMapping("/{groupId}/assignments")
+//    public ResponseEntity<List<Assignment>> getAssignments(@PathVariable Long groupId) {
+//        List<Assignment> assignments = assignmentService.getAssignmentsByGroupId(groupId);
+//        return ResponseEntity.ok(assignments);
+//    }
+@GetMapping("/{groupId}/assignments")
+public ResponseEntity<List<Assignment>> getAssignments(@PathVariable Long groupId, HttpServletRequest request) {
+    String token = jwtUtil.extractJwtFromCookie(request);
+    if (token != null && jwtUtil.validateToken(token)) {
+        String username = jwtUtil.getUsernameFromToken(token);
+        User user = userService.getUserByUsername(username);
+        List<Assignment> assignments;
+        if (user != null && user.getAccountType().equals(AccountType.STUDENT)) {
+            assignments = assignmentService.getAssignmentsByGroupIdWithSubmissionsForUser(groupId, user.getId());
+        } else {
+            assignments = assignmentService.getAssignmentsByGroupId(groupId);
+        }
         return ResponseEntity.ok(assignments);
+    } else {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
     }
+}
+
 
     @GetMapping("/assignments/{assignmentId}")
     public ResponseEntity<Assignment> getAssignment(@PathVariable Long assignmentId, HttpServletRequest request) {
@@ -143,5 +165,22 @@ public class AssignmentController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to provide feedback");
         }
     }
+
+//    @GetMapping("/{groupId}/assignments/forStudent")
+//    public ResponseEntity<List<Assignment>> getAssignmentsForStudent(@PathVariable Long groupId, HttpServletRequest request) {
+//        String token = jwtUtil.extractJwtFromCookie(request);
+//        if (token != null && jwtUtil.validateToken(token)) {
+//            String username = jwtUtil.getUsernameFromToken(token);
+//            User user = userService.getUserByUsername(username);
+//            if (user != null && user.getAccountType().equals(AccountType.STUDENT)) {
+//                List<Assignment> assignments = assignmentService.getAssignmentsByGroupIdWithSubmissionsForUser(groupId, user.getId());
+//                return ResponseEntity.ok(assignments);
+//            } else {
+//                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
+//            }
+//        } else {
+//            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+//        }
+//    }
 
 }
