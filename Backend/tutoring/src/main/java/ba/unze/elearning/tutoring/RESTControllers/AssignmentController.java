@@ -87,6 +87,17 @@ public class AssignmentController {
         return ResponseEntity.ok(assignments);
     }
 
+    @GetMapping("/assignments/{assignmentId}")
+    public ResponseEntity<Assignment> getAssignment(@PathVariable Long assignmentId, HttpServletRequest request) {
+        String token = jwtUtil.extractJwtFromCookie(request);
+        if (token != null && jwtUtil.validateToken(token)) {
+            Assignment assignment = assignmentService.getAssignmentById(assignmentId);
+            return ResponseEntity.ok(assignment);
+        } else {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
+        }
+    }
+
     @PostMapping("/assignments/{assignmentId}/submit")
     public ResponseEntity<?> submitAssignment(HttpServletRequest request, @PathVariable Long assignmentId, @RequestPart("file") MultipartFile file) {
         String token = jwtUtil.extractJwtFromCookie(request);
@@ -132,4 +143,5 @@ public class AssignmentController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to provide feedback");
         }
     }
+
 }

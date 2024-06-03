@@ -16,8 +16,8 @@ public class AssignmentSubmissionMapper implements RowMapper<AssignmentSubmissio
         submission.setFileUrl(rs.getString("file_url"));
         submission.setFeedback(rs.getString("feedback"));
         submission.setGrade(rs.getInt("grade"));
-        submission.setSubmissionTime(rs.getTimestamp("submission_time").toLocalDateTime());
         submission.setStatus(SubmissionStatus.valueOf(rs.getString("status")));
+        submission.setSubmissionTime(rs.getTimestamp("submission_time").toLocalDateTime());
 
         Assignment assignment = new Assignment();
         assignment.setId(rs.getLong("assignment_id"));
@@ -25,6 +25,7 @@ public class AssignmentSubmissionMapper implements RowMapper<AssignmentSubmissio
 
         User student = new User();
         student.setId(rs.getLong("user_id"));
+        student.setUsername(rs.getString("username"));
         submission.setStudent(student);
 
         return submission;
