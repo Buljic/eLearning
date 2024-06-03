@@ -44,4 +44,10 @@ public class GroupService {
         String insertRequestSql = "INSERT INTO group_requests (user_id, group_id, request_date, status) VALUES (?, ?, ?, ?)";
         jdbcTemplate.update(insertRequestSql, userId, groupId, LocalDate.now(), RequestStatus.REQUESTED.toString());
     }
+
+    public boolean isUserInGroup(Long userId, Long groupId) {
+        String sql = "SELECT COUNT(*) FROM user_group WHERE user_id = ? AND group_id = ?";
+        Integer count = jdbcTemplate.queryForObject(sql, new Object[]{userId, groupId}, Integer.class);
+        return count != null && count > 0;
+    }
 }
