@@ -6,6 +6,7 @@ import ba.unze.elearning.tutoring.DTOs.StringNumber;
 import ba.unze.elearning.tutoring.DTOs.UserDTO;
 import ba.unze.elearning.tutoring.Entities.Tutor;
 import ba.unze.elearning.tutoring.Entities.User;
+import ba.unze.elearning.tutoring.Other.UserMapper;
 import ba.unze.elearning.tutoring.Repositories.UserRepository;
 import ba.unze.elearning.tutoring.Security.EncriptionUtility;
 import ba.unze.elearning.tutoring.Security.JwtUtil;
@@ -463,4 +464,8 @@ public class UserService
         return findUserByUsername(username);
     }
 
+    public User getUserByUsername(String username) {
+        String sql = "SELECT * FROM user WHERE username = ?";
+        return jdbcTemplate.queryForObject(sql, new Object[]{username}, new UserMapper());
+    }
 }
