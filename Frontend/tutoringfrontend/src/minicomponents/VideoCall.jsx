@@ -5,18 +5,24 @@ import SimplePeer from "simple-peer";
 const VideoCall = ({ groupId }) => {
     const [stream, setStream] = useState(null);
     const [peers, setPeers] = useState([]);
+    const [muted, setMuted] = useState(false);
+    const [cameraOff, setCameraOff] = useState(false);
+    const [isCalling, setIsCalling] = useState(false);
+    const [shareScreen, setShareScreen] = useState(false);
+    const [error, setError] = useState("");
     const socketRef = useRef();
     const userVideo = useRef();
     const peersRef = useRef([]);
     const storedUser = sessionStorage.getItem("myUser");
     const myUser = JSON.parse(storedUser);
     const isProfessor = myUser.accountType === "PROFESOR";
-    const token = sessionStorage.getItem("token");
-    const [isCalling, setIsCalling] = useState(false);
-    const [shareScreen, setShareScreen] = useState(false);
 
     const startCall = () => {
-        setIsCalling(true);
+        if (isProfessor) {
+            setIsCalling(true);
+        } else {
+            alert("Samo profesori mogu započeti poziv.");
+        }
     };
 
     const stopCall = () => {
@@ -28,13 +34,16 @@ const VideoCall = ({ groupId }) => {
 
     useEffect(() => {
         if (isCalling) {
-            socketRef.current = io.connect("http://localhost:8080/video-call");
+            socketRef.current = io("http://localhost:8080/video-call", {
+                withCredentials: true
+            });
+
             navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then(stream => {
                 setStream(stream);
                 if (userVideo.current) {
                     userVideo.current.srcObject = stream;
                 }
-                socketRef.current.emit("join room", JSON.stringify({ groupId, token }));
+                socketRef.current.emit("join room", JSON.stringify({ groupId, action: "start" }));
                 socketRef.current.on("all users", users => {
                     const peers = [];
                     users.forEach(userID => {
@@ -76,6 +85,11 @@ const VideoCall = ({ groupId }) => {
                 socketRef.current.on("call ended", () => {
                     stopCall();
                 });
+
+                socketRef.current.on("error", error => {
+                    setError(error);
+                    stopCall();
+                });
             });
 
             return () => {
@@ -100,6 +114,16 @@ const VideoCall = ({ groupId }) => {
             setStream(userStream);
             setShareScreen(false);
         }
+    };
+
+    const toggleMute = () => {
+        stream.getAudioTracks()[0].enabled = !muted;
+        setMuted(!muted);
+    };
+
+    const toggleCamera = () => {
+        stream.getVideoTracks()[0].enabled = !cameraOff;
+        setCameraOff(!cameraOff);
     };
 
     function createPeer(userToSignal, callerID, stream) {
@@ -135,19 +159,25 @@ const VideoCall = ({ groupId }) => {
     return (
         <div>
             <h2>Video poziv</h2>
+            {error && <div style={{ color: "red" }}>{error}</div>}
             {isProfessor && !isCalling && <button onClick={startCall}>Započni poziv</button>}
             {isProfessor && isCalling && <button onClick={stopCall}>Zaustavi poziv</button>}
+            {!isProfessor && isCalling && <button onClick={stopCall}>Napusti poziv</button>}
             {isCalling && (
                 <>
-                    <video ref={userVideo} autoPlay muted style={{ width: "300px" }} />
-                    {peers.map((peer, index) => {
-                        return <Video key={index} peer={peer} />;
-                    })}
+                    <div style={{ display: 'flex', flexWrap: 'wrap' }}>
+                        <video ref={userVideo} autoPlay muted style={{ width: "300px" }} />
+                        {peers.map((peer, index) => {
+                            return <Video key={index} peer={peer} />;
+                        })}
+                    </div>
                     {isProfessor && (
                         <>
                             <button onClick={toggleShareScreen}>{shareScreen ? "Zaustavi dijeljenje ekrana" : "Podijeli ekran"}</button>
                         </>
                     )}
+                    <button onClick={toggleMute}>{muted ? "Uključi zvuk" : "Isključi zvuk"}</button>
+                    <button onClick={toggleCamera}>{cameraOff ? "Uključi kameru" : "Isključi kameru"}</button>
                 </>
             )}
         </div>
