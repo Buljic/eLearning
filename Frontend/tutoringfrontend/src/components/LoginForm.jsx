@@ -4,6 +4,9 @@ import { useNavigate } from 'react-router-dom';
 import "../css/general.css"
 import MyUserContext from "../minicomponents/Context/MyUserContext.js";
 import useFetchUser from "../customHooks/useFetchUser.js";
+
+import config from '../config.js';
+
 function LoginForm() {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
@@ -12,10 +15,12 @@ function LoginForm() {
     // const {myUser,setMyUser}=useContext(MyUserContext);
 
 console.log("SAMO JEDNOM MOLIM TE");
+console.log(`${config.BASE_URL}`)
     const handleLogin = async (event) => {
         event.preventDefault();
         try {
-            const response = await fetch('http://localhost:8080/api/login', {
+
+            const response = await fetch(`${config.BASE_URL}/api/login`, {
                 method: 'POST',
                 credentials:'include',
                 headers: {
@@ -33,7 +38,7 @@ console.log("SAMO JEDNOM MOLIM TE");
                 //navigate('/welcome'); // Preusmjeravanje na WelcomePage
 
 
-                const userResponse = await fetch('http://localhost:8080/api/welcomePage', {
+                const userResponse = await fetch(`${config.BASE_URL}/api/welcomePage`, {
                     method: 'GET',
                     credentials: 'include',
                     headers: {

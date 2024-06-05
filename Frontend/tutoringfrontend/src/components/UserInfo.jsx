@@ -2,6 +2,7 @@ import React from "react";
 import {Link, useParams} from "react-router-dom";
 import useFetchCertainUser from "../customHooks/useFetchCertainUser.js";
 import "../css/subject.css";
+import config from '../config.js';
 const UserInfo=()=>{
     const {username}=useParams();
     console.log("PARAMETAR JE :"+username)

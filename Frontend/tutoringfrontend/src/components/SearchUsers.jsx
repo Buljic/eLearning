@@ -1,6 +1,6 @@
 import React, {useState} from "react";
 import {useNavigate} from "react-router-dom";
-
+import config from '../config.js';
 const SearchUsers=()=>{
 
     const[isSearching,setIsSearching]=useState(false);

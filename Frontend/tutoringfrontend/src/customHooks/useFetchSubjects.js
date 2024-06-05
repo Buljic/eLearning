@@ -1,4 +1,5 @@
 import {useEffect,useState} from "react";
+import config from '../config.js';
 //Za gettanje svih subjecta u svrhu pravljenja liste
 const useFetchSubjects=()=>{
     const [subjects,setSubjects]=useState([]);

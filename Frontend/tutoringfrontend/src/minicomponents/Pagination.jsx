@@ -1,5 +1,5 @@
 import React from 'react';
-
+import config from '../config.js';
 const Pagination = ({ currentPage, totalPages, onPageChange }) => {
     const pages = [];
     for (let i = 0; i < totalPages; i++) {

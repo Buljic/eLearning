@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import config from '../config.js';
 
 const useFetchUser = () => {
     const [user, setUser] = useState(null);

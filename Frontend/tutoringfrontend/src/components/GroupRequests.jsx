@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Popup from 'reactjs-popup';
 import 'reactjs-popup/dist/index.css';
-
+import config from '../config.js';
 const GroupRequests = () => {
     const [requests, setRequests] = useState([]);
     const [totalPages, setTotalPages] = useState(0);

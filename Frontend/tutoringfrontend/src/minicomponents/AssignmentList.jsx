@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import AssignmentCreateModal from "./AssignmentCreateModal";
-
+import config from '../config.js';
 const AssignmentList = ({ isProfessor }) => {
     const { groupId } = useParams();
     const [assignments, setAssignments] = useState([]);

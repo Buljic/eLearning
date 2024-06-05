@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-
+import config from '../config.js';
 const UploadLessonFile = ({ lessonId }) => {
     const [file, setFile] = useState(null);
 

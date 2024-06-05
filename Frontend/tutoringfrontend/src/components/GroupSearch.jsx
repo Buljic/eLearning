@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import GroupFilterForm from "../minicomponents/GroupFilterForm.jsx";
-
+import config from '../config.js';
 import Pagination from "../minicomponents/Pagination.jsx";
 import GroupResults from "../minicomponents/GroupResult.jsx";
 

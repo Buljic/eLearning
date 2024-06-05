@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import CreateLessonModal from "./CreateLessonModal";
-
+import config from '../config.js';
 const LessonList = () => {
     const { groupId } = useParams();
     const storedUser = sessionStorage.getItem("myUser");
