@@ -1,5 +1,5 @@
 import React, {useState} from "react";
-
+import config from '../config.js';
 import {useNavigate} from "react-router-dom";
 //import error from "eslint-plugin-react/lib/util/error.js";
 function CreateAccount()

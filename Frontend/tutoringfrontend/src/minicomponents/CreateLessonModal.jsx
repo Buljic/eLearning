@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-
+import config from '../config.js';
 const CreateLessonModal = ({ show, handleClose, groupId }) => {
     const [title, setTitle] = useState("");
     const [content, setContent] = useState("");

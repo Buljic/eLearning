@@ -21,6 +21,7 @@ public class WebConfig implements WebMvcConfigurer
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowCredentials(true);
         configuration.addAllowedOrigin("http://localhost:5173"); // Frontend port
+        configuration.addAllowedOrigin("http://192.168.0.11:5173");
         configuration.addAllowedHeader("Authorization");
         configuration.addAllowedHeader("Content-Type");
         configuration.addAllowedHeader("Accept");
@@ -41,6 +42,7 @@ public class WebConfig implements WebMvcConfigurer
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
         config.addAllowedOrigin("http://localhost:5173"); // Frontend port
+        config.addAllowedOrigin("http://192.168.0.11:5173"); // Frontend port
         config.addAllowedHeader("*");
         config.addAllowedMethod("*");
 

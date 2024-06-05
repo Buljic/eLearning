@@ -1,5 +1,5 @@
 import React from "react";
-
+import config from '../config.js';
 const Lessons = ({ groupId }) => {
     return (
         <div>

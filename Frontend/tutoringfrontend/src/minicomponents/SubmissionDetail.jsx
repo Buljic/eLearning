@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-
+import config from '../config.js';
 const SubmissionDetail = () => {
     const { submissionId } = useParams();
     const [submission, setSubmission] = useState(null);

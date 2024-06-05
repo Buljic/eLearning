@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import useFetchSubjects from "../customHooks/useFetchSubjects.js";
-
+import config from '../config.js';
 const CreateGroup = () => {
     const [groupName, setGroupName] = useState(''); // max 31 chars
     const [topic, setTopic] = useState(''); // max 31 chars

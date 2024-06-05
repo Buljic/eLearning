@@ -6,7 +6,7 @@ import AssignmentList from "../minicomponents/AssignmentList.jsx";
 import VideoCall from "../minicomponents/VideoCall.jsx";
 import ChatForGroup from "../minicomponents/ChatForGroup.jsx";
 import LessonList from "../minicomponents/LessonList.jsx";
-
+import config from '../config.js';
 const GroupOverview = () => {
     const { groupId } = useParams();
     const [activeTab, setActiveTab] = useState("chat");

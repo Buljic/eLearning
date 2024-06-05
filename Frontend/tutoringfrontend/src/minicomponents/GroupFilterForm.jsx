@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import useFetchSubjects from "../customHooks/useFetchSubjects.js";
-
+import config from '../config.js';
 const GroupFilterForm = ({ filters, onFilterChange, onSubmit }) => {
     const [subjects, setSubjects] = useState(['']);
     const { subjects: allSubjects, loading, error } = useFetchSubjects();

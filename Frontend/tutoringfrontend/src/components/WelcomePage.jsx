@@ -4,7 +4,7 @@ import useFetchUser from "../customHooks/useFetchUser";
 import {Link} from "react-router-dom";
 import myUserContext from "../minicomponents/Context/MyUserContext.js";
 import MyUserContext from "../minicomponents/Context/MyUserContext.js";
-
+import config from '../config.js';
 const WelcomePage = () => {
     const { user, error, loading } = useFetchUser(); // Koristimo naš custom hook
 

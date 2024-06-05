@@ -1,5 +1,5 @@
 import {useEffect, useState} from "react";
-
+import config from '../config.js';
 
 const useFetchCertainUser=(username)=>
 {

@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import Peer from 'simple-peer';
 import SockJS from 'sockjs-client';
 import Stomp from 'stompjs';
-
+import config from '../config.js';
 const socket = new SockJS('http://localhost:8080/api/videoCall');
 const stompClient = Stomp.over(socket);
 

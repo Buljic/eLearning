@@ -2,6 +2,7 @@ import React, {useContext, useEffect, useState} from "react";
 import {Link} from "react-router-dom";
 import useFetchSubjects from "../customHooks/useFetchSubjects.js";
 import MyUserContext from "../minicomponents/Context/MyUserContext.js";
+import config from '../config.js';
 //Moze se koristiti i tj
 /*
     const ImeKomponente = () => {return };

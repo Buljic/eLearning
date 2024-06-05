@@ -27,6 +27,11 @@ export default defineConfig({
       process: 'rollup-plugin-node-polyfills/polyfills/process-es6',
       timers: 'timers-browserify'
     }
+  },
+  //todo izbrisi kad ti bude trebalo
+  server: {
+    host: '192.168.0.11',  // Replace with your main laptop's IP address
+    port: 5173            // Ensure this matches the port you're using for Vite
   }
 });
 

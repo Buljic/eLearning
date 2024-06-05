@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import SockJS from "sockjs-client";
 import Stomp from "stompjs";
 import { format } from "date-fns";
-
+import config from '../config.js';
 function determineEndpoints(isGroupChat, chatId, myUserId) {
     if (isGroupChat) {
         return {
