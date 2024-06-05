@@ -17,6 +17,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer
         //ontend na ovaj endpoint
         registry.addEndpoint("/api/chatTo").setAllowedOriginPatterns("*").withSockJS();//TODO implementuj specificni endpoint
         registry.addEndpoint("/api/chatGroup").setAllowedOriginPatterns("*").withSockJS(); //na ovom endpointu se povezujemo z a uspostavljanje ws veze
+
+        registry.addEndpoint("/api/videoCall").setAllowedOriginPatterns("*").withSockJS();
     }
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry)

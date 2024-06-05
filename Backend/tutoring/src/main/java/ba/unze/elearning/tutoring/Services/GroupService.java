@@ -11,6 +11,8 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 @Service
 public class GroupService {
@@ -49,5 +51,15 @@ public class GroupService {
         String sql = "SELECT COUNT(*) FROM user_group WHERE user_id = ? AND group_id = ?";
         Integer count = jdbcTemplate.queryForObject(sql, new Object[]{userId, groupId}, Integer.class);
         return count != null && count > 0;
+    }
+
+    public boolean isTutorPresentInGroup(Long groupId) {
+        String sql = "SELECT u.id, u.account_type FROM user u " +
+                "JOIN user_group ug ON u.id = ug.user_id " +
+                "WHERE ug.group_id = ?";
+
+        List<Map<String, Object>> users = jdbcTemplate.queryForList(sql, groupId);
+
+        return users.stream().anyMatch(user -> "PROFESOR".equals(user.get("account_type")));
     }
 }

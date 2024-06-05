@@ -8,13 +8,13 @@ import org.springframework.web.socket.server.support.HttpSessionHandshakeInterce
 
 @Configuration
 @EnableWebSocket
-public class SocketIOConfig implements WebSocketConfigurer {
+public class SocketIOConfig {//implements WebSocketConfigurer {
 
-    @Override
-    public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-        registry.addHandler(new VideoCallHandler(), "/video-call")
-                .addInterceptors(new JwtHandshakeInterceptor())
-                .setAllowedOrigins("*");
-    }
+//    @Override
+//    public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
+//        registry.addHandler(new VideoCallHandler(), "/video-call")
+//                .addInterceptors(new JwtHandshakeInterceptor())
+//                .setAllowedOrigins("*");
+//    }
 }
 
