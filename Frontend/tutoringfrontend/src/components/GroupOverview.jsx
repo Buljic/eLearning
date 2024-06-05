@@ -14,7 +14,7 @@ const GroupOverview = () => {
     const storedUser = sessionStorage.getItem("myUser");
     const myUser = JSON.parse(storedUser);
     const isProfessor = myUser.accountType === "PROFESOR";
-
+    console.log(groupId+"LOL")
     const renderTabContent = () => {
         switch (activeTab) {
             case "chat":

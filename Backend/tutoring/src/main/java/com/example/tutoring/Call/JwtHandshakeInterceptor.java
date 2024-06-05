@@ -11,23 +11,23 @@ import org.springframework.web.util.WebUtils;
 
 import java.util.Map;
 
-public class JwtHandshakeInterceptor implements HandshakeInterceptor {
+public class JwtHandshakeInterceptor {//implements HandshakeInterceptor {
 
-    @Override
-    public boolean beforeHandshake(ServerHttpRequest request, ServerHttpResponse response, WebSocketHandler wsHandler, Map<String, Object> attributes) throws Exception {
-        // Extract JWT from cookie and put it into attributes
-        if (request instanceof HttpServletRequest) {
-            HttpServletRequest servletRequest = (HttpServletRequest) request;
-            jakarta.servlet.http.Cookie cookie = WebUtils.getCookie(servletRequest, "JWT");
-            if (cookie != null) {
-                attributes.put("token", cookie.getValue());
-            }
-        }
-        return true;
-    }
-
-    @Override
-    public void afterHandshake(ServerHttpRequest request, ServerHttpResponse response, WebSocketHandler wsHandler, Exception ex) {
-        // No implementation needed
-    }
+//    @Override
+//    public boolean beforeHandshake(ServerHttpRequest request, ServerHttpResponse response, WebSocketHandler wsHandler, Map<String, Object> attributes) throws Exception {
+//        // Extract JWT from cookie and put it into attributes
+//        if (request instanceof HttpServletRequest) {
+//            HttpServletRequest servletRequest = (HttpServletRequest) request;
+//            jakarta.servlet.http.Cookie cookie = WebUtils.getCookie(servletRequest, "JWT");
+//            if (cookie != null) {
+//                attributes.put("token", cookie.getValue());
+//            }
+//        }
+//        return true;
+//    }
+//
+//    @Override
+//    public void afterHandshake(ServerHttpRequest request, ServerHttpResponse response, WebSocketHandler wsHandler, Exception ex) {
+//        // No implementation needed
+//    }
 }
