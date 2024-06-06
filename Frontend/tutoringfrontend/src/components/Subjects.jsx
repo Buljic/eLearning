@@ -40,7 +40,7 @@ const Subjects = () => {
     useEffect( ()=>{
         const getPopularSubjects=async() =>{
             //response ovo tj response=await fetch('',{}); je zasebna stvar neovisna o useEffect ali se koristi cesto tu
-            const response=await  fetch('http://localhost:8080/api/mostTutorSubjects',{
+            const response = await fetch(`${config.BASE_URL}/api/mostTutorSubjects`, {
                 method:'GET',
                 credentials:'include',
                 headers:{
@@ -103,7 +103,7 @@ const Subjects = () => {
     //za info o searched subjects
     const  getSearchedSubjectInfo=async ()=>
     {//koristi backticks tj `` umjesto navodnika , na podrucju gdje koristis queryje  i template literal za interpolaciju
-        const response=await fetch(`http://localhost:8080/api/subjects/search?searchTerm=${searchTerm}`,{
+        const response = await fetch(`${config.BASE_URL}/api/subjects/search?searchTerm=${searchTerm}`, {
                                                         //ovaj prije ? mora biti zapravo ime koje se na backendu trazi
             method:'GET',
             credentials:'include',

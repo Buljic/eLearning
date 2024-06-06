@@ -12,7 +12,7 @@ const AssignmentSubmissions = () => {
     }, []);
 
     const fetchSubmissions = async () => {
-        const response = await fetch(`http://localhost:8080/api/assignments/${assignmentId}/submissions`, {
+        const response = await fetch(`${config.BASE_URL}/api/assignments/${assignmentId}/submissions`, {
             method: 'GET',
             credentials: 'include',
             headers: {
@@ -42,7 +42,7 @@ const AssignmentSubmissions = () => {
         };
 
         try {
-            const response = await fetch(`http://localhost:8080/api/assignments/${assignmentId}/submissions/${submissionId}/feedback`, {
+            const response = await fetch(`${config.BASE_URL}/api/assignments/${assignmentId}/submissions/${submissionId}/feedback`, {
                 method: 'POST',
                 credentials: 'include',
                 headers: {
@@ -75,7 +75,7 @@ const AssignmentSubmissions = () => {
                                 <p>{submission.student.username}</p>
                                 <p>{new Date(submission.submissionTime).toLocaleString()}</p>
                                 <p>Status: {submission.status}</p>
-                                {submission.fileUrl && <a href={`http://localhost:8080${submission.fileUrl}`} target="_blank" rel="noopener noreferrer">View Submission</a>}
+                                {submission.fileUrl && <a href={`${config.BASE_URL}${submission.fileUrl}`} target="_blank" rel="noopener noreferrer">View Submission</a>}
                                 <textarea value={feedback} onChange={handleFeedbackChange} placeholder="Enter feedback" />
                                 <input type="number" value={grade} onChange={handleGradeChange} placeholder="Enter grade" />
                                 <button onClick={() => handleProvideFeedback(submission.id)}>Submit Feedback</button>

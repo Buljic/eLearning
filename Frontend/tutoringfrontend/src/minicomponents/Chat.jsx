@@ -44,9 +44,9 @@ const Chat = ({ chatId, isGroupChat }) => {
         if (!stompClient.current) {
             let socket;
             if (isGroupChat) {
-                socket = new SockJS("http://localhost:8080/api/chatGroup");
+                socket = new SockJS(`${config.BASE_URL}/api/chatGroup`);
             } else {
-                socket = new SockJS("http://localhost:8080/api/chatTo");
+                socket = new SockJS(`${config.BASE_URL}/api/chatTo`);
             }
             stompClient.current = Stomp.over(socket);
 
@@ -98,9 +98,9 @@ const Chat = ({ chatId, isGroupChat }) => {
 
         let fetchEndpoint = '';
         if (isGroupChat) {
-            fetchEndpoint = `http://localhost:8080/api/${chatId}/getOldGroupMessages?page=${page}&size=10`;
+            fetchEndpoint = `${config.BASE_URL}/api/${chatId}/getOldGroupMessages?page=${page}&size=10`;
         } else {
-            fetchEndpoint = `http://localhost:8080/api/${myUser.id}/${chatId}/getOldDirectMessages?page=${page}&size=10`;
+            fetchEndpoint = `${config.BASE_URL}/api/${myUser.id}/${chatId}/getOldDirectMessages?page=${page}&size=10`;
         }
         try {
             const response = await fetch(fetchEndpoint, {

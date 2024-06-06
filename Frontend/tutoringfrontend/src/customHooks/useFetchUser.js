@@ -9,7 +9,7 @@ const useFetchUser = () => {
     useEffect(() => {
         const getUser = async () => {
             try {
-                const response = await fetch('http://localhost:8080/api/welcomePage', {
+                const response = await fetch(`${config.BASE_URL}/api/welcomePage`, {
                     method: 'GET',
                     credentials: 'include',
                     headers: {

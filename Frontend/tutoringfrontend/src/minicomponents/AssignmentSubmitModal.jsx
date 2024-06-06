@@ -14,7 +14,7 @@ const AssignmentSubmitModal = ({ show, handleClose, assignment }) => {
         formData.append("file", file);
 
         try {
-            const response = await fetch(`http://localhost:8080/api/assignments/${assignment.id}/submit`, {
+            const response = await fetch(`${config.BASE_URL}/api/assignments/${assignment.id}/submit`, {
                 method: "POST",
                 body: formData,
                 credentials: "include",

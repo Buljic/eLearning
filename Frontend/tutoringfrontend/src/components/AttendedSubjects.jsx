@@ -67,7 +67,7 @@ const AttendedSubjects = () => {
 
     useEffect(() => {
         const getAttendedSubjects = async () => {
-            const response = await fetch(`http://localhost:8080/api/getAttendedGroups?userId=${myUser.id}`, {
+            const response = await fetch(`${config.BASE_URL}/api/getAttendedGroups?userId=${myUser.id}`, {
                 method: 'GET',
                 credentials: 'include',
                 headers: {

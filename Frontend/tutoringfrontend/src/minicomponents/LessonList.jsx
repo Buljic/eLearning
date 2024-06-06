@@ -14,7 +14,7 @@ const LessonList = () => {
     }, []);
 
     const fetchLessons = async () => {
-        const response = await fetch(`http://localhost:8080/api/${groupId}/lessons`, {
+        const response = await fetch(`${config.BASE_URL}/api/${groupId}/lessons`, {
             method: 'GET',
             credentials: 'include',
             headers: {
@@ -55,9 +55,9 @@ const LessonList = () => {
                             {lesson.materials && lesson.materials.map((material, index) => (
                                 <div key={index}>
                                     {material.fileType.startsWith("image/") ? (
-                                        <img src={`http://localhost:8080${material.fileUrl}`} alt={material.fileName} style={{ maxWidth: '200px', maxHeight: '200px' }} />
+                                        <img src={`${config.BASE_URL}${material.fileUrl}`} alt={material.fileName} style={{ maxWidth: '200px', maxHeight: '200px' }} />
                                     ) : (
-                                        <a href={`http://localhost:8080${material.fileUrl}`} target="_blank" rel="noopener noreferrer">{material.fileName}</a>
+                                        <a href={`${config.BASE_URL}${material.fileUrl}`} target="_blank" rel="noopener noreferrer">{material.fileName}</a>
                                     )}
                                 </div>
                             ))}

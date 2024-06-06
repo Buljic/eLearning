@@ -17,7 +17,7 @@ const SearchUsers=()=>{
         getSearchedUsers();
     }
     const getSearchedUsers=async ()=>{
-        const response=await fetch(`http://localhost:8080/api/getUsers?searchTerm=${searchTerm}`,{
+        const response = await fetch(`${config.BASE_URL}/api/getUsers?searchTerm=${searchTerm}`, {
             method:'GET',
             credentials:'include',
             headers:{

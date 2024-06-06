@@ -3,7 +3,7 @@ import Peer from 'simple-peer';
 import SockJS from 'sockjs-client';
 import Stomp from 'stompjs';
 import config from '../config.js';
-const socket = new SockJS('http://localhost:8080/api/videoCall');
+const socket = new SockJS(`${config.BASE_URL}/api/videoCall`);
 const stompClient = Stomp.over(socket);
 
 const VideoCall = ({ groupId }) => {

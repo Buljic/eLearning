@@ -17,7 +17,7 @@ const GroupRequests = () => {
     }, [page]);
 
     const fetchRequests = async () => {
-        const response = await fetch(`http://localhost:8080/api/requests?page=${page}&size=10`, {
+        const response = await fetch(`${config.BASE_URL}/api/requests?page=${page}&size=10`, {
             method: 'GET',
             credentials: 'include',
             headers: {
@@ -34,7 +34,7 @@ const GroupRequests = () => {
     };
 
     const handleAccept = async (groupId, userId) => {
-        const response = await fetch(`http://localhost:8080/api/requests/${groupId}/${userId}/accept`, {
+        const response = await fetch(`${config.BASE_URL}/api/requests/${groupId}/${userId}/accept`, {
             method: 'POST',
             credentials: 'include',
             headers: {
@@ -49,7 +49,7 @@ const GroupRequests = () => {
     };
 
     const handleApprove = async (groupId, userId) => {
-        const response = await fetch(`http://localhost:8080/api/requests/${groupId}/${userId}/approve`, {
+        const response = await fetch(`${config.BASE_URL}/api/requests/${groupId}/${userId}/approve`, {
             method: 'POST',
             credentials: 'include',
             headers: {
@@ -65,7 +65,7 @@ const GroupRequests = () => {
     };
 
     const handleReject = async (groupId, userId) => {
-        const response = await fetch(`http://localhost:8080/api/requests/${groupId}/${userId}/reject`, {
+        const response = await fetch(`${config.BASE_URL}/api/requests/${groupId}/${userId}/reject`, {
             method: 'POST',
             credentials: 'include',
             headers: {

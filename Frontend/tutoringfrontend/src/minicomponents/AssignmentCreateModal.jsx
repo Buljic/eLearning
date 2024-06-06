@@ -22,7 +22,7 @@ const AssignmentCreateModal = ({ show, handleClose, groupId }) => {
         formData.append("file", file);
 
         try {
-            const response = await fetch("http://localhost:8080/api/assignments", {
+            const response = await fetch(`${config.BASE_URL}/api/assignments`, {
                 method: "POST",
                 body: formData,
                 credentials: "include",

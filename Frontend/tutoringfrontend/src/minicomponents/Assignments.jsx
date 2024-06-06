@@ -12,7 +12,7 @@ const Assignments = ({ groupId, onSelectAssignment }) => {
     }, []);
 
     const fetchAssignments = async () => {
-        const response = await fetch(`http://localhost:8080/api/${groupId}/assignments`, {
+        const response = await fetch(`${config.BASE_URL}/api/${groupId}/assignments`, {
             method: 'GET',
             credentials: 'include',
             headers: {
@@ -64,7 +64,7 @@ const Assignments = ({ groupId, onSelectAssignment }) => {
                             <p>{assignment.description}</p>
                             <p>Due Date: {assignment.dueDateTime}</p>
                             <p>Points: {assignment.points}</p>
-                            {assignment.imageUrl && <img src={`http://localhost:8080${assignment.imageUrl}`} alt={assignment.name} style={{ maxWidth: '200px', maxHeight: '200px' }} />}
+                            {assignment.imageUrl && <img src={`${config.BASE_URL}${assignment.imageUrl}`} alt={assignment.name} style={{ maxWidth: '200px', maxHeight: '200px' }} />}
                             {assignment.submissions && assignment.submissions.length > 0 && assignment.submissions.map((submission) => (
                                 <div key={submission.id} style={getStatusStyle(submission.status)}>
                                     <p>Status: {submission.status}</p>

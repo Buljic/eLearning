@@ -39,7 +39,7 @@ const GroupSearch = () => {
 
     const getSearchedGroups = async (pageToFetch = page) => {
         const queryParams = new URLSearchParams(filters).toString();
-        const response = await fetch(`http://localhost:8080/api/getGroups?page=${pageToFetch}&size=${size}&${queryParams}`, {
+        const response = await fetch(`${config.BASE_URL}/api/getGroups?page=${pageToFetch}&size=${size}&${queryParams}`, {
             method: 'GET',
             credentials: 'include',
             headers: {

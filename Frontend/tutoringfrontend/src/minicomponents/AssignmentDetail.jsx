@@ -14,7 +14,7 @@ const AssignmentDetail = () => {
     }, []);
 
     const fetchAssignment = async () => {
-        const response = await fetch(`http://localhost:8080/api/assignments/${assignmentId}/withSubmissions`, {
+        const response = await fetch(`${config.BASE_URL}/api/assignments/${assignmentId}/withSubmissions`, {
             method: 'GET',
             credentials: 'include',
             headers: {
@@ -58,7 +58,7 @@ const AssignmentDetail = () => {
         formData.append("file", selectedFile);
 
         try {
-            const response = await fetch(`http://localhost:8080/api/assignments/${assignmentId}/submit`, {
+            const response = await fetch(`${config.BASE_URL}/api/assignments/${assignmentId}/submit`, {
                 method: 'POST',
                 credentials: 'include',
                 body: formData,
@@ -86,7 +86,7 @@ const AssignmentDetail = () => {
             <h1>{assignment.name}</h1>
             <p>{assignment.description}</p>
             <p>Due: {new Date(assignment.dueDateTime).toLocaleString()}</p>
-            {assignment.imageUrl && <img src={`http://localhost:8080${assignment.imageUrl}`} alt={assignment.name} style={{ maxWidth: '200px', maxHeight: '200px' }} />}
+            {assignment.imageUrl && <img src={`${config.BASE_URL}${assignment.imageUrl}`} alt={assignment.name} style={{ maxWidth: '200px', maxHeight: '200px' }} />}
             <p>Status: <span style={{ color: getStatusColor(status) }}>{status}</span></p>
             {status === "Missing" && (
                 <div>
@@ -110,7 +110,7 @@ const AssignmentDetail = () => {
                                 <p>{submission.student.username}</p>
                                 <p>{new Date(submission.submissionTime).toLocaleString()}</p>
                                 <p>Status: {submission.status}</p>
-                                {submission.fileUrl && <a href={`http://localhost:8080${submission.fileUrl}`} target="_blank" rel="noopener noreferrer">View Submission</a>}
+                                {submission.fileUrl && <a href={`${config.BASE_URL}${submission.fileUrl}`} target="_blank" rel="noopener noreferrer">View Submission</a>}
                                 {submission.feedback && <p>Feedback: {submission.feedback}</p>}
                                 {submission.grade && <p>Grade: {submission.grade}</p>}
                             </li>

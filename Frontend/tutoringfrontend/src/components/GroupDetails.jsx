@@ -12,7 +12,7 @@ const GroupDetails = () => {
     useEffect(() => {
         const fetchGroupDetails = async () => {
             try {
-                const response = await fetch(`http://localhost:8080/api/groups/${groupId}`, {
+                const response = await fetch(`${config.BASE_URL}/api/groups/${groupId}`, {
                     method: 'GET',
                     credentials: 'include',
                     headers: {
@@ -35,7 +35,7 @@ const GroupDetails = () => {
 
     const handleRequestAccess = async () => {
         try {
-            const response = await fetch(`http://localhost:8080/api/groups/${groupId}/request-access`, {
+            const response = await fetch(`${config.BASE_URL}/api/groups/${groupId}/request-access`, {
                 method: 'POST',
                 credentials: 'include',
                 headers: {
