@@ -1,93 +1,180 @@
-import React, { useEffect, useRef, useState, useContext } from 'react';
-import SimplePeer from 'simple-peer';
-
-import Video from "./Video.jsx"; // Make sure you have a context for WebSockets
+// src/minicomponents/VideoCall.jsx
+import React, { useState, useEffect, useRef } from 'react';
+import { io } from 'socket.io-client';
+import config from '../config';
 
 const VideoCall = ({ groupId }) => {
-    const [peers, setPeers] = useState([]);
-    const socketRef = useContext(SocketContext);
-    const userVideo = useRef();
-    const peersRef = useRef([]);
+    const [localStream, setLocalStream] = useState(null);
+    const [remoteStreams, setRemoteStreams] = useState({});
+    const [peerConnections, setPeerConnections] = useState({});
+    const socketRef = useRef(null);
+    const localVideoRef = useRef(null);
+    const remoteVideoRefs = useRef({});
 
     useEffect(() => {
-        navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then(stream => {
-            userVideo.current.srcObject = stream;
+        // Initialize WebSocket connection
+        socketRef.current = io(config.WS_BASE_URL);
+        socketRef.current.emit('join', { groupId });
 
-            socketRef.current.emit('join room', groupId);
+        // Handle WebSocket events
+        socketRef.current.on('offer', handleOffer);
+        socketRef.current.on('answer', handleAnswer);
+        socketRef.current.on('ice-candidate', handleNewICECandidateMsg);
+        socketRef.current.on('user-joined', handleUserJoined);
+        socketRef.current.on('user-left', handleUserLeft);
 
-            socketRef.current.on('all users', users => {
-                const peers = [];
-                users.forEach(userID => {
-                    const peer = createPeer(userID, socketRef.current.id, stream);
-                    peersRef.current.push({
-                        peerID: userID,
-                        peer,
-                    });
-                    peers.push(peer);
-                });
-                setPeers(peers);
+        // Get user media
+        navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+            .then(stream => {
+                setLocalStream(stream);
+                if (localVideoRef.current) {
+                    localVideoRef.current.srcObject = stream;
+                }
+
+                // Notify other users of the new user
+                socketRef.current.emit('ready', { groupId });
             });
 
-            socketRef.current.on('user joined', payload => {
-                const peer = addPeer(payload.signal, payload.callerID, stream);
-                peersRef.current.push({
-                    peerID: payload.callerID,
-                    peer,
-                });
-
-                setPeers(users => [...users, peer]);
-            });
-
-            socketRef.current.on('receiving returned signal', payload => {
-                const item = peersRef.current.find(p => p.peerID === payload.callerID);
-                item.peer.signal(payload.signal);
-            });
-        });
-
-        // Clean up function
         return () => {
-            socketRef.current.off('user joined');
-            socketRef.current.off('all users');
-            socketRef.current.off('receiving returned signal');
+            // Cleanup on component unmount
+            socketRef.current.disconnect();
+            if (localStream) {
+                localStream.getTracks().forEach(track => track.stop());
+            }
         };
     }, [groupId]);
 
-    function createPeer(userToSignal, callerID, stream) {
-        const peer = new SimplePeer({
-            initiator: true,
-            trickle: false,
-            stream,
+    const handleUserJoined = (userId) => {
+        createPeerConnection(userId);
+        socketRef.current.emit('offer', { userId, sdp: peerConnections[userId].localDescription });
+    };
+
+    const handleUserLeft = (userId) => {
+        if (peerConnections[userId]) {
+            peerConnections[userId].close();
+            const newPeerConnections = { ...peerConnections };
+            delete newPeerConnections[userId];
+            setPeerConnections(newPeerConnections);
+        }
+
+        const newRemoteStreams = { ...remoteStreams };
+        delete newRemoteStreams[userId];
+        setRemoteStreams(newRemoteStreams);
+    };
+
+    const createPeerConnection = (userId) => {
+        const pc = new RTCPeerConnection();
+
+        pc.onicecandidate = (event) => {
+            if (event.candidate) {
+                socketRef.current.emit('ice-candidate', {
+                    target: userId,
+                    candidate: event.candidate,
+                });
+            }
+        };
+
+        pc.ontrack = (event) => {
+            setRemoteStreams(prevStreams => ({
+                ...prevStreams,
+                [userId]: event.streams[0]
+            }));
+        };
+
+        localStream.getTracks().forEach(track => {
+            pc.addTrack(track, localStream);
         });
 
-        peer.on('signal', signal => {
-            socketRef.current.emit('sending signal', { userToSignal, callerID, signal });
+        pc.createOffer().then(sdp => {
+            pc.setLocalDescription(sdp);
+            socketRef.current.emit('offer', {
+                target: userId,
+                sdp: pc.localDescription,
+            });
         });
 
-        return peer;
-    }
+        setPeerConnections(prevConnections => ({
+            ...prevConnections,
+            [userId]: pc,
+        }));
 
-    function addPeer(incomingSignal, callerID, stream) {
-        const peer = new SimplePeer({
-            initiator: false,
-            trickle: false,
-            stream,
+        return pc;
+    };
+
+    const handleOffer = async (offer) => {
+        const pc = createPeerConnection(offer.sender);
+        await pc.setRemoteDescription(new RTCSessionDescription(offer.sdp));
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        socketRef.current.emit('answer', {
+            target: offer.sender,
+            sdp: pc.localDescription,
         });
+    };
 
-        peer.on('signal', signal => {
-            socketRef.current.emit('returning signal', { callerID, signal });
+    const handleAnswer = async (answer) => {
+        const pc = peerConnections[answer.sender];
+        await pc.setRemoteDescription(new RTCSessionDescription(answer.sdp));
+    };
+
+    const handleNewICECandidateMsg = (msg) => {
+        const pc = peerConnections[msg.sender];
+        const candidate = new RTCIceCandidate(msg.candidate);
+        pc.addIceCandidate(candidate);
+    };
+
+    const handleMuteUnmute = () => {
+        if (localStream) {
+            localStream.getAudioTracks()[0].enabled = !localStream.getAudioTracks()[0].enabled;
+        }
+    };
+
+    const handleCameraToggle = () => {
+        if (localStream) {
+            localStream.getVideoTracks()[0].enabled = !localStream.getVideoTracks()[0].enabled;
+        }
+    };
+
+    const handleScreenShare = async () => {
+        try {
+            const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+            const videoTrack = screenStream.getVideoTracks()[0];
+            videoTrack.onended = () => {
+                localStream.getVideoTracks()[0].enabled = true;
+            };
+
+            const sender = peerConnections[Object.keys(peerConnections)[0]].getSenders().find(s => s.track.kind === 'video');
+            if (sender) {
+                sender.replaceTrack(videoTrack);
+            }
+        } catch (err) {
+            console.error('Error sharing screen:', err);
+        }
+    };
+
+    useEffect(() => {
+        Object.keys(remoteStreams).forEach(userId => {
+            const videoElement = remoteVideoRefs.current[userId];
+            if (videoElement && remoteStreams[userId]) {
+                videoElement.srcObject = remoteStreams[userId];
+            }
         });
-
-        peer.signal(incomingSignal);
-
-        return peer;
-    }
+    }, [remoteStreams]);
 
     return (
-        <div className="video-call-container">
-            <video playsInline muted ref={userDatabase} autoPlay className="user-video" />
-            {peers.map((peer, index) => (
-                <Video key={index} peer={peer} />
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '10px' }}>
+            <video ref={localVideoRef} autoPlay muted style={{ width: '100%', height: 'auto' }} />
+            {Object.keys(remoteStreams).map(userId => (
+                <video
+                    key={userId}
+                    ref={el => remoteVideoRefs.current[userId] = el}
+                    autoPlay
+                    style={{ width: '100%', height: 'auto' }}
+                />
             ))}
+            <button onClick={handleMuteUnmute}>Mute/Unmute</button>
+            <button onClick={handleCameraToggle}>Camera On/Off</button>
+            <button onClick={handleScreenShare}>Share Screen</button>
         </div>
     );
 };

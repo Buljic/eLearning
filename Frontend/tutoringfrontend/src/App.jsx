@@ -25,7 +25,7 @@ import GroupOverview from "./components/GroupOverview.jsx";
 import AssignmentSubmissions from "./minicomponents/AssignmentSubmissions.jsx";
 import SubmissionDetail from "./minicomponents/SubmissionDetail.jsx";
 import AssignmentDetail from "./minicomponents/AssignmentDetail.jsx";
-import {SocketProvider} from "./SocketContext.js";
+
 function App() {
     // const [myUser,setMyUser]=useState(null);
     return (
@@ -34,7 +34,7 @@ function App() {
             <Header />
         {/*   sve sto je izvan routes je stalno tu a unutar njega je dinamicko */}
         {/*<MyUserContext.Provider value={{myUser,setMyUser}}>*/}
-            <SocketProvider>
+
         <Router>
 
             <Routes>
@@ -68,7 +68,7 @@ function App() {
             {/*    da navigira bilo koji nedefinirani path na login*/}
             </Routes>
         </Router>
-                </SocketProvider>
+
         {/*</MyUserContext.Provider>*/}
         </>
     );
