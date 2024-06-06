@@ -11,6 +11,7 @@ const VideoCall = () => {
     const stompClientRef = useRef(null);
     const localVideoRef = useRef(null);
     const remoteVideoRefs = useRef({});
+    const pendingPeerConnections = useRef([]);
     const myUser = JSON.parse(sessionStorage.getItem("myUser")); // Assuming you store user info in sessionStorage
 
     useEffect(() => {
@@ -37,6 +38,9 @@ const VideoCall = () => {
                 } else if (msg.type === 'leave') {
                     handleUserLeft(msg.sender);
                     console.log('USER LEFT: ' + msg.sender);
+                } else if (msg.type === 'existingUsers') {
+                    handleExistingUsers(msg.existingUsers);
+                    console.log('EXISTING USERS: ', msg.existingUsers);
                 }
             });
 
@@ -45,19 +49,27 @@ const VideoCall = () => {
         });
 
         // Get user media
-        navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-            .then(stream => {
-                setLocalStream(stream);
-                if (localVideoRef.current) {
-                    localVideoRef.current.srcObject = stream;
-                }
-                console.log('LOCAL STREAM SET');
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+                .then(stream => {
+                    setLocalStream(stream);
+                    if (localVideoRef.current) {
+                        localVideoRef.current.srcObject = stream;
+                    }
+                    console.log('LOCAL STREAM SET');
 
-                // Create peer connections for existing users
-                users.forEach(username => {
-                    createPeerConnection(username);
+                    // Create peer connections for pending users
+                    pendingPeerConnections.current.forEach(username => {
+                        createPeerConnection(username);
+                    });
+                    pendingPeerConnections.current = [];
+                })
+                .catch(error => {
+                    console.error('Error accessing media devices.', error);
                 });
-            });
+        } else {
+            console.error('navigator.mediaDevices not supported.');
+        }
 
         return () => {
             // Cleanup on component unmount
@@ -68,7 +80,18 @@ const VideoCall = () => {
                 localStream.getTracks().forEach(track => track.stop());
             }
         };
-    }, [myUser.username, users]);
+    }, [myUser.username]);
+
+    // Handle localStream changes to create pending peer connections
+    useEffect(() => {
+        if (localStream) {
+            console.log('LOCAL STREAM UPDATED');
+            pendingPeerConnections.current.forEach(username => {
+                createPeerConnection(username);
+            });
+            pendingPeerConnections.current = [];
+        }
+    }, [localStream]);
 
     const handleUserJoined = (username, existingUsers) => {
         if (!users.includes(username)) {
@@ -78,7 +101,11 @@ const VideoCall = () => {
             existingUsers.forEach(existingUser => {
                 if (!users.includes(existingUser) && existingUser !== myUser.username) {
                     setUsers(prevUsers => [...prevUsers, existingUser]);
-                    createPeerConnection(existingUser);
+                    if (localStream) {
+                        createPeerConnection(existingUser);
+                    } else {
+                        pendingPeerConnections.current.push(existingUser);
+                    }
                 }
             });
         }
@@ -87,6 +114,23 @@ const VideoCall = () => {
             console.log('UPDATED USERS LIST: ', [...users, username]);
         } else {
             console.log('Local stream not set yet, delaying peer connection creation.');
+            pendingPeerConnections.current.push(username);
+        }
+    };
+
+    const handleExistingUsers = (existingUsers) => {
+        if (existingUsers) {
+            existingUsers.forEach(username => {
+                if (!users.includes(username) && username !== myUser.username) {
+                    setUsers(prevUsers => [...prevUsers, username]);
+                    if (localStream) {
+                        createPeerConnection(username);
+                    } else {
+                        console.log('Local stream not set yet, delaying peer connection creation for existing users.');
+                        pendingPeerConnections.current.push(username);
+                    }
+                }
+            });
         }
     };
 
@@ -109,6 +153,11 @@ const VideoCall = () => {
     };
 
     const createPeerConnection = (username) => {
+        if (!localStream) {
+            console.log('LOCAL STREAM IS NULL WHEN CREATING PEER CONNECTION FOR: ', username);
+            return;
+        }
+
         const pc = new RTCPeerConnection();
 
         pc.onicecandidate = (event) => {
@@ -127,17 +176,13 @@ const VideoCall = () => {
                 ...prevStreams,
                 [username]: event.streams[0]
             }));
-            console.log(`REMOTE STREAM ADDED FOR USER: ${username}`);
+            console.log(`REMOTE STREAM ADDED FOR USER: ${username}`, event.streams[0]);
         };
 
-        if (localStream) {
-            localStream.getTracks().forEach(track => {
-                pc.addTrack(track, localStream);
-            });
-            console.log('LOCAL STREAM TRACKS ADDED TO PEER CONNECTION FOR: ', username);
-        } else {
-            console.log('LOCAL STREAM IS NULL WHEN CREATING PEER CONNECTION FOR: ', username);
-        }
+        localStream.getTracks().forEach(track => {
+            pc.addTrack(track, localStream);
+        });
+        console.log('LOCAL STREAM TRACKS ADDED TO PEER CONNECTION FOR: ', username);
 
         setPeerConnections(prevConnections => ({
             ...prevConnections,
@@ -150,6 +195,10 @@ const VideoCall = () => {
 
     const handleOffer = async (offer) => {
         const pc = createPeerConnection(offer.sender);
+        if (!pc) {
+            console.log('Peer connection not created for offer from: ', offer.sender);
+            return;
+        }
         await pc.setRemoteDescription(new RTCSessionDescription(offer.sdp));
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
@@ -163,14 +212,28 @@ const VideoCall = () => {
 
     const handleAnswer = async (answer) => {
         const pc = peerConnections[answer.sender];
+        if (!pc) {
+            console.log('Peer connection not found for answer from: ', answer.sender);
+            return;
+        }
         await pc.setRemoteDescription(new RTCSessionDescription(answer.sdp));
         console.log('ANSWER RECEIVED FROM: ', answer.sender);
     };
 
     const handleNewICECandidateMsg = (msg) => {
         const pc = peerConnections[msg.sender];
+        if (!pc) {
+            console.log('Peer connection not found for ICE candidate from: ', msg.sender);
+            return;
+        }
         const candidate = new RTCIceCandidate(msg.candidate);
-        pc.addIceCandidate(candidate);
+        pc.addIceCandidate(candidate)
+            .then(() => {
+                console.log('ICE CANDIDATE ADDED: ', msg.candidate);
+            })
+            .catch(error => {
+                console.error('Error adding ICE candidate: ', error);
+            });
         console.log('ICE CANDIDATE RECEIVED FROM: ', msg.sender);
     };
 
@@ -187,20 +250,22 @@ const VideoCall = () => {
             console.log('VIDEO TOGGLED: ', localStream.getVideoTracks()[0].enabled);
         }
     };
-
     const handleScreenShare = async () => {
         try {
             const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
             const videoTrack = screenStream.getVideoTracks()[0];
             videoTrack.onended = () => {
                 localStream.getVideoTracks()[0].enabled = true;
+                console.log('Screen sharing stopped, re-enabling local video');
             };
 
-            const sender = peerConnections[Object.keys(peerConnections)[0]].getSenders().find(s => s.track.kind === 'video');
+            const sender = Object.values(peerConnections)
+                .flatMap(pc => pc.getSenders())
+                .find(s => s.track.kind === 'video');
             if (sender) {
                 sender.replaceTrack(videoTrack);
+                console.log('Screen sharing started');
             }
-            console.log('SCREEN SHARING STARTED');
         } catch (err) {
             console.error('Error sharing screen:', err);
         }
@@ -211,7 +276,7 @@ const VideoCall = () => {
             const videoElement = remoteVideoRefs.current[username];
             if (videoElement && remoteStreams[username]) {
                 videoElement.srcObject = remoteStreams[username];
-                console.log(`STREAM SET FOR USER: ${username}`);
+                console.log(`STREAM SET FOR USER: ${username}`, remoteStreams[username]);
             }
         });
     }, [remoteStreams]);
