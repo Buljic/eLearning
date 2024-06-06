@@ -21,6 +21,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer
         registry.addEndpoint("/api/videoCall").setAllowedOriginPatterns("*").withSockJS();
 
         registry.addEndpoint("/api/ws/videoCall").setAllowedOriginPatterns("*").withSockJS();
+
     }
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry)
