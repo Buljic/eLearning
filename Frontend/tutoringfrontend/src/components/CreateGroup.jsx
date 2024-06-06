@@ -90,7 +90,7 @@ const CreateGroup = () => {
         console.log('Group Data: ', groupData);
 
         try {
-            const response = await fetch('http://localhost:8080/api/createGroup', {
+            const response = await fetch(`${config.BASE_URL}/api/createGroup`, {
                 method: 'POST',
                 credentials: 'include',
                 headers: {

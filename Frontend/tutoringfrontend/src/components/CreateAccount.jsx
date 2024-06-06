@@ -26,7 +26,7 @@ Kada pozoveš event.preventDefault(), kažeš browseru: "Ne radi ono standardno 
 
         try
         {
-            const response = await fetch('http://localhost:8080/api/createAccount', { //fetch je za sve radnje asinhrone
+            const response = await fetch(`${config.BASE_URL}/api/createAccount`, { //fetch je za sve radnje asinhrone
                 method: 'POST',//koristis za post , postmapping
                 headers: {
                     'Content-Type': 'application/json',

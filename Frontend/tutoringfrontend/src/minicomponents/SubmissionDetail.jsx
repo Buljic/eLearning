@@ -12,7 +12,7 @@ const SubmissionDetail = () => {
     }, []);
 
     const fetchSubmission = async () => {
-        const response = await fetch(`http://localhost:8080/api/submissions/${submissionId}`, {
+        const response = await fetch(`${config.BASE_URL}/api/submissions/${submissionId}`, {
             method: 'GET',
             credentials: 'include',
             headers: {
@@ -38,7 +38,7 @@ const SubmissionDetail = () => {
         };
 
         try {
-            const response = await fetch(`http://localhost:8080/api/submissions/${submissionId}`, {
+            const response = await fetch(`${config.BASE_URL}/api/submissions/${submissionId}`, {
                 method: "PUT",
                 headers: {
                     'Content-Type': 'application/json',
@@ -65,7 +65,7 @@ const SubmissionDetail = () => {
             <p>Submission Time: {new Date(submission.submissionTime).toLocaleString()}</p>
             <p>Status: <span style={{ color: getStatusColor(submission.status) }}>{submission.status}</span></p>
             <div>
-                <a href={`http://localhost:8080${submission.fileUrl}`} target="_blank" rel="noopener noreferrer">View Submission File</a>
+                <a href={`${config.BASE_URL}${submission.fileUrl}`} target="_blank" rel="noopener noreferrer">View Submission File</a>
             </div>
             <form onSubmit={handleSubmit}>
                 <div>

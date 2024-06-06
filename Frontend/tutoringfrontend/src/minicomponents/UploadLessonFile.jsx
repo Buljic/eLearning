@@ -11,7 +11,7 @@ const UploadLessonFile = ({ lessonId }) => {
         const formData = new FormData();
         formData.append("file", file);
 
-        const response = await fetch(`http://localhost:8080/api/lessons/${lessonId}/upload`, {
+        const response = await fetch(`${config.BASE_URL}/api/lessons/${lessonId}/upload`, {
             method: "POST",
             credentials: "include",
             body: formData,

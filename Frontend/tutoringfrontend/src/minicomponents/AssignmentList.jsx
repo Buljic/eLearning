@@ -14,7 +14,7 @@ const AssignmentList = ({ isProfessor }) => {
     }, []);
 
     const fetchAssignments = async () => {
-        const response = await fetch(`http://localhost:8080/api/${groupId}/assignments`, {
+        const response = await fetch(`${config.BASE_URL}/api/${groupId}/assignments`, {
             method: 'GET',
             credentials: 'include',
             headers: {
@@ -52,7 +52,7 @@ const AssignmentList = ({ isProfessor }) => {
                         <h2>{assignment.name}</h2>
                         <p>{assignment.description}</p>
                         <p>Due: {new Date(assignment.dueDateTime).toLocaleString()}</p>
-                        {assignment.imageUrl && <img src={`http://localhost:8080${assignment.imageUrl}`} alt={assignment.name} style={{ maxWidth: '200px', maxHeight: '200px' }} />}
+                        {assignment.imageUrl && <img src={`${config.BASE_URL}${assignment.imageUrl}`} alt={assignment.name} style={{ maxWidth: '200px', maxHeight: '200px' }} />}
                         {!isProfessor && (
                             <p>Status: <span style={{ color: getStatusColor(getStatus(assignment)) }}>{getStatus(assignment)}</span></p>
                         )}

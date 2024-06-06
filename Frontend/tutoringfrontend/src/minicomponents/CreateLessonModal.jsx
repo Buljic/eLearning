@@ -22,7 +22,7 @@ const CreateLessonModal = ({ show, handleClose, groupId }) => {
         });
 
         try {
-            const response = await fetch("http://localhost:8080/api/lessons", {
+            const response = await fetch(`${config.BASE_URL}/api/lessons`, {
                 method: "POST",
                 credentials: "include",
                 body: formData,

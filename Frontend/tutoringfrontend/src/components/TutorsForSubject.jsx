@@ -12,7 +12,7 @@ console.log("JEDNOM");
 
     useEffect(()=>{
         const getTutorsForSubject=async()=>{
-            const response=await fetch(`http://localhost:8080/api/getTutorsFor?subject=${subject}`, {
+            const response = await fetch(`${config.BASE_URL}/api/getTutorsFor?subject=${subject}`, {
                 method:'GET',
                 credentials:'include',
                 headers:{

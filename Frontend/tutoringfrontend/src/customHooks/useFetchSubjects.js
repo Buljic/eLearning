@@ -10,7 +10,7 @@ const useFetchSubjects=()=>{
         const getSubjects= async ()=>{
             try
             {
-                const response = await fetch('http://localhost:8080/api/allSubjects', {
+                const response = await fetch(`${config.BASE_URL}/api/allSubjects`, {
                     method: 'GET',
                     credentials: 'include',
                     headers: {

@@ -12,7 +12,7 @@ const useFetchCertainUser=(username)=>
         const getCertainUser=async()=>{
             try{
                 console.log("USERNAME JE:"+username)
-                const response=await fetch(`http://localhost:8080/api/getUser/${username}`,{
+                const response = await fetch(`${config.BASE_URL}/api/getUser/${username}`, {
                     method:'GET',
                     credentials:'include',
                     headers:{

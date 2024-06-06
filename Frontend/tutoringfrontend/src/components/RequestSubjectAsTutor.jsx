@@ -25,7 +25,7 @@ const RequestSubjectAsTutor=()=>{
             console.log({inputSubject,writtenQualifications,comment});
             const requestBody = JSON.stringify({inputSubject, writtenQualifications, comment});
             console.log(requestBody);
-            const response = await fetch('http://localhost:8080/api/registerForSubjectAsTutor', {
+            const response = await fetch(`${config.BASE_URL}/api/registerForSubjectAsTutor`, {
                 method: 'POST',
                 credentials: 'include',
                 headers: {
