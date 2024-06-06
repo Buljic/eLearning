@@ -4,8 +4,9 @@ import SockJS from 'sockjs-client';
 import Stomp from 'stompjs';
 import config from '../config.js';
 
-const VideoCall = ({ groupId }) => {
+const VideoCall = () => {
     const [peers, setPeers] = useState([]);
+    const [sessionCode, setSessionCode] = useState('');
     const userVideo = useRef();
     const peersRef = useRef([]);
     const userStream = useRef();
@@ -13,35 +14,39 @@ const VideoCall = ({ groupId }) => {
     const [cameraOn, setCameraOn] = useState(true);
     const [micOn, setMicOn] = useState(true);
     const stompClientRef = useRef();
+    const [connected, setConnected] = useState(false);
 
     useEffect(() => {
-        const socket = new SockJS(`${config.BASE_URL}/api/videoCall`);
-        const stompClient = Stomp.over(socket);
-        stompClientRef.current = stompClient;
+        if (sessionCode) {
+            const socket = new SockJS(`${config.BASE_URL}/api/videoCall`);
+            const stompClient = Stomp.over(socket);
+            stompClientRef.current = stompClient;
 
-        stompClient.connect({}, () => {
-            console.log('Connected to WebSocket');
+            stompClient.connect({}, () => {
+                console.log('Connected to WebSocket');
+                setConnected(true);
 
-            stompClient.subscribe(`/topic/call/${groupId}`, (message) => {
-                const payload = JSON.parse(message.body);
-                console.log('Received signal:', payload);
-                handleSignal(payload);
+                stompClient.subscribe(`/topic/call/${sessionCode}`, (message) => {
+                    const payload = JSON.parse(message.body);
+                    console.log('Received signal:', payload);
+                    handleSignal(payload);
+                });
+
+                stompClient.subscribe(`/user/queue/errors`, (message) => {
+                    const errorMessage = message.body;
+                    console.error('Error:', errorMessage);
+                    alert(errorMessage); // Display error to the user
+                });
+            }, error => {
+                console.error('Error connecting to WebSocket:', error);
             });
 
-            stompClient.subscribe(`/user/queue/errors`, (message) => {
-                const errorMessage = message.body;
-                console.error('Error:', errorMessage);
-                alert(errorMessage); // Display error to the user
-            });
-        }, error => {
-            console.error('Error connecting to WebSocket:', error);
-        });
-
-        return () => {
-            leaveCall();
-            stompClient.disconnect();
-        };
-    }, [groupId]);
+            return () => {
+                leaveCall();
+                stompClient.disconnect();
+            };
+        }
+    }, [sessionCode]);
 
     const joinCall = () => {
         const storedUser = sessionStorage.getItem('myUser');
@@ -55,13 +60,18 @@ const VideoCall = ({ groupId }) => {
                     setStream(stream);
                     console.log('User media stream:', stream);
 
-                    const joinPayload = {
-                        type: 'join',
-                        groupId: groupId,
-                        userId: myUser.id,
-                        username: myUser.username
-                    };
-                    stompClientRef.current.send(`/app/video/join/${groupId}`, {}, JSON.stringify(joinPayload));
+                    if (connected) {
+                        const joinPayload = {
+                            type: 'join',
+                            sessionCode: sessionCode,
+                            userId: myUser.id,
+                            username: myUser.username
+                        };
+                        console.log('Sending join payload:', joinPayload);
+                        stompClientRef.current.send(`/app/video/join/${sessionCode}`, {}, JSON.stringify(joinPayload));
+                    } else {
+                        console.log('Waiting for WebSocket connection to establish...');
+                    }
                 })
                 .catch(error => {
                     console.error('Error accessing media devices.', error);
@@ -77,17 +87,43 @@ const VideoCall = ({ groupId }) => {
 
         console.log('Leaving call');
 
-        const leavePayload = {
-            type: 'leave',
-            groupId: groupId,
-            userId: myUser.id,
-            username: myUser.username
-        };
-        stompClientRef.current.send(`/app/video/leave/${groupId}`, {}, JSON.stringify(leavePayload));
+        if (connected) {
+            const leavePayload = {
+                type: 'leave',
+                sessionCode: sessionCode,
+                userId: myUser.id,
+                username: myUser.username
+            };
+            console.log('Sending leave payload:', leavePayload);
+            stompClientRef.current.send(`/app/video/leave/${sessionCode}`, {}, JSON.stringify(leavePayload));
+        }
 
         if (stream) {
             stream.getTracks().forEach(track => track.stop());
         }
+    };
+
+    const setCode = () => {
+        const storedUser = sessionStorage.getItem('myUser');
+        const myUser = JSON.parse(storedUser);
+        const groupId = myUser.id;  // Assuming the user's id is the group id, modify as needed
+
+        fetch(`${config.BASE_URL}/api/videoCall/setCode`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code: sessionCode, groupId }),
+            credentials: 'include'  // Include credentials to send JWT cookie
+        })
+            .then(response => {
+                if (response.ok) {
+                    console.log('Session code set successfully');
+                } else {
+                    console.error('Failed to set session code');
+                }
+            })
+            .catch(error => {
+                console.error('Error setting session code:', error);
+            });
     };
 
     const toggleCamera = () => {
@@ -129,6 +165,7 @@ const VideoCall = ({ groupId }) => {
         console.log('Handling signal:', payload);
         switch (type) {
             case 'user-joined':
+                console.log('User joined:', callerID);
                 const peer = addPeer(signal, callerID, userStream.current);
                 peersRef.current.push({
                     peerID: callerID,
@@ -171,7 +208,8 @@ const VideoCall = ({ groupId }) => {
                 callerID,
                 signal
             };
-            stompClientRef.current.send(`/app/video/signal/${groupId}`, {}, JSON.stringify(payload));
+            console.log('Sending signal from createPeer:', payload);
+            stompClientRef.current.send(`/app/video/signal/${sessionCode}`, {}, JSON.stringify(payload));
         });
 
         return peer;
@@ -190,7 +228,8 @@ const VideoCall = ({ groupId }) => {
                 callerID,
                 signal
             };
-            stompClientRef.current.send(`/app/video/signal/${groupId}`, {}, JSON.stringify(payload));
+            console.log('Sending signal from addPeer:', payload);
+            stompClientRef.current.send(`/app/video/signal/${sessionCode}`, {}, JSON.stringify(payload));
         });
 
         peer.signal(incomingSignal);
@@ -201,7 +240,14 @@ const VideoCall = ({ groupId }) => {
     return (
         <div>
             <div>
+                <input
+                    type="text"
+                    placeholder="Enter session code"
+                    value={sessionCode}
+                    onChange={(e) => setSessionCode(e.target.value)}
+                />
                 <button onClick={joinCall}>Join Call</button>
+                <button onClick={setCode}>Set Session Code</button>
                 <button onClick={leaveCall}>Leave Call</button>
                 <button onClick={toggleCamera}>{cameraOn ? 'Turn Camera Off' : 'Turn Camera On'}</button>
                 <button onClick={toggleMic}>{micOn ? 'Mute' : 'Unmute'}</button>
@@ -221,6 +267,7 @@ const Video = ({ peer }) => {
     useEffect(() => {
         peer.on('stream', stream => {
             ref.current.srcObject = stream;
+            console.log('Received stream for peer:', peer);
         });
     }, [peer]);
 
