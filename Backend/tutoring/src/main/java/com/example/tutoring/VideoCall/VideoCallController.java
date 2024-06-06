@@ -2,20 +2,24 @@ package com.example.tutoring.VideoCall;
 
 import com.example.tutoring.Entities.User;
 import com.example.tutoring.Other.AccountType;
+import com.example.tutoring.Poziv.CreateVideoCallRequest;
+import com.example.tutoring.Poziv.EndVideoCallRequest;
+import com.example.tutoring.Poziv.VideoCall;
+import com.example.tutoring.Poziv.VideoCallService;
 import com.example.tutoring.Repositories.UserRepository;
 import com.example.tutoring.Services.GroupService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.Message;
 import org.springframework.messaging.handler.annotation.*;
 import org.springframework.stereotype.Controller;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 @RestController
@@ -67,10 +71,44 @@ public class VideoCallController {
 //        messagingTemplate.convertAndSend("/topic/call/" + code, signal);
 //        System.out.println("Signal handled for code: " + code + " with signal: " + signal);
 //    }
-@MessageMapping("/videoCall/send")
-public void handleSignalingMessage(@Payload SignalingMessage message,
-                                   @Header ("simpSessionId") String sessionId) throws Exception {
-    // Broadcasting signal to other peers in the same room
-    messagingTemplate.convertAndSend("/topic/videoCall/" + message.getRoomId(), message);
-}
+    //TODO
+//@MessageMapping("/videoCall/send")
+//public void handleSignalingMessage(@Payload SignalingMessage message,
+//                                   @Header ("simpSessionId") String sessionId) throws Exception {
+//    // Broadcasting signal to other peers in the same room
+//    messagingTemplate.convertAndSend("/topic/videoCall/" + message.getRoomId(), message);
+//}
+
+    @Autowired
+    private VideoCallService videoCallService;
+
+    @MessageMapping("/videoCall/join")
+    @SendTo("/topic/videoCall")
+    public Message join(Message message) {
+        return message;
+    }
+
+    @MessageMapping("/videoCall/offer")
+    @SendTo("/topic/videoCall")
+    public Message offer(Message message) {
+        return message;
+    }
+
+    @MessageMapping("/videoCall/answer")
+    @SendTo("/topic/videoCall")
+    public Message answer(Message message) {
+        return message;
+    }
+
+    @MessageMapping("/videoCall/ice-candidate")
+    @SendTo("/topic/videoCall")
+    public Message iceCandidate(Message message) {
+        return message;
+    }
+
+    @MessageMapping("/videoCall/leave")
+    @SendTo("/topic/videoCall")
+    public Message leave(Message message) {
+        return message;
+    }
 }
