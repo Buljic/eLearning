@@ -12,6 +12,7 @@ import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 import java.util.List;
+import java.util.Map;
 
 @Controller
 public class VideoCallController {
@@ -28,23 +29,23 @@ public class VideoCallController {
     }
 
     @MessageMapping("/video/join/{groupId}")
-    public void joinCall(@Payload String message, @DestinationVariable Long groupId) {
+    public void joinCall(@Payload Map<String, String> message, @DestinationVariable Long groupId) {
         boolean isTutorPresent = groupService.isTutorPresentInGroup(groupId);
 
         if (isTutorPresent) {
             messagingTemplate.convertAndSend("/topic/call/" + groupId, message);
         } else {
-            messagingTemplate.convertAndSendToUser(message, "/queue/errors", "Tutor is not present in the group.");
+            messagingTemplate.convertAndSendToUser(message.get("username"), "/queue/errors", "Tutor is not present in the group.");
         }
     }
 
     @MessageMapping("/video/leave/{groupId}")
-    public void leaveCall(@Payload String message, @DestinationVariable Long groupId) {
+    public void leaveCall(@Payload Map<String, String> message, @DestinationVariable Long groupId) {
         messagingTemplate.convertAndSend("/topic/call/" + groupId, message);
     }
 
     @MessageMapping("/video/signal/{groupId}")
-    public void handleSignal(@Payload String signal, @DestinationVariable Long groupId) {
+    public void handleSignal(@Payload Map<String, String> signal, @DestinationVariable Long groupId) {
         messagingTemplate.convertAndSend("/topic/call/" + groupId, signal);
     }
 }
