@@ -12,10 +12,12 @@ const VideoCall = ({ groupId }) => {
     const [stream, setStream] = useState(null);
     const [cameraOn, setCameraOn] = useState(true);
     const [micOn, setMicOn] = useState(true);
+    const stompClientRef = useRef();
 
     useEffect(() => {
         const socket = new SockJS(`${config.BASE_URL}/api/videoCall`);
         const stompClient = Stomp.over(socket);
+        stompClientRef.current = stompClient;
 
         stompClient.connect({}, () => {
             console.log('Connected to WebSocket');
@@ -38,10 +40,13 @@ const VideoCall = ({ groupId }) => {
         return () => {
             leaveCall();
             stompClient.disconnect();
-        }
+        };
     }, [groupId]);
 
     const joinCall = () => {
+        const storedUser = sessionStorage.getItem('myUser');
+        const myUser = JSON.parse(storedUser);
+
         if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
             navigator.mediaDevices.getUserMedia({ video: true, audio: true })
                 .then(stream => {
@@ -50,12 +55,13 @@ const VideoCall = ({ groupId }) => {
                     setStream(stream);
                     console.log('User media stream:', stream);
 
-                    const socket = new SockJS(`${config.BASE_URL}/api/videoCall`);
-                    const stompClient = Stomp.over(socket);
-
-                    stompClient.connect({}, () => {
-                        stompClient.send(`/app/video/join/${groupId}`, {}, JSON.stringify({ groupId }));
-                    });
+                    const joinPayload = {
+                        type: 'join',
+                        groupId: groupId,
+                        userId: myUser.id,
+                        username: myUser.username
+                    };
+                    stompClientRef.current.send(`/app/video/join/${groupId}`, {}, JSON.stringify(joinPayload));
                 })
                 .catch(error => {
                     console.error('Error accessing media devices.', error);
@@ -66,14 +72,18 @@ const VideoCall = ({ groupId }) => {
     };
 
     const leaveCall = () => {
+        const storedUser = sessionStorage.getItem('myUser');
+        const myUser = JSON.parse(storedUser);
+
         console.log('Leaving call');
 
-        const socket = new SockJS(`${config.BASE_URL}/api/videoCall`);
-        const stompClient = Stomp.over(socket);
-
-        stompClient.connect({}, () => {
-            stompClient.send(`/app/video/leave/${groupId}`, {}, JSON.stringify({ groupId }));
-        });
+        const leavePayload = {
+            type: 'leave',
+            groupId: groupId,
+            userId: myUser.id,
+            username: myUser.username
+        };
+        stompClientRef.current.send(`/app/video/leave/${groupId}`, {}, JSON.stringify(leavePayload));
 
         if (stream) {
             stream.getTracks().forEach(track => track.stop());
@@ -115,26 +125,30 @@ const VideoCall = ({ groupId }) => {
     };
 
     const handleSignal = (payload) => {
+        const { type, signal, callerID } = payload;
         console.log('Handling signal:', payload);
-        switch (payload.type) {
+        switch (type) {
             case 'user-joined':
-                const peer = addPeer(payload.signal, payload.callerID, userStream.current);
+                const peer = addPeer(signal, callerID, userStream.current);
                 peersRef.current.push({
-                    peerID: payload.callerID,
+                    peerID: callerID,
                     peer,
                 });
                 setPeers(users => [...users, peer]);
                 break;
             case 'receiving-returned-signal':
-                const item = peersRef.current.find(p => p.peerID === payload.id);
-                item.peer.signal(payload.signal);
+                const item = peersRef.current.find(p => p.peerID === callerID);
+                if (item) {
+                    console.log('Signaling peer:', item);
+                    item.peer.signal(signal);
+                }
                 break;
             case 'user-left':
-                const peerObj = peersRef.current.find(p => p.peerID === payload.id);
+                const peerObj = peersRef.current.find(p => p.peerID === callerID);
                 if (peerObj) {
                     peerObj.peer.destroy();
                 }
-                const remainingPeers = peersRef.current.filter(p => p.peerID !== peerObj.peerID);
+                const remainingPeers = peersRef.current.filter(p => p.peerID !== callerID);
                 peersRef.current = remainingPeers;
                 setPeers(remainingPeers);
                 break;
@@ -151,12 +165,13 @@ const VideoCall = ({ groupId }) => {
         });
 
         peer.on('signal', signal => {
-            const socket = new SockJS(`${config.BASE_URL}/api/videoCall`);
-            const stompClient = Stomp.over(socket);
-
-            stompClient.connect({}, () => {
-                stompClient.send(`/app/video/signal/${groupId}`, {}, JSON.stringify({ userToSignal, callerID, signal, type: 'user-joined' }));
-            });
+            const payload = {
+                type: 'user-joined',
+                userToSignal,
+                callerID,
+                signal
+            };
+            stompClientRef.current.send(`/app/video/signal/${groupId}`, {}, JSON.stringify(payload));
         });
 
         return peer;
@@ -170,12 +185,12 @@ const VideoCall = ({ groupId }) => {
         });
 
         peer.on('signal', signal => {
-            const socket = new SockJS(`${config.BASE_URL}/api/videoCall`);
-            const stompClient = Stomp.over(socket);
-
-            stompClient.connect({}, () => {
-                stompClient.send(`/app/video/signal/${groupId}`, {}, JSON.stringify({ signal, callerID, type: 'receiving-returned-signal' }));
-            });
+            const payload = {
+                type: 'receiving-returned-signal',
+                callerID,
+                signal
+            };
+            stompClientRef.current.send(`/app/video/signal/${groupId}`, {}, JSON.stringify(payload));
         });
 
         peer.signal(incomingSignal);
