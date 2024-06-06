@@ -3,8 +3,6 @@ import Peer from 'simple-peer';
 import SockJS from 'sockjs-client';
 import Stomp from 'stompjs';
 import config from '../config.js';
-const socket = new SockJS(`${config.BASE_URL}/api/videoCall`);
-const stompClient = Stomp.over(socket);
 
 const VideoCall = ({ groupId }) => {
     const [peers, setPeers] = useState([]);
@@ -16,6 +14,9 @@ const VideoCall = ({ groupId }) => {
     const [micOn, setMicOn] = useState(true);
 
     useEffect(() => {
+        const socket = new SockJS(`${config.BASE_URL}/api/videoCall`);
+        const stompClient = Stomp.over(socket);
+
         stompClient.connect({}, () => {
             console.log('Connected to WebSocket');
 
@@ -41,20 +42,39 @@ const VideoCall = ({ groupId }) => {
     }, [groupId]);
 
     const joinCall = () => {
-        navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then(stream => {
-            userVideo.current.srcObject = stream;
-            userStream.current = stream;
-            setStream(stream);
-            console.log('User media stream:', stream);
-            stompClient.send(`/app/video/join/${groupId}`, {}, JSON.stringify({ groupId }));
-        }).catch(error => {
-            console.error('Error accessing media devices.', error);
-        });
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+                .then(stream => {
+                    userVideo.current.srcObject = stream;
+                    userStream.current = stream;
+                    setStream(stream);
+                    console.log('User media stream:', stream);
+
+                    const socket = new SockJS(`${config.BASE_URL}/api/videoCall`);
+                    const stompClient = Stomp.over(socket);
+
+                    stompClient.connect({}, () => {
+                        stompClient.send(`/app/video/join/${groupId}`, {}, JSON.stringify({ groupId }));
+                    });
+                })
+                .catch(error => {
+                    console.error('Error accessing media devices.', error);
+                });
+        } else {
+            console.error('Media devices not supported in this browser.');
+        }
     };
 
     const leaveCall = () => {
         console.log('Leaving call');
-        stompClient.send(`/app/video/leave/${groupId}`, {}, JSON.stringify({ groupId }));
+
+        const socket = new SockJS(`${config.BASE_URL}/api/videoCall`);
+        const stompClient = Stomp.over(socket);
+
+        stompClient.connect({}, () => {
+            stompClient.send(`/app/video/leave/${groupId}`, {}, JSON.stringify({ groupId }));
+        });
+
         if (stream) {
             stream.getTracks().forEach(track => track.stop());
         }
@@ -75,15 +95,23 @@ const VideoCall = ({ groupId }) => {
     };
 
     const shareScreen = () => {
-        navigator.mediaDevices.getDisplayMedia({ cursor: true }).then(screenStream => {
-            const screenTrack = screenStream.getTracks()[0];
-            userStream.current.getVideoTracks()[0].stop();
-            userStream.current.addTrack(screenTrack);
-            screenTrack.onended = () => {
-                userStream.current.removeTrack(screenTrack);
-                joinCall();
-            };
-        });
+        if (navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) {
+            navigator.mediaDevices.getDisplayMedia({ cursor: true })
+                .then(screenStream => {
+                    const screenTrack = screenStream.getTracks()[0];
+                    userStream.current.getVideoTracks()[0].stop();
+                    userStream.current.addTrack(screenTrack);
+                    screenTrack.onended = () => {
+                        userStream.current.removeTrack(screenTrack);
+                        joinCall();
+                    };
+                })
+                .catch(error => {
+                    console.error('Error accessing display media.', error);
+                });
+        } else {
+            console.error('Display media not supported in this browser.');
+        }
     };
 
     const handleSignal = (payload) => {
@@ -123,7 +151,12 @@ const VideoCall = ({ groupId }) => {
         });
 
         peer.on('signal', signal => {
-            stompClient.send(`/app/video/signal/${groupId}`, {}, JSON.stringify({ userToSignal, callerID, signal, type: 'user-joined' }));
+            const socket = new SockJS(`${config.BASE_URL}/api/videoCall`);
+            const stompClient = Stomp.over(socket);
+
+            stompClient.connect({}, () => {
+                stompClient.send(`/app/video/signal/${groupId}`, {}, JSON.stringify({ userToSignal, callerID, signal, type: 'user-joined' }));
+            });
         });
 
         return peer;
@@ -137,7 +170,12 @@ const VideoCall = ({ groupId }) => {
         });
 
         peer.on('signal', signal => {
-            stompClient.send(`/app/video/signal/${groupId}`, {}, JSON.stringify({ signal, callerID, type: 'receiving-returned-signal' }));
+            const socket = new SockJS(`${config.BASE_URL}/api/videoCall`);
+            const stompClient = Stomp.over(socket);
+
+            stompClient.connect({}, () => {
+                stompClient.send(`/app/video/signal/${groupId}`, {}, JSON.stringify({ signal, callerID, type: 'receiving-returned-signal' }));
+            });
         });
 
         peer.signal(incomingSignal);
@@ -169,7 +207,7 @@ const Video = ({ peer }) => {
         peer.on('stream', stream => {
             ref.current.srcObject = stream;
         });
-    }, []);
+    }, [peer]);
 
     return <video ref={ref} autoPlay playsInline style={{ width: '300px', height: '300px' }} />;
 };
