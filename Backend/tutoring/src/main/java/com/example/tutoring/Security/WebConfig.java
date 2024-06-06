@@ -22,6 +22,8 @@ public class WebConfig implements WebMvcConfigurer
         configuration.setAllowCredentials(true);
         configuration.addAllowedOrigin("http://localhost:5173"); // Frontend port
         configuration.addAllowedOrigin("http://192.168.0.11:5173");
+        configuration.addAllowedOrigin("http://192.168.126.66:5173");
+        //TODO IPSET
         configuration.addAllowedHeader("Authorization");
         configuration.addAllowedHeader("Content-Type");
         configuration.addAllowedHeader("Accept");

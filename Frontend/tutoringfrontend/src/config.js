@@ -5,8 +5,9 @@ const config = {
         WS_BASE_URL: 'http://localhost:5173'
     },
     lan: {
-        BASE_URL: 'http://192.168.0.11:8080',
-        WS_BASE_URL: 'http://192.168.0.11:5173'
+        // TODO SETIP
+        BASE_URL: 'http://192.168.126.66:8080',
+        WS_BASE_URL: 'http://192.168.126.66:5173'
     },
 };
 
