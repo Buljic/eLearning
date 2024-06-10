@@ -62,7 +62,7 @@ const Subjects = () => {
             }
         }
         getPopularSubjects();
-    },[popularSubjects]);
+    },[]);
 
 
 
@@ -138,7 +138,7 @@ const Subjects = () => {
 
     return(
         <div>
-            <h1>Nas user je {myUser.username}</h1>
+            <p>Profesori s specijalizacijom za predmete</p>
             {/*forma je zapravo wrapper za ovo i u njoj stavljamo input field i button i sl*/}
             <form id="searchForm" onSubmit={handleSubmit}>
             <input id="inputField"
