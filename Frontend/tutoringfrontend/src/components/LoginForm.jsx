@@ -1,10 +1,7 @@
-// components/LoginForm.jsx
-import React, {useContext, useState} from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import "../css/general.css"
-import MyUserContext from "../minicomponents/Context/MyUserContext.js";
-import useFetchUser from "../customHooks/useFetchUser.js";
-
+import "../css/general.css";
+import { TextField, Button, Typography, Container, Box, Alert } from '@mui/material';
 import config from '../config.js';
 
 function LoginForm() {
@@ -12,17 +9,13 @@ function LoginForm() {
     const [password, setPassword] = useState('');
     const navigate = useNavigate();
     const [message, setMessage] = useState('');
-    // const {myUser,setMyUser}=useContext(MyUserContext);
 
-console.log("SAMO JEDNOM MOLIM TE");
-console.log(`${config.BASE_URL}`)
     const handleLogin = async (event) => {
         event.preventDefault();
         try {
-
             const response = await fetch(`${config.BASE_URL}/api/login`, {
                 method: 'POST',
-                credentials:'include',
+                credentials: 'include',
                 headers: {
                     'Content-Type': 'application/json',
                 },
@@ -30,14 +23,6 @@ console.log(`${config.BASE_URL}`)
             });
 
             if (response.ok) {
-               // const data = await response.json();
-                //localStorage.setItem('token', data.token); // Spremanje JWT tokena u localStorage
-                // const {fetchedUser,error,loading}=useFetchUser();
-                // //dodavanje u context
-                // setMyUser(fetchedUser);
-                //navigate('/welcome'); // Preusmjeravanje na WelcomePage
-
-
                 const userResponse = await fetch(`${config.BASE_URL}/api/welcomePage`, {
                     method: 'GET',
                     credentials: 'include',
@@ -47,16 +32,11 @@ console.log(`${config.BASE_URL}`)
                 });
                 if (userResponse.ok) {
                     const fetchedUser = await userResponse.json();
-                  //  setMyUser(fetchedUser); // ovo azurira kontekst koji smo kreirali
-
-                    sessionStorage.setItem('myUser',JSON.stringify(fetchedUser));//jer kao argument prima samo stringove
-                    navigate('/welcome'); // Preusmeravanje na WelcomePage
+                    sessionStorage.setItem('myUser', JSON.stringify(fetchedUser));
+                    navigate('/welcome');
                 } else {
-                    // Obrada grešaka
                     setMessage('Neuspješno dohvatanje korisničkih podataka.');
                 }
-
-
             } else {
                 setMessage('Neuspješna prijava. Molimo pokušajte ponovo.');
             }
@@ -67,29 +47,28 @@ console.log(`${config.BASE_URL}`)
     };
 
     return (
-        <div>
-
-            <div id="loginDiv">
-                <h2>Ukucajte svoje kredencijale</h2>
-            <form onSubmit={handleLogin}>
-                <input
-                    type="text"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    placeholder="Korisničko ime"
-                />
-                <input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Lozinka"
-                />
-                <br/>
-                <button type="submit" id="loginSubmit">Login</button>
-            </form>
-            </div>
-            {message && <p>{message}</p>}
-        </div>
+        <Container maxWidth="sm">
+            <Box sx={{ mt: 4, textAlign: 'center' }}>
+                <Typography variant="h4" gutterBottom>Ukucajte svoje kredencijale</Typography>
+                <Box component="form" onSubmit={handleLogin} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    <TextField
+                        label="Korisničko ime"
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}
+                        required
+                    />
+                    <TextField
+                        label="Lozinka"
+                        type="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                    />
+                    <Button type="submit" variant="contained" color="primary">Login</Button>
+                </Box>
+                {message && <Alert severity="error" sx={{ mt: 2 }}>{message}</Alert>}
+            </Box>
+        </Container>
     );
 }
 

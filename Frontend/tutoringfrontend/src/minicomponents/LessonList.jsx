@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import CreateLessonModal from "./CreateLessonModal";
 import config from '../config.js';
+import { Container, Box, Typography, Button, CircularProgress, List, ListItem, Card, CardContent } from '@mui/material';
+
 const LessonList = () => {
     const { groupId } = useParams();
     const storedUser = sessionStorage.getItem("myUser");
@@ -40,34 +42,40 @@ const LessonList = () => {
     };
 
     return (
-        <div>
-            <h1>Lessons</h1>
-            {myUser.accountType === 'PROFESOR' && (
-                <button onClick={handleOpenModal}>Add Lesson</button>
-            )}
-            <CreateLessonModal show={showModal} handleClose={handleCloseModal} groupId={groupId} />
-            <ul>
-                {lessons.length > 0 ? (
-                    lessons.map((lesson) => (
-                        <li key={lesson.id}>
-                            <h2>{lesson.title}</h2>
-                            <p>{lesson.content}</p>
-                            {lesson.materials && lesson.materials.map((material, index) => (
-                                <div key={index}>
-                                    {material.fileType.startsWith("image/") ? (
-                                        <img src={`${config.BASE_URL}${material.fileUrl}`} alt={material.fileName} style={{ maxWidth: '200px', maxHeight: '200px' }} />
-                                    ) : (
-                                        <a href={`${config.BASE_URL}${material.fileUrl}`} target="_blank" rel="noopener noreferrer">{material.fileName}</a>
-                                    )}
-                                </div>
-                            ))}
-                        </li>
-                    ))
-                ) : (
-                    <p>No lessons available.</p>
+        <Container>
+            <Box sx={{ my: 4 }}>
+                <Typography variant="h4">Lessons</Typography>
+                {myUser.accountType === 'PROFESOR' && (
+                    <Button variant="contained" color="primary" onClick={handleOpenModal}>Add Lesson</Button>
                 )}
-            </ul>
-        </div>
+                <CreateLessonModal show={showModal} handleClose={handleCloseModal} groupId={groupId} />
+                <List>
+                    {lessons.length > 0 ? (
+                        lessons.map((lesson) => (
+                            <ListItem key={lesson.id}>
+                                <Card sx={{ width: '100%' }}>
+                                    <CardContent>
+                                        <Typography variant="h5">{lesson.title}</Typography>
+                                        <Typography variant="body1">{lesson.content}</Typography>
+                                        {lesson.materials && lesson.materials.map((material, index) => (
+                                            <Box key={index} sx={{ my: 2 }}>
+                                                {material.fileType.startsWith("image/") ? (
+                                                    <img src={`${config.BASE_URL}${material.fileUrl}`} alt={material.fileName} style={{ maxWidth: '200px', maxHeight: '200px' }} />
+                                                ) : (
+                                                    <Button href={`${config.BASE_URL}${material.fileUrl}`} target="_blank" rel="noopener noreferrer">{material.fileName}</Button>
+                                                )}
+                                            </Box>
+                                        ))}
+                                    </CardContent>
+                                </Card>
+                            </ListItem>
+                        ))
+                    ) : (
+                        <Typography variant="body1">No lessons available.</Typography>
+                    )}
+                </List>
+            </Box>
+        </Container>
     );
 };
 

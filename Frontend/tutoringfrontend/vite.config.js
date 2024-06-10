@@ -29,11 +29,11 @@ export default defineConfig({
     }
   },
   //todo izbrisi kad ti bude trebalo
-  server: {
-    // TODO IPSET
-    host: '192.168.126.66',  // Replace with your main laptop's IP address
-    port: 5173            // Ensure this matches the port you're using for Vite
-  }
+  // server: {
+  //   // TODO IPSET
+  //   host: '192.168.126.66',  // Replace with your main laptop's IP address
+  //   port: 5173            // Ensure this matches the port you're using for Vite
+  // }
 });
 
 

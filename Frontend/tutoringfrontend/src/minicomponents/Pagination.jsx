@@ -1,5 +1,6 @@
 import React from 'react';
-import config from '../config.js';
+import { Box, Button } from '@mui/material';
+
 const Pagination = ({ currentPage, totalPages, onPageChange }) => {
     const pages = [];
     for (let i = 0; i < totalPages; i++) {
@@ -7,18 +8,19 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
     }
 
     return (
-        <div className="pagination">
+        <Box sx={{ display: 'flex', justifyContent: 'start', mt: 2 }}>
             {pages.map((page) => (
-                <button
+                <Button
                     key={page}
                     onClick={() => onPageChange(page)}
                     disabled={page === currentPage}
-                    style={{ margin: '0 2px', padding: '5px 10px', backgroundColor: page === currentPage ? 'lightblue' : 'white' }}
+                    variant={page === currentPage ? 'contained' : 'outlined'}
+                    sx={{ margin: '0 2px' }}
                 >
                     {page + 1}
-                </button>
+                </Button>
             ))}
-        </div>
+        </Box>
     );
 };
 

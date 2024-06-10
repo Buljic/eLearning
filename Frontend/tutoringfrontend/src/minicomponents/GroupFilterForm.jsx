@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import useFetchSubjects from "../customHooks/useFetchSubjects.js";
-import config from '../config.js';
+import { Box, TextField, Button, Select, MenuItem, FormControl, InputLabel, Typography } from '@mui/material';
+
 const GroupFilterForm = ({ filters, onFilterChange, onSubmit }) => {
     const [subjects, setSubjects] = useState(['']);
     const { subjects: allSubjects, loading, error } = useFetchSubjects();
@@ -35,132 +36,142 @@ const GroupFilterForm = ({ filters, onFilterChange, onSubmit }) => {
     };
 
     return (
-        <form onSubmit={onSubmit} style={{ flex: 1 }}>
-            <div>
-                <label>Naziv Grupe:</label>
-                <input
-                    type="text"
-                    name="group_name"
-                    value={filters.group_name}
-                    onChange={handleChange}
-                    placeholder="Pretraži po nazivu grupe"
-                />
-            </div>
-            <div>
-                <label>Topic:</label>
-                <input
-                    type="text"
-                    name="topic"
-                    value={filters.topic}
-                    onChange={handleChange}
-                    placeholder="Pretraži po topicu"
-                />
-            </div>
-            <div>
-                <label>Datum Početka (Od):</label>
-                <input
+        <Box component="form" onSubmit={onSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 2, height: '100%', maxHeight: 'calc(100vh - 20px)', overflow: 'auto' }}>
+            <TextField
+                label="Naziv Grupe"
+                name="group_name"
+                value={filters.group_name}
+                onChange={handleChange}
+                placeholder="Pretraži po nazivu grupe"
+                fullWidth
+            />
+            <TextField
+                label="Topic"
+                name="topic"
+                value={filters.topic}
+                onChange={handleChange}
+                placeholder="Pretraži po topicu"
+                fullWidth
+            />
+            <Box sx={{ display: 'flex', gap: 2 }}>
+                <TextField
+                    label="Datum Početka (Od)"
                     type="date"
                     name="start_date_from"
                     value={filters.start_date_from}
                     onChange={handleChange}
+                    InputLabelProps={{ shrink: true }}
+                    fullWidth
                 />
-                <label>Datum Početka (Do):</label>
-                <input
+                <TextField
+                    label="Datum Početka (Do)"
                     type="date"
                     name="start_date_to"
                     value={filters.start_date_to}
                     onChange={handleChange}
+                    InputLabelProps={{ shrink: true }}
+                    fullWidth
                 />
-            </div>
-            <div>
-                <label>Datum Završetka (Od):</label>
-                <input
+            </Box>
+            <Box sx={{ display: 'flex', gap: 2 }}>
+                <TextField
+                    label="Datum Završetka (Od)"
                     type="date"
                     name="end_date_from"
                     value={filters.end_date_from}
                     onChange={handleChange}
+                    InputLabelProps={{ shrink: true }}
+                    fullWidth
                 />
-                <label>Datum Završetka (Do):</label>
-                <input
+                <TextField
+                    label="Datum Završetka (Do)"
                     type="date"
                     name="end_date_to"
                     value={filters.end_date_to}
                     onChange={handleChange}
+                    InputLabelProps={{ shrink: true }}
+                    fullWidth
                 />
-            </div>
-            <div>
-                <label>Sati po Sedmici (Od):</label>
-                <input
+            </Box>
+            <Box sx={{ display: 'flex', gap: 2 }}>
+                <TextField
+                    label="Sati po Sedmici (Od)"
                     type="number"
                     name="hours_per_week_from"
                     value={filters.hours_per_week_from}
                     onChange={handleChange}
+                    fullWidth
                 />
-                <label>Sati po Sedmici (Do):</label>
-                <input
+                <TextField
+                    label="Sati po Sedmici (Do)"
                     type="number"
                     name="hours_per_week_to"
                     value={filters.hours_per_week_to}
                     onChange={handleChange}
+                    fullWidth
                 />
-            </div>
-            <div>
-                <label>Cijena (Od):</label>
-                <input
+            </Box>
+            <Box sx={{ display: 'flex', gap: 2 }}>
+                <TextField
+                    label="Cijena (Od)"
                     type="number"
                     name="price_from"
                     value={filters.price_from}
                     onChange={handleChange}
+                    fullWidth
                 />
-                <label>Cijena (Do):</label>
-                <input
+                <TextField
+                    label="Cijena (Do)"
                     type="number"
                     name="price_to"
                     value={filters.price_to}
                     onChange={handleChange}
+                    fullWidth
                 />
-            </div>
-            <div>
-                <label>Maksimalan broj studenata (Od):</label>
-                <input
+            </Box>
+            <Box sx={{ display: 'flex', gap: 2 }}>
+                <TextField
+                    label="Maksimalan broj studenata (Od)"
                     type="number"
                     name="max_students_from"
                     value={filters.max_students_from}
                     onChange={handleChange}
+                    fullWidth
                 />
-                <label>Maksimalan broj studenata (Do):</label>
-                <input
+                <TextField
+                    label="Maksimalan broj studenata (Do)"
                     type="number"
                     name="max_students_to"
                     value={filters.max_students_to}
                     onChange={handleChange}
+                    fullWidth
                 />
-            </div>
-            <div>
-                <label>Predmeti:</label>
-                {subjects.map((subject, index) => (
-                    <div key={index}>
-                        <select
+            </Box>
+            <Typography variant="h6">Predmeti:</Typography>
+            {subjects.map((subject, index) => (
+                <Box key={index} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <FormControl sx={{ flexGrow: 1 }}>
+                        <InputLabel>Predmet</InputLabel>
+                        <Select
                             value={subject}
                             onChange={(e) => handleSubjectChange(index, e.target.value)}
-                            required={subjects.length > 1 || (subjects.length === 1 && subjects[0] !== '')}
                         >
-                            <option value="">Izaberi predmet</option>
+                            <MenuItem value="">Izaberi predmet</MenuItem>
                             {allSubjects.map((sub) => (
-                                <option key={sub} value={sub}>{sub}</option>
+                                <MenuItem key={sub} value={sub}>{sub}</MenuItem>
                             ))}
-                        </select>
-                        {subjects.length > 1 && (
-                            <button type="button" onClick={() => handleRemoveSubject(index)}>Ukloni</button>
-                        )}
-                    </div>
-                ))}
-                {subjects.length < 5 && (
-                    <button type="button" onClick={handleAddSubject}>Dodaj Predmet</button>
-                )}
-            </div>
-            <button type="submit">Pretraži</button>
-        </form>
+                        </Select>
+                    </FormControl>
+                    {subjects.length > 1 && (
+                        <Button type="button" onClick={() => handleRemoveSubject(index)}>Ukloni</Button>
+                    )}
+                </Box>
+            ))}
+            {subjects.length < 5 && (
+                <Button type="button" onClick={handleAddSubject}>Dodaj Predmet</Button>
+            )}
+            <Button type="submit" variant="contained" color="primary">Pretraži</Button>
+        </Box>
     );
 };
 

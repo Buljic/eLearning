@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import config from '../config.js';
+import { Container, Box, Typography, Button, CircularProgress, Alert } from '@mui/material';
+
 const GroupDetails = () => {
     const { groupId } = useParams();
     const [group, setGroup] = useState(null);
@@ -54,28 +56,32 @@ const GroupDetails = () => {
     };
 
     if (error) {
-        return <p>Error: {error}</p>;
+        return <Alert severity="error">{error}</Alert>;
     }
 
     if (!group) {
-        return <p>Loading...</p>;
+        return <CircularProgress />;
     }
 
     return (
-        <div>
-            <h1>{group.group_name}</h1>
-            <p>{group.description}</p>
-            <p>Start Date: {group.startDate}</p>
-            <p>End Date: {group.endDate}</p>
-            <p>Hours per Week: {group.hoursPerWeek}</p>
-            <p>Price: {group.price} BAM</p>
-            <p>Max Students: {group.maxStudents}</p>
-            <p>Topic: {group.topic}</p>
-            {myUser.accountType === 'STUDENT' && new Date(group.startDate) > new Date() && (
-                <button onClick={handleRequestAccess}>Request Access</button>
-            )}
-            {message && <p>{message}</p>}
-        </div>
+        <Container>
+            <Box sx={{ my: 4 }}>
+                <Typography variant="h4">{group.group_name}</Typography>
+                <Typography variant="body1">{group.description}</Typography>
+                <Typography variant="body1">Start Date: {group.startDate}</Typography>
+                <Typography variant="body1">End Date: {group.endDate}</Typography>
+                <Typography variant="body1">Hours per Week: {group.hoursPerWeek}</Typography>
+                <Typography variant="body1">Price: {group.price} BAM</Typography>
+                <Typography variant="body1">Max Students: {group.maxStudents}</Typography>
+                <Typography variant="body1">Topic: {group.topic}</Typography>
+                {myUser.accountType === 'STUDENT' && new Date(group.startDate) > new Date() && (
+                    <Button variant="contained" color="primary" onClick={handleRequestAccess}>
+                        Request Access
+                    </Button>
+                )}
+                {message && <Typography color="error">{message}</Typography>}
+            </Box>
+        </Container>
     );
 };
 

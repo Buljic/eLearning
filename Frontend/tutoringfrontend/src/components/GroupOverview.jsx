@@ -6,7 +6,9 @@ import AssignmentList from "../minicomponents/AssignmentList.jsx";
 import VideoCall from "../minicomponents/VideoCall.jsx";
 import ChatForGroup from "../minicomponents/ChatForGroup.jsx";
 import LessonList from "../minicomponents/LessonList.jsx";
+import { Container, Box, Typography, Button, Tabs, Tab } from '@mui/material';
 import config from '../config.js';
+
 const GroupOverview = () => {
     const { groupId } = useParams();
     const [activeTab, setActiveTab] = useState("chat");
@@ -14,7 +16,7 @@ const GroupOverview = () => {
     const storedUser = sessionStorage.getItem("myUser");
     const myUser = JSON.parse(storedUser);
     const isProfessor = myUser.accountType === "PROFESOR";
-    console.log(groupId+"LOL")
+
     const renderTabContent = () => {
         switch (activeTab) {
             case "chat":
@@ -30,19 +32,25 @@ const GroupOverview = () => {
         }
     };
 
+    const handleTabChange = (event, newValue) => {
+        setActiveTab(newValue);
+    };
+
     return (
-        <div>
-            <h1>Pregled Grupe</h1>
-            <div className="tabs">
-                <button onClick={() => setActiveTab("chat")}>Chat</button>
-                <button onClick={() => setActiveTab("lessons")}>Lekcije</button>
-                <button onClick={() => setActiveTab("assignments")}>Zadaci</button>
-                <button onClick={() => setActiveTab("videoCall")}>Video poziv</button>
-            </div>
-            <div className="tab-content">
-                {renderTabContent()}
-            </div>
-        </div>
+        <Container>
+            <Box sx={{ my: 4 }}>
+                <Typography variant="h4">Pregled Grupe</Typography>
+                <Tabs value={activeTab} onChange={handleTabChange}>
+                    <Tab label="Chat" value="chat" />
+                    <Tab label="Lekcije" value="lessons" />
+                    <Tab label="Zadaci" value="assignments" />
+                    <Tab label="Video poziv" value="videoCall" />
+                </Tabs>
+                <Box sx={{ mt: 2 }}>
+                    {renderTabContent()}
+                </Box>
+            </Box>
+        </Container>
     );
 };
 

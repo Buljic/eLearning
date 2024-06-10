@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import Popup from 'reactjs-popup';
 import 'reactjs-popup/dist/index.css';
 import config from '../config.js';
+import { Container, Box, Typography, Button, List, ListItem, CircularProgress, Alert, Pagination } from '@mui/material';
+
 const GroupRequests = () => {
     const [requests, setRequests] = useState([]);
     const [totalPages, setTotalPages] = useState(0);
@@ -92,51 +94,52 @@ const GroupRequests = () => {
     };
 
     return (
-        <div>
-            <h1>Zahtjevi za grupe</h1>
-            <ul>
-                {requests.map((request, index) => (
-                    <li key={index}>
-                        <p>Grupa: {request.groupName}</p>
-                        <p>Korisnik: {request.username}</p>
-                        {request.status === 'REQUESTED' && (
-                            <button onClick={() => handleAccept(request.id.groupId, request.id.userId)}>Prihvati</button>
+        <Container>
+            <Box sx={{ my: 4 }}>
+                <Typography variant="h4">Zahtjevi za grupe</Typography>
+                <List>
+                    {requests.map((request, index) => (
+                        <ListItem key={index}>
+                            <Box>
+                                <Typography>Grupa: {request.groupName}</Typography>
+                                <Typography>Korisnik: {request.username}</Typography>
+                                {request.status === 'REQUESTED' && (
+                                    <Button onClick={() => handleAccept(request.id.groupId, request.id.userId)}>Prihvati</Button>
+                                )}
+                                {request.status === 'PENDING' && (
+                                    <>
+                                        <Button onClick={() => openPopup(request, 'approve')}>Odobri</Button>
+                                        <Button onClick={() => openPopup(request, 'reject')}>Odbij</Button>
+                                    </>
+                                )}
+                                {request.status === 'ACCEPTED' && (
+                                    <Typography>Status: Odobreno</Typography>
+                                )}
+                                <Button onClick={() => navigate(`/chatTo/${request.id.userId}`)}>DM Korisnik</Button>
+                            </Box>
+                        </ListItem>
+                    ))}
+                </List>
+                <Pagination
+                    count={totalPages}
+                    page={page + 1}
+                    onChange={(event, value) => setPage(value - 1)}
+                    sx={{ mt: 2 }}
+                />
+                <Popup open={popupOpen} closeOnDocumentClick onClose={closePopup}>
+                    <div>
+                        <Typography variant="h6">{popupAction === 'approve' ? 'Odobri zahtjev' : 'Odbij zahtjev'}</Typography>
+                        <Typography>Da li ste sigurni da želite {popupAction === 'approve' ? 'odobriti' : 'odbiti'} ovaj zahtjev?</Typography>
+                        {popupAction === 'approve' ? (
+                            <Button onClick={() => handleApprove(selectedRequest.id.groupId, selectedRequest.id.userId)}>Da</Button>
+                        ) : (
+                            <Button onClick={() => handleReject(selectedRequest.id.groupId, selectedRequest.id.userId)}>Da</Button>
                         )}
-                        {request.status === 'PENDING' && (
-                            <>
-                                <button onClick={() => openPopup(request, 'approve')}>Odobri</button>
-                                <button onClick={() => openPopup(request, 'reject')}>Odbij</button>
-                            </>
-                        )}
-                        {request.status === 'ACCEPTED' && (
-                            <p>Status: Odobreno</p>
-                        )}
-                        <button onClick={() => navigate(`/chatTo/${request.id.userId}`)}>DM Korisnik</button>
-                    </li>
-                ))}
-            </ul>
-
-            <div className="pagination">
-                {Array.from({ length: totalPages }, (_, i) => (
-                    <button key={i} onClick={() => setPage(i)} disabled={i === page}>
-                        {i + 1}
-                    </button>
-                ))}
-            </div>
-
-            <Popup open={popupOpen} closeOnDocumentClick onClose={closePopup}>
-                <div>
-                    <h2>{popupAction === 'approve' ? 'Odobri zahtjev' : 'Odbij zahtjev'}</h2>
-                    <p>Da li ste sigurni da želite {popupAction === 'approve' ? 'odobriti' : 'odbiti'} ovaj zahtjev?</p>
-                    {popupAction === 'approve' ? (
-                        <button onClick={() => handleApprove(selectedRequest.id.groupId, selectedRequest.id.userId)}>Da</button>
-                    ) : (
-                        <button onClick={() => handleReject(selectedRequest.id.groupId, selectedRequest.id.userId)}>Da</button>
-                    )}
-                    <button onClick={closePopup}>Ne</button>
-                </div>
-            </Popup>
-        </div>
+                        <Button onClick={closePopup}>Ne</Button>
+                    </div>
+                </Popup>
+            </Box>
+        </Container>
     );
 };
 

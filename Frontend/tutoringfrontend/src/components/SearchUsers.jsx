@@ -1,68 +1,69 @@
-import React, {useState} from "react";
-import {useNavigate} from "react-router-dom";
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import config from '../config.js';
-const SearchUsers=()=>{
+import { Container, Box, TextField, Button, Typography, List, ListItem, CircularProgress } from '@mui/material';
 
-    const[isSearching,setIsSearching]=useState(false);
-    const[searchedUsers,setSearchedUsers]=useState([]);
-    const[searchTerm,setSearchTerm]=useState('');
-    const navigate=useNavigate();
+const SearchUsers = () => {
+    const [isSearching, setIsSearching] = useState(false);
+    const [searchedUsers, setSearchedUsers] = useState([]);
+    const [searchTerm, setSearchTerm] = useState('');
+    const navigate = useNavigate();
 
-    const handleSuggestionClick=(username)=>{
+    const handleSuggestionClick = (username) => {
         navigate(`/userInfoFor/${username}`);
     }
-    const handleSubmit=(event)=>{
+
+    const handleSubmit = (event) => {
         event.preventDefault();
         setIsSearching(true);
         getSearchedUsers();
     }
-    const getSearchedUsers=async ()=>{
+
+    const getSearchedUsers = async () => {
         const response = await fetch(`${config.BASE_URL}/api/getUsers?searchTerm=${searchTerm}`, {
-            method:'GET',
-            credentials:'include',
-            headers:{
-                'Content-Type':'application/json',
+            method: 'GET',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json',
             }
         });
-        if(!response.ok)
-        {
+        if (!response.ok) {
             console.log("Problem s fetchanjem usera");
             return;
         }
-        const data=await response.json();
+        const data = await response.json();
         setSearchedUsers(data);
-        searchedUsers.forEach(user=>{
-           console.log("KORISNIK JE"+user.username);
-        });
-
+        setIsSearching(false);
     }
+
     return (
-        <div>
-            <h1>Pretraži korisnike</h1>
-
-            <form onSubmit={handleSubmit}>
-                <input  id="inputField"
-                        type="text"
+        <Container maxWidth="sm">
+            <Box sx={{ mt: 4 }}>
+                <Typography variant="h4" gutterBottom>Pretraži korisnike</Typography>
+                <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    <TextField
+                        id="inputField"
+                        label="Pretraži user-e"
                         value={searchTerm}
-                        placeholder="Pretraži user-e"
-                        onChange={(e)=>setSearchTerm(e.target.value)}
-                       />
-                    <button type="submit" id="submit">Pretrazi</button>
-            </form>
-
-            {isSearching &&(
-                <ul id="suggestions">
-                    {searchedUsers.map((user,index)=>(
-                        <li key={index}>
-                            <button id={user.username} onClick={()=>handleSuggestionClick(user.username)}>
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        required
+                    />
+                    <Button type="submit" variant="contained" color="primary">Pretraži</Button>
+                </Box>
+                {isSearching ? (
+                    <CircularProgress sx={{ mt: 2 }} />
+                ) : (
+                    <List id="suggestions" sx={{ mt: 2 }}>
+                        {searchedUsers.map((user, index) => (
+                            <ListItem key={index} button onClick={() => handleSuggestionClick(user.username)}>
                                 {user.username}
-                            </button>
-                        </li>
-                    ))}
-                </ul>
-            )}
-        </div>
+                            </ListItem>
+                        ))}
+                    </List>
+                )}
+            </Box>
+        </Container>
     )
 }
-export default SearchUsers;
 
+export default SearchUsers;

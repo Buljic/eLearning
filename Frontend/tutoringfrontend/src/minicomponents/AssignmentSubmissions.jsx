@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import config from '../config.js';
+import { Container, Box, Typography, Button, CircularProgress, Alert, TextField, List, ListItem, Card, CardContent } from '@mui/material';
+
 const AssignmentSubmissions = () => {
     const { assignmentId } = useParams();
     const [submissions, setSubmissions] = useState([]);
@@ -62,31 +64,51 @@ const AssignmentSubmissions = () => {
         }
     };
 
-    if (submissions.length === 0) return <div>No submissions yet.</div>;
+    if (submissions.length === 0) return <Typography variant="h6">No submissions yet.</Typography>;
 
     return (
-        <div>
-            <h1>Submissions</h1>
-            <ul>
-                {submissions.map((submission) => (
-                    <li key={submission.id}>
-                        {submission.student && (
-                            <>
-                                <p>{submission.student.username}</p>
-                                <p>{new Date(submission.submissionTime).toLocaleString()}</p>
-                                <p>Status: {submission.status}</p>
-                                {submission.fileUrl && <a href={`${config.BASE_URL}${submission.fileUrl}`} target="_blank" rel="noopener noreferrer">View Submission</a>}
-                                <textarea value={feedback} onChange={handleFeedbackChange} placeholder="Enter feedback" />
-                                <input type="number" value={grade} onChange={handleGradeChange} placeholder="Enter grade" />
-                                <button onClick={() => handleProvideFeedback(submission.id)}>Submit Feedback</button>
-                                {submission.feedback && <p>Feedback: {submission.feedback}</p>}
-                                {submission.grade && <p>Grade: {submission.grade}</p>}
-                            </>
-                        )}
-                    </li>
-                ))}
-            </ul>
-        </div>
+        <Container>
+            <Box sx={{ my: 4 }}>
+                <Typography variant="h4">Submissions</Typography>
+                <List>
+                    {submissions.map((submission) => (
+                        <ListItem key={submission.id}>
+                            <Card sx={{ width: '100%' }}>
+                                <CardContent>
+                                    {submission.student && (
+                                        <>
+                                            <Typography variant="h6">{submission.student.username}</Typography>
+                                            <Typography variant="body2">{new Date(submission.submissionTime).toLocaleString()}</Typography>
+                                            <Typography variant="body2">Status: {submission.status}</Typography>
+                                            {submission.fileUrl && <Button href={`${config.BASE_URL}${submission.fileUrl}`} target="_blank" rel="noopener noreferrer">View Submission</Button>}
+                                            <TextField
+                                                label="Feedback"
+                                                multiline
+                                                rows={4}
+                                                value={feedback}
+                                                onChange={handleFeedbackChange}
+                                                fullWidth
+                                                sx={{ my: 2 }}
+                                            />
+                                            <TextField
+                                                label="Grade"
+                                                type="number"
+                                                value={grade}
+                                                onChange={handleGradeChange}
+                                                fullWidth
+                                            />
+                                            <Button variant="contained" color="primary" onClick={() => handleProvideFeedback(submission.id)} sx={{ mt: 2 }}>Submit Feedback</Button>
+                                            {submission.feedback && <Typography variant="body2">Feedback: {submission.feedback}</Typography>}
+                                            {submission.grade && <Typography variant="body2">Grade: {submission.grade}</Typography>}
+                                        </>
+                                    )}
+                                </CardContent>
+                            </Card>
+                        </ListItem>
+                    ))}
+                </List>
+            </Box>
+        </Container>
     );
 };
 

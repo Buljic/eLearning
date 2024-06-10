@@ -90,7 +90,7 @@ const AttendedSubjects = () => {
 
     return (
         <div>
-            <h1>Pohađani kursevi</h1>
+            <h1>Vasi kursevi</h1>
             <br />
             {attendedGroups.length > 0 && (
                 <ul id="attendedGroups">
