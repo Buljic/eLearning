@@ -1,17 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import useFetchSubjects from "../customHooks/useFetchSubjects.js";
 import config from '../config.js';
+import { TextField, Button, Select, MenuItem, FormControl, InputLabel, Typography, Container, Box, Alert } from '@mui/material';
+
 const CreateGroup = () => {
-    const [groupName, setGroupName] = useState(''); // max 31 chars
-    const [topic, setTopic] = useState(''); // max 31 chars
-    const [chosenSubjects, setChosenSubjects] = useState(['']); // as a list, one subject is required initially
-    const [description, setDescription] = useState(''); // max 255 letters
-    const [startDate, setStartDate] = useState(''); // must be at least 7 days AFTER today's date
-    const [endDate, setEndDate] = useState(''); // these are dates
+    const [groupName, setGroupName] = useState('');
+    const [topic, setTopic] = useState('');
+    const [chosenSubjects, setChosenSubjects] = useState(['']);
+    const [description, setDescription] = useState('');
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
     const [hoursPerWeek, setHoursPerWeek] = useState(0);
     const [price, setPrice] = useState(0);
     const { subjects, loading, error } = useFetchSubjects();
     const [maxStudents, setMaxStudents] = useState(0);
+    const [formError, setFormError] = useState('');
     const storedUser = sessionStorage.getItem('myUser');
     const myUser = JSON.parse(storedUser);
     const tutorId = myUser.id;
@@ -22,7 +25,7 @@ const CreateGroup = () => {
         minStartDate.setDate(today.getDate() + 7);
 
         const minEndDate = new Date(minStartDate);
-        minEndDate.setDate(minStartDate.getDate() + 7); // kurs mora trajati najmanje jednu sedmicu
+        minEndDate.setDate(minStartDate.getDate() + 7);
 
         setStartDate(minStartDate.toISOString().split('T')[0]);
         setEndDate(minEndDate.toISOString().split('T')[0]);
@@ -50,29 +53,59 @@ const CreateGroup = () => {
     };
 
     const isFormValid = () => {
-        return (
-            groupName.length >= 3 &&
-            topic.length >= 4 &&
-            chosenSubjects.every(subject => subject !== '') &&
-            description.length > 0 &&
-            startDate &&
-            endDate &&
-            new Date(endDate) >= new Date(startDate) &&
-            new Date(endDate) >= new Date(new Date(startDate).setDate(new Date(startDate).getDate() + 7)) &&
-            hoursPerWeek > 0 &&
-            price > 0 &&
-            maxStudents > 0
-        );
+        if (groupName.length < 3) {
+            setFormError('Naziv grupe mora imati najmanje 3 slova.');
+            return false;
+        }
+        if (topic.length < 4) {
+            setFormError('Topic mora imati najmanje 4 slova.');
+            return false;
+        }
+        if (chosenSubjects.some(subject => subject === '')) {
+            setFormError('Sva polja za predmete moraju biti popunjena.');
+            return false;
+        }
+        if (description.length === 0) {
+            setFormError('Opis mora biti popunjen.');
+            return false;
+        }
+        if (!startDate) {
+            setFormError('Datum početka mora biti izabran.');
+            return false;
+        }
+        if (!endDate) {
+            setFormError('Datum završetka mora biti izabran.');
+            return false;
+        }
+        if (new Date(endDate) < new Date(startDate)) {
+            setFormError('Datum završetka mora biti nakon datuma početka.');
+            return false;
+        }
+        if (new Date(endDate) < new Date(startDate).setDate(new Date(startDate).getDate() + 7)) {
+            setFormError('Datum završetka mora biti najmanje 7 dana nakon datuma početka.');
+            return false;
+        }
+        if (hoursPerWeek <= 0) {
+            setFormError('Sati po sedmici moraju biti veći od 0.');
+            return false;
+        }
+        if (price <= 0) {
+            setFormError('Cijena mora biti veća od 0.');
+            return false;
+        }
+        if (maxStudents <= 0) {
+            setFormError('Maksimalan broj studenata mora biti veći od 0.');
+            return false;
+        }
+        setFormError('');
+        return true;
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!isFormValid()) {
-            alert('Sva polja moraju biti popunjena prema pravilima.');
             return;
         }
-
-        console.log('Chosen Subjects: ', chosenSubjects);
 
         const groupData = {
             groupName,
@@ -86,8 +119,6 @@ const CreateGroup = () => {
             tutorId,
             maxStudents
         };
-
-        console.log('Group Data: ', groupData);
 
         try {
             const response = await fetch(`${config.BASE_URL}/api/createGroup`, {
@@ -103,123 +134,114 @@ const CreateGroup = () => {
             }
             alert('Grupa uspješno kreirana!');
         } catch (error) {
-            console.log("Greška pri kreiranju grupe", error);
+            console.error("Greška pri kreiranju grupe", error);
+            alert('Došlo je do greške prilikom kreiranja grupe.');
         }
     };
 
     return (
-        <form onSubmit={handleSubmit}>
-            <div>
-                <label>Naziv Grupe:</label>
-                <input
-                    type="text"
+        <Container maxWidth="sm">
+            <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <TextField
+                    label="Naziv Grupe"
                     value={groupName}
                     onChange={(e) => setGroupName(e.target.value)}
                     maxLength="31"
                     required
+                    error={groupName.length < 3}
+                    helperText={groupName.length < 3 ? 'Naziv grupe mora imati najmanje 3 slova.' : ''}
                 />
-                {groupName.length < 3 && <p style={{color: 'red'}}>Naziv grupe mora imati najmanje 3 slova.</p>}
-            </div>
-            <div>
-                <label>Topic:</label>
-                <input
-                    type="text"
+                <TextField
+                    label="Topic"
                     value={topic}
                     onChange={(e) => setTopic(e.target.value)}
                     maxLength="31"
                     required
+                    error={topic.length < 4}
+                    helperText={topic.length < 4 ? 'Topic mora imati najmanje 4 slova.' : ''}
                 />
-                {topic.length < 4 && <p style={{color: 'red'}}>Topic mora imati najmanje 4 slova.</p>}
-            </div>
-            <div>
-                <label>Predmeti:</label>
+                <Typography variant="h6">Predmeti:</Typography>
                 {chosenSubjects.map((subject, index) => (
-                    <div key={index}>
-                        <select
-                            value={subject}
-                            onChange={(e) => handleSubjectChange(index, e.target.value)}
-                            required
-                        >
-                            <option value="">Izaberi predmet</option>
-                            {subjects.map((sub) => (
-                                <option key={sub} value={sub}>{sub}</option>
-                            ))}
-                        </select>
+                    <Box key={index} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <FormControl sx={{ flexGrow: 1 }}>
+                            <InputLabel>Predmet</InputLabel>
+                            <Select
+                                value={subject}
+                                onChange={(e) => handleSubjectChange(index, e.target.value)}
+                                required
+                            >
+                                <MenuItem value="">Izaberi predmet</MenuItem>
+                                {subjects.map((sub) => (
+                                    <MenuItem key={sub} value={sub}>{sub}</MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
                         {chosenSubjects.length > 1 && (
-                            <button type="button" onClick={() => handleRemoveSubject(index)}>Ukloni</button>
+                            <Button type="button" onClick={() => handleRemoveSubject(index)}>Ukloni</Button>
                         )}
-                    </div>
+                    </Box>
                 ))}
                 {chosenSubjects.length < 5 && (
-                    <button type="button" onClick={handleAddSubject}>Dodaj Predmet</button>
+                    <Button type="button" onClick={handleAddSubject}>Dodaj Predmet</Button>
                 )}
-            </div>
-            <div>
-                <label>Opis:</label>
-                <textarea
+                <TextField
+                    label="Opis"
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
+                    multiline
+                    rows={4}
                     maxLength="255"
                     required
+                    error={description.length === 0}
+                    helperText={description.length === 0 ? 'Opis mora biti popunjen.' : ''}
                 />
-            </div>
-            <div>
-                <label>Datum Početka:</label>
-                <input
+                <TextField
+                    label="Datum Početka"
                     type="date"
                     value={startDate}
                     onChange={(e) => setStartDate(e.target.value)}
-                    min={new Date().toISOString().split('T')[0]}
+                    InputLabelProps={{ shrink: true }}
                     required
                 />
-            </div>
-            <div>
-                <label>Datum Završetka:</label>
-                <input
+                <TextField
+                    label="Datum Završetka"
                     type="date"
                     value={endDate}
                     onChange={(e) => setEndDate(e.target.value)}
-                    min={new Date(
-                        startDate ? new Date(startDate).setDate(new Date(startDate).getDate() + 7) : new Date().setDate(
-                            new Date().getDate() + 14)).toISOString().split('T')[0]}
+                    InputLabelProps={{ shrink: true }}
                     required
                 />
-                {new Date(endDate) <= new Date(startDate) && (
-                    <p style={{color: 'red'}}>Datum završetka mora biti najmanje 7 dana nakon datuma početka.</p>
-                )}
-            </div>
-            <div>
-                <label>Maksimalan broj studenata:</label>
-                <input
+                <TextField
+                    label="Maksimalan broj studenata"
                     type="number"
                     value={maxStudents}
                     onChange={(e) => setMaxStudents(Math.max(0, e.target.value))}
-                    min="1"
                     required
+                    error={maxStudents <= 0}
+                    helperText={maxStudents <= 0 ? 'Maksimalan broj studenata mora biti veći od 0.' : ''}
                 />
-            </div>
-            <div>
-                <label>Cijena (BAM):</label>
-                <input
+                <TextField
+                    label="Cijena (BAM)"
                     type="number"
                     value={price}
                     onChange={(e) => setPrice(Math.max(0, e.target.value))}
-                    min="0"
                     required
+                    error={price <= 0}
+                    helperText={price <= 0 ? 'Cijena mora biti veća od 0.' : ''}
                 />
-            </div>
-            <div>
-                <label>Sati po Sedmici:</label>
-                <input
+                <TextField
+                    label="Sati po Sedmici"
                     type="number"
                     value={hoursPerWeek}
                     onChange={(e) => setHoursPerWeek(Math.max(0, e.target.value))}
-                    min="2"
                     required
+                    error={hoursPerWeek <= 0}
+                    helperText={hoursPerWeek <= 0 ? 'Sati po sedmici moraju biti veći od 0.' : ''}
                 />
-            </div>
-            <button type="submit" disabled={!isFormValid()}>Kreiraj Grupu</button>
-        </form>
+                {formError && <Alert severity="error">{formError}</Alert>}
+                <Button type="submit" variant="contained" color="primary">Kreiraj Grupu</Button>
+            </Box>
+        </Container>
     );
 };
 

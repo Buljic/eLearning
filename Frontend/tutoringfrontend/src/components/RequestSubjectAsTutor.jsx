@@ -40,7 +40,7 @@ const RequestSubjectAsTutor=()=>{
             }
             else
             {
-
+                alert("Uspjesno postavljeno");
             }
         }
             catch(error)
@@ -69,7 +69,7 @@ const RequestSubjectAsTutor=()=>{
     return (
         <div>
             <h1>REGISTRACIJA ZA PREDMETE</h1>
-            <p>KORISNIK JE {user.name}</p>
+            <p>Zatrazi predmete za kvalifikaciju</p>
 
             <div id="subjectRegistrationForm">
             <form onSubmit={handleFormInput}>

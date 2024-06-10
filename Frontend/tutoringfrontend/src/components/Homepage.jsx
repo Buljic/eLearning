@@ -69,7 +69,6 @@ const Homepage= ()=>{
             <br/>
             <br/>
             <br/>
-            text
         </div>
     );
 };

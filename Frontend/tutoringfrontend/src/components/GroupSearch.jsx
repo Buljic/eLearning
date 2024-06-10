@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from "react";
 import GroupFilterForm from "../minicomponents/GroupFilterForm.jsx";
 import config from '../config.js';
 import Pagination from "../minicomponents/Pagination.jsx";
 import GroupResults from "../minicomponents/GroupResult.jsx";
+import { Box } from '@mui/material';
 
 const GroupSearch = () => {
     const [isSearching, setIsSearching] = useState(false);
@@ -23,7 +24,7 @@ const GroupSearch = () => {
         subjects: []
     });
     const [page, setPage] = useState(0);
-    const [size, setSize] = useState(3); // Default veličina stranice
+    const [size, setSize] = useState(3);
     const [totalPages, setTotalPages] = useState(0);
 
     const handleFilterChange = (newFilters) => {
@@ -33,7 +34,7 @@ const GroupSearch = () => {
     const handleSubmit = async (event) => {
         event.preventDefault();
         setIsSearching(true);
-        setPage(0); // Resetovanje na prvu stranicu pri novoj pretrazi
+        setPage(0);
         getSearchedGroups(0);
     };
 
@@ -52,7 +53,7 @@ const GroupSearch = () => {
         }
         const data = await response.json();
         setSearchedGroups(data.groups);
-        setTotalPages(Math.ceil(data.totalCount / size)); // Racunanje ukupnog broja stranice
+        setTotalPages(Math.ceil(data.totalCount / size));
     };
 
     const handlePageChange = (newPage) => {
@@ -61,13 +62,13 @@ const GroupSearch = () => {
     };
 
     return (
-        <div style={{ display: 'flex' }}>
+        <Box sx={{ display: 'flex', gap: 2, padding: 2 }}>
             <GroupFilterForm filters={filters} onFilterChange={handleFilterChange} onSubmit={handleSubmit} />
-            <div style={{ flex: 2 }}>
+            <Box sx={{ flex: 2, maxHeight: 'calc(100vh - 20px)', overflow: 'auto' }}>
                 <GroupResults isSearching={isSearching} groups={searchedGroups} />
                 <Pagination currentPage={page} totalPages={totalPages} onPageChange={handlePageChange} />
-            </div>
-        </div>
+            </Box>
+        </Box>
     );
 };
 

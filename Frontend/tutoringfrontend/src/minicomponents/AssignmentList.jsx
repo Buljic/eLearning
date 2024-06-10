@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import AssignmentCreateModal from "./AssignmentCreateModal";
 import config from '../config.js';
+import { Container, Box, Typography, Button, List, ListItem, CircularProgress, Card, CardContent } from '@mui/material';
+
 const AssignmentList = ({ isProfessor }) => {
     const { groupId } = useParams();
     const [assignments, setAssignments] = useState([]);
@@ -40,35 +42,45 @@ const AssignmentList = ({ isProfessor }) => {
     };
 
     return (
-        <div>
-            <h1>Assignments</h1>
-            {isProfessor && (
-                <button onClick={() => setShowCreateModal(true)}>Create New Assignment</button>
-            )}
-            <AssignmentCreateModal show={showCreateModal} handleClose={() => setShowCreateModal(false)} groupId={groupId} />
-            <ul>
-                {assignments.map((assignment) => (
-                    <li key={assignment.id}>
-                        <h2>{assignment.name}</h2>
-                        <p>{assignment.description}</p>
-                        <p>Due: {new Date(assignment.dueDateTime).toLocaleString()}</p>
-                        {assignment.imageUrl && <img src={`${config.BASE_URL}${assignment.imageUrl}`} alt={assignment.name} style={{ maxWidth: '200px', maxHeight: '200px' }} />}
-                        {!isProfessor && (
-                            <p>Status: <span style={{ color: getStatusColor(getStatus(assignment)) }}>{getStatus(assignment)}</span></p>
-                        )}
-                        {isProfessor ? (
-                            <Link to={`/assignments/${assignment.id}/submissions`}>
-                                <button>View Submissions</button>
-                            </Link>
-                        ) : (
-                            <Link to={`/assignments/${assignment.id}`}>
-                                <button>View Assignment</button>
-                            </Link>
-                        )}
-                    </li>
-                ))}
-            </ul>
-        </div>
+        <Container>
+            <Box sx={{ my: 4 }}>
+                <Typography variant="h4">Assignments</Typography>
+                {isProfessor && (
+                    <Button variant="contained" color="primary" onClick={() => setShowCreateModal(true)}>Create New Assignment</Button>
+                )}
+                <AssignmentCreateModal show={showCreateModal} handleClose={() => setShowCreateModal(false)} groupId={groupId} />
+                {assignments.length === 0 ? (
+                    <CircularProgress />
+                ) : (
+                    <List>
+                        {assignments.map((assignment) => (
+                            <ListItem key={assignment.id}>
+                                <Card>
+                                    <CardContent>
+                                        <Typography variant="h5">{assignment.name}</Typography>
+                                        <Typography variant="body1">{assignment.description}</Typography>
+                                        <Typography variant="body1">Due: {new Date(assignment.dueDateTime).toLocaleString()}</Typography>
+                                        {assignment.imageUrl && <img src={`${config.BASE_URL}${assignment.imageUrl}`} alt={assignment.name} style={{ maxWidth: '200px', maxHeight: '200px' }} />}
+                                        {!isProfessor && (
+                                            <Typography variant="body1">Status: <span style={{ color: getStatusColor(getStatus(assignment)) }}>{getStatus(assignment)}</span></Typography>
+                                        )}
+                                        {isProfessor ? (
+                                            <Link to={`/assignments/${assignment.id}/submissions`}>
+                                                <Button variant="contained" color="primary">View Submissions</Button>
+                                            </Link>
+                                        ) : (
+                                            <Link to={`/assignments/${assignment.id}`}>
+                                                <Button variant="contained" color="primary">View Assignment</Button>
+                                            </Link>
+                                        )}
+                                    </CardContent>
+                                </Card>
+                            </ListItem>
+                        ))}
+                    </List>
+                )}
+            </Box>
+        </Container>
     );
 };
 

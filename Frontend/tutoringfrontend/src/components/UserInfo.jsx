@@ -1,50 +1,47 @@
 import React from "react";
-import {Link, useParams} from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import useFetchCertainUser from "../customHooks/useFetchCertainUser.js";
-import "../css/subject.css";
+import { Container, Box, Typography, CircularProgress, Alert, List, ListItem, Card, CardContent } from '@mui/material';
 import config from '../config.js';
-const UserInfo=()=>{
-    const {username}=useParams();
-    console.log("PARAMETAR JE :"+username)
-    const{userInfo,error,loading}=useFetchCertainUser(username);
-    if(!userInfo)
-    {
-        return <h3>LOADING</h3>
+
+const UserInfo = () => {
+    const { username } = useParams();
+    const { userInfo, error, loading } = useFetchCertainUser(username);
+
+    if (loading) {
+        return <CircularProgress />;
     }
-    if(userInfo)
-    {
-        console.log("INFORMACIJE"+userInfo);
+
+    if (error) {
+        return <Alert severity="error">{error.message}</Alert>;
     }
-    // if(loading){
-    //     return (<div>
-    //         <h2>Loading...</h2>
-    //     </div>)
-    // }
 
-    // if(!loading){
-    //     console.log(userInfo);
-    // }
+    if (!userInfo) {
+        return <Typography variant="h6">LOADING...</Typography>;
+    }
 
-    return (<div>
-        <p>Ime korisnika je {userInfo.username}</p>
-        <p>Vrsta korisnika : {userInfo.account_type}</p>
-        <p>Broj telefona : {userInfo.phone_number}</p>
-        <p>Email : {userInfo.email}</p>
-
-        <Link to={`/chatTo/${userInfo.id}`}><h3>Dopisivanje</h3></Link>
-        {/*//TODO username ili id*/}
-        {userInfo && userInfo.subjects && userInfo.subjects.map((subject, index) => (
-            <div key={index} id="subjectPresent">
-                <p>Predmet ID: {subject.subject_name}</p>
-                {/*<p>Tutor ID: {subject.tutor_id}</p>*/}
-                <p>Ocjena Predavanja: {subject.teaching_grade}</p>
-
-                {/*<p>TODO dodati info tj custom bio za korisnika</p>*/}
-            </div>
-        ))}
-    </div>
+    return (
+        <Container>
+            <Box sx={{ my: 4 }}>
+                <Typography variant="h4">Korisničke informacije</Typography>
+                <Typography variant="body1">Ime korisnika: {userInfo.username}</Typography>
+                <Typography variant="body1">Vrsta korisnika: {userInfo.account_type}</Typography>
+                <Typography variant="body1">Broj telefona: {userInfo.phone_number}</Typography>
+                <Typography variant="body1">Email: {userInfo.email}</Typography>
+                <Link to={`/chatTo/${userInfo.id}`}>
+                    <Typography variant="h6" color="primary">Dopisivanje</Typography>
+                </Link>
+                {userInfo.subjects && userInfo.subjects.map((subject, index) => (
+                    <Card key={index} sx={{ my: 2 }}>
+                        <CardContent>
+                            <Typography>Predmet: {subject.subject_name}</Typography>
+                            <Typography>Ocjena Predavanja: {subject.teaching_grade}</Typography>
+                        </CardContent>
+                    </Card>
+                ))}
+            </Box>
+        </Container>
     );
-
 }
 
 export default UserInfo;

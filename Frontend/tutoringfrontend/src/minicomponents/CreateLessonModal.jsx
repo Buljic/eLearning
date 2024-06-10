@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import config from '../config.js';
+import { Modal, Box, TextField, Button, Typography } from '@mui/material';
+
 const CreateLessonModal = ({ show, handleClose, groupId }) => {
     const [title, setTitle] = useState("");
     const [content, setContent] = useState("");
@@ -42,32 +44,35 @@ const CreateLessonModal = ({ show, handleClose, groupId }) => {
         }
     };
 
-
-
-    if (!show) return null;
-
     return (
-        <div className="modal">
-            <div className="modal-content">
-                <span className="close" onClick={handleClose}>
-                    &times;
-                </span>
-                <h2>Create Lesson</h2>
-                <input
-                    type="text"
-                    placeholder="Title"
+        <Modal open={show} onClose={handleClose}>
+            <Box sx={{ p: 4, bgcolor: 'background.paper', boxShadow: 24, borderRadius: 2, width: 400, mx: 'auto', mt: '10%' }}>
+                <Typography variant="h6" gutterBottom>Create Lesson</Typography>
+                <TextField
+                    label="Title"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
+                    fullWidth
+                    sx={{ mb: 2 }}
                 />
-                <textarea
-                    placeholder="Content"
+                <TextField
+                    label="Content"
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
-                ></textarea>
-                <input type="file" multiple onChange={handleFileChange} />
-                <button onClick={handleCreateLesson}>Create Lesson</button>
-            </div>
-        </div>
+                    multiline
+                    rows={4}
+                    fullWidth
+                    sx={{ mb: 2 }}
+                />
+                <Button variant="contained" component="label" fullWidth>
+                    Upload Files
+                    <input type="file" multiple hidden onChange={handleFileChange} />
+                </Button>
+                <Button variant="contained" color="primary" onClick={handleCreateLesson} sx={{ mt: 2 }}>
+                    Create Lesson
+                </Button>
+            </Box>
+        </Modal>
     );
 };
 

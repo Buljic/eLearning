@@ -1,44 +1,43 @@
-
-import React, {useContext} from 'react';
+import React from 'react';
 import useFetchUser from "../customHooks/useFetchUser";
-import {Link} from "react-router-dom";
-import myUserContext from "../minicomponents/Context/MyUserContext.js";
-import MyUserContext from "../minicomponents/Context/MyUserContext.js";
+import { Link } from "react-router-dom";
+import { Container, Box, Typography, CircularProgress, Alert, List, ListItem } from '@mui/material';
 import config from '../config.js';
+
 const WelcomePage = () => {
     const { user, error, loading } = useFetchUser(); // Koristimo naš custom hook
+    const storedUser = sessionStorage.getItem('myUser');
+    const myUser = JSON.parse(storedUser); //jer ono inace dobijamo string obicni
 
-    console.log("SAMO JEDNOM");
-    //const {myUser,setMyUser}=useContext(MyUserContext);//dodajemo usera u context
-    const storedUser=sessionStorage.getItem('myUser');
-    const myUser=JSON.parse(storedUser);//jer ono inace dobijamo string obicni
     if (loading) {
-        return <div>Učitavanje...</div>; // Prikazujemo dok se podaci učitavaju
+        return <CircularProgress />;
     }
 
     if (error) {
-        return <div>Došlo je do greške: {error.message}</div>; // Prikazujemo ako postoji greška
+        return <Alert severity="error">Došlo je do greške: {error.message}</Alert>;
     }
 
-    // Kada nije ucitavanje i nema greske, prikazujemo podatke korisnika
     return (
-        <div>
-            <h1>NAS USER {myUser.username}</h1>
-            <h1>Dobrodošli, {user?.name}</h1>
-            <ul>
-        {((user.accountType==='STUDENT')||(user.accountType==='OBOJE') )&& <li><Link to='/searchSubjects'>Trazi predmete</Link></li>}
-        { (user.accountType==='OBOJE') && <li>Radi</li>}
-        {(user.accountType==='STUDENT') && <li>STUDENT</li>}
-        {(user.accountType==='PROFESOR')&&<li>PROFESOR</li>}
-{((user.accountType==='PROFESOR')||(user.accountType==='OBOJE')||(user.accountType==='PROFESOR'))&& <div><li><Link to="/requestSubjectsAsTutor">Registruj se za predmete</Link></li><br/></div>}
+        <Container>
+            <Box sx={{ my: 4 }}>
+                <Typography variant="h4">Dobrodošli, {myUser.username}</Typography>
+                <List>
 
-        {((user.accountType==='STUDENT')||(user.accountType==='OBOJE')||(user.accountType==='PROFESOR') )&& <li><Link to="/attendedCourses">Kursevi koje pohadjas</Link></li>}
-                {(user.accountType==='PROFESOR')&& <li><Link to="/createGroup">Napravi grupu</Link></li>}
-                {(user.accountType==='PROFESOR')&& <li><Link to="/groupRequests">Pristigli zahtijevi</Link></li>}
-        <li><Link to="/userSearch">Pretraži usere</Link></li>
-                <li><Link to="/groupSearch">Pretraži grupe</Link></li>
-            </ul>
-        </div>
+                    {(user.accountType === 'OBOJE') && <ListItem>Radi</ListItem>}
+                    {(user.accountType === 'STUDENT') && <ListItem>Trenutni role : STUDENT</ListItem>}
+                    {(user.accountType === 'PROFESOR') && <ListItem>Trenutni role :PROFESOR</ListItem>}
+                    {((user.accountType === 'STUDENT') || (user.accountType === 'OBOJE')) && <ListItem><Link to='/searchSubjects'>Trazi predmete</Link></ListItem>}
+                    {((user.accountType === 'PROFESOR') || (user.accountType === 'OBOJE') || (user.accountType === 'PROFESOR')) &&
+                        <ListItem><Link to="/requestSubjectsAsTutor">Registruj se za predmete</Link></ListItem>}
+                    {((user.accountType === 'STUDENT') || (user.accountType === 'OBOJE') || (user.accountType === 'PROFESOR')) &&
+                        <ListItem><Link to="/attendedCourses">Vasi kursevi</Link></ListItem>}
+                    {(user.accountType === 'PROFESOR') && <ListItem><Link to="/createGroup">Napravi grupu</Link></ListItem>}
+                    {(user.accountType === 'PROFESOR') && <ListItem><Link to="/groupRequests">Pristigli zahtijevi</Link></ListItem>}
+                    <ListItem><Link to="/userSearch">Pretraži usere</Link></ListItem>
+                    <ListItem><Link to="/groupSearch">Pretraži grupe</Link></ListItem>
+                </List>
+            </Box>
+        </Container>
     );
 };
 
