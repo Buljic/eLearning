@@ -1,6 +1,5 @@
 // Video.jsx
-import React, { useRef, useEffect } from 'react';
-
+import { useRef, useEffect } from 'react';
 const Video = ({ peer }) => {
     const ref = useRef();
 

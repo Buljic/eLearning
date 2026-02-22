@@ -1,8 +1,6 @@
-import React from "react";
 import { Link, useParams } from "react-router-dom";
 import useFetchCertainUser from "../customHooks/useFetchCertainUser.js";
-import { Container, Box, Typography, CircularProgress, Alert, List, ListItem, Card, CardContent } from '@mui/material';
-import config from '../config.js';
+import { Container, Box, Typography, CircularProgress, Alert, Card, CardContent } from '@mui/material';
 
 const UserInfo = () => {
     const { username } = useParams();
@@ -42,6 +40,6 @@ const UserInfo = () => {
             </Box>
         </Container>
     );
-}
+};
 
 export default UserInfo;

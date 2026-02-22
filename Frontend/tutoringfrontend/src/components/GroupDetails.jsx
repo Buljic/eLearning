@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import config from '../config.js';
 import { Container, Box, Typography, Button, CircularProgress, Alert } from '@mui/material';
@@ -7,7 +7,6 @@ const GroupDetails = () => {
     const { groupId } = useParams();
     const [group, setGroup] = useState(null);
     const [error, setError] = useState('');
-    const [message, setMessage] = useState('');
     const storedUser = sessionStorage.getItem('myUser');
     const myUser = JSON.parse(storedUser);
 
@@ -79,7 +78,6 @@ const GroupDetails = () => {
                         Request Access
                     </Button>
                 )}
-                {message && <Typography color="error">{message}</Typography>}
             </Box>
         </Container>
     );

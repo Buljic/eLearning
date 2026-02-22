@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import useFetchSubjects from "../customHooks/useFetchSubjects.js";
 import config from '../config.js';
 import { TextField, Button, Select, MenuItem, FormControl, InputLabel, Typography, Container, Box, Alert } from '@mui/material';
+import { Navigate } from "react-router-dom";
 
 const CreateGroup = () => {
     const [groupName, setGroupName] = useState('');
@@ -12,12 +13,11 @@ const CreateGroup = () => {
     const [endDate, setEndDate] = useState('');
     const [hoursPerWeek, setHoursPerWeek] = useState(0);
     const [price, setPrice] = useState(0);
-    const { subjects, loading, error } = useFetchSubjects();
+    const { subjects } = useFetchSubjects();
     const [maxStudents, setMaxStudents] = useState(0);
     const [formError, setFormError] = useState('');
-    const storedUser = sessionStorage.getItem('myUser');
-    const myUser = JSON.parse(storedUser);
-    const tutorId = myUser.id;
+    const myUser = useMemo(() => JSON.parse(sessionStorage.getItem('myUser')), []);
+    const tutorId = myUser?.id;
 
     useEffect(() => {
         const today = new Date();
@@ -30,6 +30,10 @@ const CreateGroup = () => {
         setStartDate(minStartDate.toISOString().split('T')[0]);
         setEndDate(minEndDate.toISOString().split('T')[0]);
     }, []);
+
+    if (!tutorId) {
+        return <Navigate to="/login" replace />;
+    }
 
     const handleAddSubject = () => {
         if (chosenSubjects.length < 5) {

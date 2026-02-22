@@ -1,24 +1,24 @@
-import React, { useState } from "react";
+import { useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import Chat from "../minicomponents/Chat.jsx";
-import Lessons from "../minicomponents/Lessons.jsx";
 import AssignmentList from "../minicomponents/AssignmentList.jsx";
 import VideoCall from "../minicomponents/VideoCall.jsx";
 import ChatForGroup from "../minicomponents/ChatForGroup.jsx";
 import LessonList from "../minicomponents/LessonList.jsx";
-import { Container, Box, Typography, Tabs, Tab } from '@mui/material';
+import { Container, Box, Typography, Tabs, Tab, Alert } from '@mui/material';
 import ChatIcon from '@mui/icons-material/Chat';
 import BookIcon from '@mui/icons-material/Book';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import VideoCallIcon from '@mui/icons-material/VideoCall';
-import config from '../config.js';
 
 const GroupOverview = () => {
     const { groupId } = useParams();
     const [activeTab, setActiveTab] = useState("chat");
 
-    const storedUser = sessionStorage.getItem("myUser");
-    const myUser = JSON.parse(storedUser);
+    const myUser = useMemo(() => JSON.parse(sessionStorage.getItem("myUser")), []);
+    if (!myUser) {
+        return <Alert severity="warning">Morate biti prijavljeni da pristupite grupi.</Alert>;
+    }
     const isProfessor = myUser.accountType === "PROFESOR";
 
     const renderTabContent = () => {
@@ -28,7 +28,7 @@ const GroupOverview = () => {
             case "lessons":
                 return <LessonList groupId={groupId} />;
             case "assignments":
-                return <AssignmentList isProfessor={isProfessor} />;
+                return <AssignmentList isProfessor={isProfessor} groupId={groupId} />;
             case "videoCall":
                 return <VideoCall groupId={groupId} />;
             default:

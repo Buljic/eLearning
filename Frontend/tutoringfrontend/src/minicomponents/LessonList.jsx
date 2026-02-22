@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 import { useParams } from "react-router-dom";
 import CreateLessonModal from "./CreateLessonModal";
 import config from '../config.js';
-import { Container, Box, Typography, Button, CircularProgress, List, ListItem, Card, CardContent } from '@mui/material';
+import { Container, Box, Typography, Button, List, ListItem, Card, CardContent } from '@mui/material';
 
 const LessonList = () => {
     const { groupId } = useParams();

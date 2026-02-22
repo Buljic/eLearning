@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 import { useParams } from "react-router-dom";
 import config from '../config.js';
-import { Container, Box, Typography, Button, CircularProgress, Alert, TextField, List, ListItem, Card, CardContent } from '@mui/material';
+import { Container, Box, Typography, Button, TextField, List, ListItem, Card, CardContent } from '@mui/material';
 
 const AssignmentSubmissions = () => {
     const { assignmentId } = useParams();

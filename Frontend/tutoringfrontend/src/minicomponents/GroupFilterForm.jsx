@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import useFetchSubjects from "../customHooks/useFetchSubjects.js";
 import { Box, TextField, Button, Select, MenuItem, FormControl, InputLabel, Typography } from '@mui/material';
 
 const GroupFilterForm = ({ filters, onFilterChange, onSubmit }) => {
     const [subjects, setSubjects] = useState(['']);
-    const { subjects: allSubjects, loading, error } = useFetchSubjects();
+    const { subjects: allSubjects } = useFetchSubjects();
 
     useEffect(() => {
         if (subjects.length === 1 && subjects[0] === '') {

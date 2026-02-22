@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from "react";
+import { useState } from 'react';
 import useFetchUser from "../customHooks/useFetchUser.js";
 import useFetchSubjects from "../customHooks/useFetchSubjects.js";
 import { Container, Box, Typography, TextField, Button, CircularProgress, Alert, List, ListItem } from '@mui/material';
 import config from '../config.js';
 
 const RequestSubjectAsTutor = () => {
-    const { user, error, loading } = useFetchUser();
+    const { error, loading } = useFetchUser();
     const [inputSubject, setInputSubject] = useState('');
     const [comment, setComment] = useState('');
     const [writtenQualifications, setWrittenQualifications] = useState('');

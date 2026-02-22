@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from 'react';
 import AssignmentCreateModal from "./AssignmentCreateModal";
 import config from '../config.js';
 const Assignments = ({ groupId, onSelectAssignment }) => {
