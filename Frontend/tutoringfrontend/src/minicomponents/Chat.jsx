@@ -158,9 +158,9 @@ const Chat = ({ chatId, isGroupChat }) => {
 
     return (
         <div>
-            <h1>Dopisivanje {myUser.id} sa {chatId}</h1>
-
-            <button onClick={fetchPreviousMessages}>Učitaj više</button>
+            <div style={{display: 'flex', justifyContent: 'center', marginTop: '10px'}}>
+                <button onClick={fetchPreviousMessages}>Učitaj više</button>
+            </div>
 
             <div id="chatBox">
                 {messages.map((msg, index) => (

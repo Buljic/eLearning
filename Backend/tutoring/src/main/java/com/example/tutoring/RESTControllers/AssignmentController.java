@@ -7,6 +7,7 @@ import com.example.tutoring.Entities.AssignmentSubmission;
 import com.example.tutoring.Entities.Group;
 import com.example.tutoring.Entities.User;
 import com.example.tutoring.Other.AccountType;
+import com.example.tutoring.Repositories.UserRepository;
 import com.example.tutoring.Security.JwtUtil;
 import com.example.tutoring.Services.AssignmentService;
 import com.example.tutoring.Services.StorageService;
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.beans.factory.annotation.Value;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api")
@@ -31,6 +33,9 @@ public class AssignmentController {
     private final StorageService storageService;
     private final ObjectMapper objectMapper;
     private final UserService userService;
+
+    @Autowired
+    private UserRepository userRepository;
     @Value("${file.upload-dir}")
     private String uploadDir;
 
@@ -120,31 +125,65 @@ public ResponseEntity<List<Assignment>> getAssignments(@PathVariable Long groupI
         }
     }
 
-    @PostMapping("/assignments/{assignmentId}/submit")
-    public ResponseEntity<?> submitAssignment(HttpServletRequest request, @PathVariable Long assignmentId, @RequestPart("file") MultipartFile file) {
-        String token = jwtUtil.extractJwtFromCookie(request);
-        if (token != null) {
-            String role = jwtUtil.getRoleFromToken(token);
-            if (role.equals("STUDENT")) {
-                AssignmentSubmission submission = new AssignmentSubmission();
-                try {
-                    String fileName = storageService.storeAssignmentSubmission(file);
-                    submission.setFileUrl("/uploads/assignmentsubmits/" + fileName);
-                    submission.setAssignment(new Assignment(assignmentId));
-                    submission.setStudent(new User(jwtUtil.getUsernameFromToken(token))); // Pretpostavljamo da imamo konstruktor User(String username)
-                    assignmentService.saveSubmission(submission);
-                    return ResponseEntity.status(HttpStatus.CREATED).body("Submission created successfully");
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to submit assignment");
+//    @PostMapping("/assignments/{assignmentId}/submit")
+//    public ResponseEntity<?> submitAssignment(HttpServletRequest request, @PathVariable Long assignmentId, @RequestPart("file") MultipartFile file) {
+//        String token = jwtUtil.extractJwtFromCookie(request);
+//        if (token != null) {
+//            String role = jwtUtil.getRoleFromToken(token);
+//            if (role.equals("STUDENT")) {
+//                AssignmentSubmission submission = new AssignmentSubmission();
+//                try {
+//                    String fileName = storageService.storeAssignmentSubmission(file);
+//                    submission.setFileUrl("/uploads/assignmentsubmits/" + fileName);
+//                    submission.setAssignment(new Assignment(assignmentId));
+//                    submission.setStudent(new User(jwtUtil.getUsernameFromToken(token))); // Pretpostavljamo da imamo konstruktor User(String username)
+//                    assignmentService.saveSubmission(submission);
+//                    return ResponseEntity.status(HttpStatus.CREATED).body("Submission created successfully");
+//                } catch (Exception e) {
+//                    e.printStackTrace();
+//                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to submit assignment");
+//                }
+//            } else {
+//                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Only students can submit assignments");
+//            }
+//        } else {
+//            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
+//        }
+//    }
+@PostMapping("/assignments/{assignmentId}/submit")
+public ResponseEntity<?> submitAssignment(HttpServletRequest request, @PathVariable Long assignmentId, @RequestPart("file") MultipartFile file) {
+    String token = jwtUtil.extractJwtFromCookie(request);
+    if (token != null) {
+        String role = jwtUtil.getRoleFromToken(token);
+        if (role.equals("STUDENT")) {
+            AssignmentSubmission submission = new AssignmentSubmission();
+            try {
+                String fileName = storageService.storeAssignmentSubmission(file);
+                submission.setFileUrl("/uploads/assignmentsubmits/" + fileName);
+                submission.setAssignment(new Assignment(assignmentId));
+
+                // Dohvaćanje cijelog User objekta iz baze podataka
+                String username = jwtUtil.getUsernameFromToken(token);
+                Optional<User> userOpt = userRepository.findByUsername(username);
+                if (userOpt.isPresent()) {
+                    submission.setStudent(userOpt.get());
+                } else {
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
                 }
-            } else {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Only students can submit assignments");
+
+                assignmentService.saveSubmission(submission);
+                return ResponseEntity.status(HttpStatus.CREATED).body("Submission created successfully");
+            } catch (Exception e) {
+                e.printStackTrace();
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to submit assignment");
             }
         } else {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Only students can submit assignments");
         }
+    } else {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
     }
+}
 
     @GetMapping("/assignments/{assignmentId}/submissions")
     public ResponseEntity<List<AssignmentSubmission>> getSubmissions(@PathVariable Long assignmentId) {

@@ -1,75 +1,21 @@
 import React from "react";
-import {Link} from "react-router-dom";
-import config from '../config.js';
-const Homepage= ()=>{
+import { Link } from "react-router-dom";
+import { Box, Typography, Button } from '@mui/material';
+
+const Homepage = () => {
     return (
-        <div>
-            <h1>Dobrodosli u centar za Tutoring</h1>
-            <Link to="/login" ><h2>Prijava</h2></Link>
-            <br/>
-            <Link to="/createAccount"><h2>Napravi racun</h2></Link>
-            <br/>
-            <br/>
-            <br/>
-            <br/>
-            <br/>
-            <br/>
-            <br/>
-            <br/>
-            <br/>
-            <br/>
-            <br/>
-            <br/>
-            <br/>
-            <br/>
-            <br/>
-            <br/>
-            <br/>
-            <br/>
-            <br/>
-            <br/>
-            <br/>
-            <br/>
-            <br/>
-            <br/>
-            <br/>
-            <br/>
-            <br/>
-            <br/>
-            <br/>
-            <br/>
-            <br/>
-            <br/>
-            <br/>
-            <br/>
-            <br/>
-            <br/>
-            <br/>
-            <br/>
-            <br/>
-            <br/>
-            <br/>
-            <br/>
-            <br/>
-            <br/>
-            <br/>
-            <br/>
-            <br/>
-            <br/>
-            <br/>
-            <br/>
-            <br/>
-            <br/>
-            <br/>
-            <br/>
-            <br/>
-            <br/>
-            <br/>
-            <br/>
-            <br/>
-            <br/>
-            <br/>
-        </div>
+        <Box sx={{textAlign: 'center', padding: 4}}>
+            <Typography variant="h3" gutterBottom>
+                Dobrodošli u centar za Tutoring
+            </Typography>
+            <Button variant="contained" color="primary" component={Link} to="/login" sx={{margin: 1}}>
+                Prijava
+            </Button>
+            <Button variant="contained" color="primary" component={Link} to="/createAccount" sx={{margin: 1}}>
+                Napravi račun
+            </Button>
+        </Box>
+
     );
 };
 

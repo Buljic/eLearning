@@ -22,7 +22,7 @@ const UserInfo = () => {
 
     return (
         <Container>
-            <Box sx={{ my: 4 }}>
+            <Box sx={{ my: 2, textAlign: 'center' }}>
                 <Typography variant="h4">Korisničke informacije</Typography>
                 <Typography variant="body1">Ime korisnika: {userInfo.username}</Typography>
                 <Typography variant="body1">Vrsta korisnika: {userInfo.account_type}</Typography>
