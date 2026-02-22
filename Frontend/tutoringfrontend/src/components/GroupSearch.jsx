@@ -3,7 +3,7 @@ import GroupFilterForm from "../minicomponents/GroupFilterForm.jsx";
 import config from '../config.js';
 import Pagination from "../minicomponents/Pagination.jsx";
 import GroupResults from "../minicomponents/GroupResult.jsx";
-import { Box, Alert, Typography, Paper } from '@mui/material';
+import { Box, Alert, Typography, Paper, CircularProgress } from '@mui/material';
 
 const GroupSearch = () => {
     const [isSearching, setIsSearching] = useState(false);
@@ -27,6 +27,7 @@ const GroupSearch = () => {
     const [size] = useState(3);
     const [totalPages, setTotalPages] = useState(0);
     const [error, setError] = useState("");
+    const [loadingResults, setLoadingResults] = useState(false);
 
     const handleFilterChange = (newFilters) => {
         setFilters(newFilters);
@@ -40,6 +41,7 @@ const GroupSearch = () => {
     };
 
     const getSearchedGroups = async (pageToFetch = page) => {
+        setLoadingResults(true);
         try {
             setError("");
             const queryParams = new URLSearchParams(filters).toString();
@@ -57,8 +59,11 @@ const GroupSearch = () => {
             const data = await response.json();
             setSearchedGroups(data.groups || []);
             setTotalPages(Math.ceil((data.totalCount || 0) / size));
-        } catch (e) {
+        } catch (searchError) {
+            console.error('Search groups failed:', searchError);
             setError("Doslo je do greske pri pretrazi.");
+        } finally {
+            setLoadingResults(false);
         }
     };
 
@@ -75,6 +80,16 @@ const GroupSearch = () => {
             </Paper>
             <Box sx={{ flex: 2, maxHeight: 'calc(100vh - 20px)', overflow: 'auto' }}>
                 {error && <Alert severity="error" sx={{ mb: 1 }}>{error}</Alert>}
+                {loadingResults && (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}>
+                        <CircularProgress size={28} />
+                    </Box>
+                )}
+                {isSearching && !loadingResults && (
+                    <Typography variant="body2" sx={{ mb: 1, color: 'text.secondary' }}>
+                        Ukupno rezultata na stranici: {searchedGroups.length}
+                    </Typography>
+                )}
                 <GroupResults isSearching={isSearching} groups={searchedGroups} />
                 <Pagination currentPage={page} totalPages={totalPages} onPageChange={handlePageChange} />
             </Box>
