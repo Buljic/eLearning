@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 //@RestController
 //@RequestMapping ("/api/videoCall")
@@ -147,10 +148,8 @@ import java.util.concurrent.ConcurrentHashMap;
 @Controller
 public class VideoCallController {
 
-    private Set<String> currentUsers = new HashSet<>();
+    private final ConcurrentMap<String, Set<String>> usersByRoom = new ConcurrentHashMap<>();
     private final SimpMessagingTemplate messagingTemplate;
-
-
 
     public VideoCallController(SimpMessagingTemplate messagingTemplate)
     {
@@ -159,43 +158,75 @@ public class VideoCallController {
 
     @MessageMapping("/videoCall/join")
     public void join(Message message) {
-        currentUsers.add(message.getSender());
-        logCurrentUsers();
+        if (message.getRoomId() == null || message.getSender() == null) {
+            return;
+        }
+
+        Set<String> roomUsers = usersByRoom.computeIfAbsent(
+                message.getRoomId(),
+                room -> ConcurrentHashMap.newKeySet()
+        );
+
+        roomUsers.add(message.getSender());
+        logCurrentUsers(message.getRoomId());
 
         // Notify all existing users about the new user
-        messagingTemplate.convertAndSend("/queue/videoCall", message);
+        messagingTemplate.convertAndSend("/topic/videoCall/" + message.getRoomId(), message);
 
         // Notify the new user about all existing users
         Message existingUsersMessage = new Message();
         existingUsersMessage.setType("existingUsers");
         existingUsersMessage.setSender(message.getSender());
-        existingUsersMessage.setExistingUsers(new HashSet<>(currentUsers));
-        messagingTemplate.convertAndSendToUser(message.getSender(), "/queue/videoCall", existingUsersMessage);
+        existingUsersMessage.setRoomId(message.getRoomId());
+        existingUsersMessage.setTarget(message.getSender());
+        existingUsersMessage.setExistingUsers(new HashSet<>(roomUsers));
+        messagingTemplate.convertAndSend("/topic/videoCall/" + message.getRoomId(), existingUsersMessage);
     }
 
     @MessageMapping("/videoCall/offer")
     public void offer(Message message) {
-        messagingTemplate.convertAndSend("/queue/videoCall", message);
+        if (message.getRoomId() == null) {
+            return;
+        }
+        messagingTemplate.convertAndSend("/topic/videoCall/" + message.getRoomId(), message);
     }
 
     @MessageMapping("/videoCall/answer")
     public void answer(Message message) {
-        messagingTemplate.convertAndSend("/queue/videoCall", message);
+        if (message.getRoomId() == null) {
+            return;
+        }
+        messagingTemplate.convertAndSend("/topic/videoCall/" + message.getRoomId(), message);
     }
 
     @MessageMapping("/videoCall/ice-candidate")
     public void iceCandidate(Message message) {
-        messagingTemplate.convertAndSend("/queue/videoCall", message);
+        if (message.getRoomId() == null) {
+            return;
+        }
+        messagingTemplate.convertAndSend("/topic/videoCall/" + message.getRoomId(), message);
     }
 
     @MessageMapping("/videoCall/leave")
     public void leave(Message message) {
-        currentUsers.remove(message.getSender());
-        logCurrentUsers();
-        messagingTemplate.convertAndSend("/queue/videoCall", message);
+        if (message.getRoomId() == null || message.getSender() == null) {
+            return;
+        }
+
+        Set<String> roomUsers = usersByRoom.get(message.getRoomId());
+        if (roomUsers != null) {
+            roomUsers.remove(message.getSender());
+            if (roomUsers.isEmpty()) {
+                usersByRoom.remove(message.getRoomId());
+            }
+        }
+
+        logCurrentUsers(message.getRoomId());
+        messagingTemplate.convertAndSend("/topic/videoCall/" + message.getRoomId(), message);
     }
 
-    private void logCurrentUsers() {
-        System.out.println("CURRENT USERS IN VIDEO CALL: " + currentUsers);
+    private void logCurrentUsers(String roomId) {
+        Set<String> roomUsers = usersByRoom.getOrDefault(roomId, Collections.emptySet());
+        System.out.println("CURRENT USERS IN VIDEO CALL ROOM " + roomId + ": " + roomUsers);
     }
 }
