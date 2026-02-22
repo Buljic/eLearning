@@ -1,75 +1,64 @@
-// App.jsx
-import React, {useState} from 'react';
-import {BrowserRouter as Router, Routes, Route, Navigate} from 'react-router-dom';
-import LoginForm from './components/LoginForm';
-import WelcomePage from './components/WelcomePage';
-import Homepage from "./components/Homepage.jsx";
+import React, { Suspense, lazy } from 'react';
+import { BrowserRouter as Router, Navigate, Route, Routes } from 'react-router-dom';
 import Header from "./minicomponents/Header.jsx";
-import CreateAccount from "./components/CreateAccount.jsx";
-import Subjects from "./components/Subjects.jsx";
-import tutorsForSubject from "./components/TutorsForSubject.jsx";
-import TutorsForSubject from "./components/TutorsForSubject.jsx";
-import RequestSubjectAsTutor from "./components/RequestSubjectAsTutor.jsx";
-import UserInfo from "./components/UserInfo.jsx";
-import ChatTo from "./components/ChatTo.jsx";
-import "./minicomponents/Context/MyUserContext.js"
-import MyUserContext from "./minicomponents/Context/MyUserContext.js";
-import ChatGroup from "./components/ChatGroup.jsx";
-import AttendedSubjects from "./components/AttendedSubjects.jsx";
-import SearchUsers from "./components/SearchUsers.jsx";
-import CreateGroup from "./components/CreateGroup.jsx";
-import GroupSearch from "./components/GroupSearch.jsx";
-import GroupDetails from "./components/GroupDetails.jsx";
-import GroupRequests from "./components/GroupRequests.jsx";
-import GroupOverview from "./components/GroupOverview.jsx";
-import AssignmentSubmissions from "./minicomponents/AssignmentSubmissions.jsx";
-import SubmissionDetail from "./minicomponents/SubmissionDetail.jsx";
-import AssignmentDetail from "./minicomponents/AssignmentDetail.jsx";
+
+const LoginForm = lazy(() => import('./components/LoginForm'));
+const WelcomePage = lazy(() => import('./components/WelcomePage'));
+const Homepage = lazy(() => import("./components/Homepage.jsx"));
+const CreateAccount = lazy(() => import("./components/CreateAccount.jsx"));
+const Subjects = lazy(() => import("./components/Subjects.jsx"));
+const TutorsForSubject = lazy(() => import("./components/TutorsForSubject.jsx"));
+const RequestSubjectAsTutor = lazy(() => import("./components/RequestSubjectAsTutor.jsx"));
+const UserInfo = lazy(() => import("./components/UserInfo.jsx"));
+const ChatTo = lazy(() => import("./components/ChatTo.jsx"));
+const ChatGroup = lazy(() => import("./components/ChatGroup.jsx"));
+const AttendedSubjects = lazy(() => import("./components/AttendedSubjects.jsx"));
+const SearchUsers = lazy(() => import("./components/SearchUsers.jsx"));
+const CreateGroup = lazy(() => import("./components/CreateGroup.jsx"));
+const GroupSearch = lazy(() => import("./components/GroupSearch.jsx"));
+const GroupDetails = lazy(() => import("./components/GroupDetails.jsx"));
+const GroupRequests = lazy(() => import("./components/GroupRequests.jsx"));
+const GroupOverview = lazy(() => import("./components/GroupOverview.jsx"));
+const AssignmentSubmissions = lazy(() => import("./minicomponents/AssignmentSubmissions.jsx"));
+const SubmissionDetail = lazy(() => import("./minicomponents/SubmissionDetail.jsx"));
+const AssignmentDetail = lazy(() => import("./minicomponents/AssignmentDetail.jsx"));
 
 function App() {
-    // const [myUser,setMyUser]=useState(null);
     return (
         <>
-            {/*react fragment se zove i koristi za grupitanje*/}
             <Header />
-        {/*   sve sto je izvan routes je stalno tu a unutar njega je dinamicko */}
-        {/*<MyUserContext.Provider value={{myUser,setMyUser}}>*/}
 
-        <Router>
+            <Router>
+                <Suspense fallback={<div style={{ padding: '1rem' }}>Loading...</div>}>
+                    <Routes>
+                        <Route path="/login" element={<LoginForm />} />
+                        <Route path="/createAccount" element={<CreateAccount />} />
+                        <Route path="/welcome" element={<WelcomePage />} />
+                        <Route path="/searchSubjects" element={<Subjects />} />
+                        <Route path="/requestSubjectsAsTutor" element={<RequestSubjectAsTutor />} />
+                        <Route path="/userInfoFor/:username" element={<UserInfo />} />
+                        <Route path="/chatTo/:objectUser" element={<ChatTo />} />
+                        <Route path="/userSearch" element={<SearchUsers />} />
+                        <Route path="/tutorsFor/:subject" element={<TutorsForSubject />} />
 
-            <Routes>
-                <Route path="/login" element={<LoginForm />} />
-                <Route path="/createAccount" element={<CreateAccount />}></Route>
-                <Route path="/welcome" element={<WelcomePage />} />
-                <Route path="/searchSubjects" element={<Subjects/>}/>
-                <Route path="/requestSubjectsAsTutor" element={<RequestSubjectAsTutor/>}/>
-                <Route path="/userInfoFor/:username" element={<UserInfo/>}/>
-                <Route path="/chatTo/:objectUser" element={<ChatTo/>}></Route>
-                <Route path="/userSearch" element={<SearchUsers/>}/>
-                <Route path="/tutorsFor/:subject" element={<TutorsForSubject/>}/>
+                        <Route path="/attendedCourses" element={<AttendedSubjects />} />
+                        <Route path="/groupSearch" element={<GroupSearch />} />
 
-                <Route path="/attendedCourses" element={<AttendedSubjects/>}/>
-                <Route path="/groupSearch" element={<GroupSearch/>}/>
+                        <Route path="/createGroup" element={<CreateGroup />} />
+                        <Route path="/groupDetails/:groupId" element={<GroupDetails />} />
+                        <Route path="/groupRequests" element={<GroupRequests />} />
 
-                <Route path="/createGroup" element={<CreateGroup/>}/>
-                <Route path="/groupDetails/:groupId" element={<GroupDetails />} />
-                <Route path="/groupRequests" element={<GroupRequests />} />
+                        <Route path="/chatGroup/:objectGroup" element={<ChatGroup />} />
+                        <Route path="/group/:groupId" element={<GroupOverview />} />
 
-                <Route path="/chatGroup/:objectGroup" element={<ChatGroup/>}/>
-                <Route path="/group/:groupId" element={<GroupOverview />} />
-                {/*<Route path="/assignments/:assignmentId/submissions" element={<AssignmentSubmissions />} />*/}
-
-                <Route path="/assignments/:assignmentId" element={<AssignmentDetail />} />
-                <Route path="/assignments/:assignmentId/submissions" element={<AssignmentSubmissions />} />
-                <Route path="/assignments/:assignmentId/submissions/:submissionId" element={<SubmissionDetail />} />
-                {/*<Route path="/tutorsFor/:subject" element={<tutorsForSubject/>}> </Route>*/}
-                <Route path="/" element={<Homepage />}></Route>
-                <Route path="*" element={<Navigate to="/" replace/>}/>
-            {/*    da navigira bilo koji nedefinirani path na login*/}
-            </Routes>
-        </Router>
-
-        {/*</MyUserContext.Provider>*/}
+                        <Route path="/assignments/:assignmentId" element={<AssignmentDetail />} />
+                        <Route path="/assignments/:assignmentId/submissions" element={<AssignmentSubmissions />} />
+                        <Route path="/assignments/:assignmentId/submissions/:submissionId" element={<SubmissionDetail />} />
+                        <Route path="/" element={<Homepage />} />
+                        <Route path="*" element={<Navigate to="/" replace />} />
+                    </Routes>
+                </Suspense>
+            </Router>
         </>
     );
 }

@@ -4,17 +4,16 @@ import com.example.tutoring.Entities.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
-import java.util.Optional;
 
 //Znaci fakticki ova klasa tj bean se koristi za najbitniju logiku tj kreiranje
 //i verifikaciju samog jwta a ona sama po sebi nikako ne djeluje vec koristimo ovu klasu
@@ -22,23 +21,31 @@ import java.util.Optional;
 @Component
 public class JwtUtil
 {
-    @Autowired
-    EncriptionUtility encriptionUtility;
+    @Value("${security.jwt.secret}")
+    private String jwtSecret;
 
-    private SecretKey secretKey= Keys.secretKeyFor(SignatureAlgorithm.HS512);//generira secret key
+    @Value("${security.jwt.expiration-ms:7200000}")
+    private long jwtExpirationMs;
+
+    private SecretKey secretKey;
+
+    @PostConstruct
+    public void initSecretKey() {
+        this.secretKey = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
+    }
 
 
-    public String generateToken(Optional<User> user)
+    public String generateToken(User user)
     {
         long nowMillis=System.currentTimeMillis();
         Date now=new Date(nowMillis);
-        long expMillis=nowMillis+7200000;//da token istekne za 2 sata
+        long expMillis=nowMillis+jwtExpirationMs;//da token istekne za 2 sata
         Date exp=new Date(expMillis);
 
         return Jwts.builder()//jwts je klasa a builder staticka metoda koja vraca JwtsBuilder objekat
-                .setSubject(user.get().getUsername())
-                .claim("username",user.get().getUsername())
-                .claim("role",user.get().getAccountType().toString())
+                .setSubject(user.getUsername())
+                .claim("username",user.getUsername())
+                .claim("role",user.getAccountType().toString())
                 .setIssuedAt(now)
                 .setExpiration(exp)
                 .signWith(secretKey)
@@ -62,7 +69,6 @@ public class JwtUtil
 
         }
         catch (Exception e){
-            System.out.println("Greska u"+ e);
             return false;
         }
     }
@@ -70,13 +76,11 @@ public class JwtUtil
     public String extractJwtFromCookie(HttpServletRequest request) {
         if (request.getCookies() != null) {
             for (Cookie cookie : request.getCookies()) {
-                if ((cookie.getName()).contains("JWT") ) {
-                    System.out.println("Naslo ga je  TJ COOKIEA");
+                if ("JWT".equals(cookie.getName())) {
                     return cookie.getValue();
                 }
             }
         }
-        System.out.println("NIJE GA NASLO");
         return null;
     }
 

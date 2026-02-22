@@ -2,6 +2,7 @@ package com.example.tutoring.AutomaticUpdateOperations;
 
 import com.example.tutoring.Entities.GroupRequest;
 import jakarta.annotation.PostConstruct;
+import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -10,6 +11,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 @Component
+@Profile("!test")
 public class StartupApplicationListener {
 
     private final GroupRequestService groupRequestService;
@@ -28,7 +30,6 @@ public class StartupApplicationListener {
 
     @Scheduled (cron = "0 0 1 * * ?")
     public void addUsersToGroups() {
-        System.out.println("Adding users to groups functionality");
         List<GroupRequest> acceptedRequests = groupRequestService.getAcceptedGroupRequests();
         for (GroupRequest request : acceptedRequests) {
             Long userId = request.getId().getUserId();

@@ -2,20 +2,34 @@ package com.example.tutoring.Security;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.ServletRequest;
-import jakarta.servlet.ServletResponse;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
-import org.springframework.web.filter.GenericFilterBean;
+import org.springframework.util.AntPathMatcher;
+import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
 
 @Component
-public class JwtFilter extends GenericFilterBean
-{
+public class JwtFilter extends OncePerRequestFilter {
+    private static final AntPathMatcher PATH_MATCHER = new AntPathMatcher();
+
+    private static final List<String> PUBLIC_PATHS = List.of(
+            "/",
+            "/error",
+            "/api/login",
+            "/api/createAccount",
+            "/api/welcomePage",
+            "/uploads/**"
+    );
+
     private final JwtUtil jwtUtil;
 
     public JwtFilter(JwtUtil jwtUtil) {
@@ -23,59 +37,38 @@ public class JwtFilter extends GenericFilterBean
     }
 
     @Override
-    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
-            throws IOException, ServletException
-    {
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        if (HttpMethod.OPTIONS.matches(request.getMethod())) {
+            return true;
+        }
 
-        HttpServletRequest httpRequest = (HttpServletRequest)request;
-        String requestURI = httpRequest.getRequestURI();
-        System.out.println("Processing request for: " + requestURI); // Samo za provjeru koji zahtjevi dolaze TODO obrisi
+        String path = request.getRequestURI();
+        return PUBLIC_PATHS.stream().anyMatch(pattern -> PATH_MATCHER.match(pattern, path));
+    }
 
-        //Ovdje navodis sve endpointe koje ce jwt filter ignorirati tj sve one za koje frontend moze slati zahtjev a nije potrebna
-        //registracija
-        List<String> ignoredEndpointsBy = Arrays.asList("/api/login", "/api/createAccount", "/", "chatTo","/uploads","Screenshot","png","/socket.io");
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+            throws ServletException, IOException {
 
-        // Preskacete provjeru JWT-a za login endpoint
-        if (requestURI.toLowerCase().contains("/uploads") || ignoredEndpointsBy.contains(requestURI) || requestURI.contains("Screen"))
-        {  //TODO IGNORE NAPRAVI
-            chain.doFilter(request, response);
+        String token = jwtUtil.extractJwtFromCookie(request);
+        if (token == null || !jwtUtil.validateToken(token)) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+            response.getWriter().write("{\"message\":\"Missing or invalid JWT\"}");
             return;
         }
-        else
-        {
-            String token= jwtUtil.extractJwtFromCookie(httpRequest);
 
-            if(token!=null && jwtUtil.validateToken(token))
-            {
-                //ako je ispravan onda nastavi s lancem filtera
-                chain.doFilter(request,response);
-            }else{
-                throw new ServletException("Neispravan ili nedostajuci JWT");
-            }
-//            String token = httpRequest.getHeader("Authorization"); //da skine header s api calla
-//
-//            if (token != null && jwtUtil.validateToken(token))
-//            {
-//                // Ako je JWT valjan, nastavite s lancem filtera
-//                chain.doFilter(request, response);
-//            }
-//            else
-//            {
-//                throw new ServletException("Neispravan ili nedostajuci JWT");
-//            }
-        }
+        String username = jwtUtil.getUsernameFromToken(token);
+        String role = jwtUtil.getRoleFromToken(token);
+
+        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                username,
+                null,
+                List.of(new SimpleGrantedAuthority("ROLE_" + role))
+        );
+        authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        filterChain.doFilter(request, response);
     }
-//    private String extractJwtFromCookie(HttpServletRequest request) {
-//        if (request.getCookies() != null) {
-//            for (Cookie cookie : request.getCookies()) {
-//                if ("JWT".equals(cookie.getName())) {
-//                    System.out.println("Naslo ga je ");
-//                    return cookie.getValue();
-//                }
-//            }
-//        }
-//        System.out.println("NIJE GA NASLO");
-//        return null;
-//    }
 }
-

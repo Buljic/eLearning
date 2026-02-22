@@ -2,6 +2,7 @@ package com.example.tutoring.Security;
 
 import com.example.tutoring.Entities.User;
 import com.example.tutoring.Repositories.UserRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
@@ -18,6 +19,12 @@ import java.util.Optional;
 @RequestMapping("/api")
 public class AuthController
 {
+    @Value("${security.jwt.cookie-secure:false}")
+    private boolean cookieSecure;
+
+    @Value("${security.jwt.cookie-same-site:Lax}")
+    private String cookieSameSite;
+
     private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
@@ -34,24 +41,22 @@ public class AuthController
             Optional<User> user=userRepository.findByUsername(loginRequest.getUsername());
             if(bCryptPasswordEncoder.matches(loginRequest.getPassword(),user.get().getPassword()))//loginRequest.getPassword().equals(user.get().getPassword()))//mozda da se provjeri ispresent ali i ne mora
             {
-                String token=jwtUtil.generateToken(user);
-
+                String token=jwtUtil.generateToken(user.get());
                 //Kreiranje Http Cookie sa JWT tokenom
                 ResponseCookie jwtCookie=ResponseCookie.from("JWT",token)
                         .httpOnly(true)//da se ne dozvoli pristup klijentskom javascriptu radi xss i slicno
-                       // .secure(true)//samo za https stranice TODO podesi https stranicu
+                        .secure(cookieSecure)
                         .path("/")//da je dostupan unutar cijele aplikacije
+                        .sameSite(cookieSameSite)
                         .build();
-                System.out.println("Poslano");
                 return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, jwtCookie.toString())
                         .body("Autentifikacija  uspjesna");
 
             }else
-            {   System.out.println("Neispravni kredencijali");
+            {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Neispravni kredencijali");
             }
         }else {
-            System.out.println("Nepostojuci user");
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Nepostojuci user");
         }
 
