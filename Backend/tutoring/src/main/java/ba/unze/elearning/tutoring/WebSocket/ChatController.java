@@ -217,7 +217,7 @@ public void processMessageFromGroup(@DestinationVariable Long groupId, @Payload 
     System.out.println("Processing group message from groupId: " + groupId);
     System.out.println("ChatMessage: " + groupMessage);
 
-    // Proveri da li su svi podaci prisutni pre nego što pokušaš da sačuvaš poruku
+
     if (groupMessage.getSenderId() == null || groupMessage.getMessage_text() == null) {
         System.out.println("Missing senderId or messageText in the message");
         return;

@@ -58,7 +58,9 @@
 // export default AttendedSubjects;
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { Container, Box, Typography, CircularProgress, List, ListItem, Button } from '@mui/material';
 import config from '../config.js';
+
 const AttendedSubjects = () => {
     const storedUser = sessionStorage.getItem("myUser");
     const myUser = JSON.parse(storedUser);
@@ -85,24 +87,36 @@ const AttendedSubjects = () => {
     }, []);
 
     if (!attendedGroups.length) {
-        return <h1>Učitavanje...</h1>;
+        return <CircularProgress />;
     }
 
     return (
-        <div>
-            <h1>Vasi kursevi</h1>
-            <br />
-            {attendedGroups.length > 0 && (
-                <ul id="attendedGroups">
+        <Container>
+            <Box sx={{ my: 4, textAlign: 'center' }}>
+                <Typography variant="h4" gutterBottom>Vaši kursevi</Typography>
+                <List sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                     {attendedGroups.map((group, index) => (
-                        <li key={index} id={group.group_id}>
-                            <Link to={`/group/${group.group_id}`}>{group.group_name}</Link>
-                        </li>
+                        <ListItem key={index} sx={{ width: '100%', maxWidth: 600 }}>
+                            <Button
+                                variant="contained"
+                                color="primary"
+                                component={Link}
+                                to={`/group/${group.group_id}`}
+                                fullWidth
+                                sx={{ mb: 2, textTransform: 'none' }}
+                            >
+                                <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'white' }}>
+                                    {group.group_name}
+                                </Typography>
+                            </Button>
+                        </ListItem>
                     ))}
-                </ul>
-            )}
-        </div>
+                </List>
+            </Box>
+        </Container>
     );
 }
 
 export default AttendedSubjects;
+
+

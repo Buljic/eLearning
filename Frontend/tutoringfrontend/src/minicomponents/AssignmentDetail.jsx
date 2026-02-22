@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import config from '../config.js';
-import { Container, Box, Typography, Button, CircularProgress, Alert, Card, CardContent, List, ListItem } from '@mui/material';
+import { Container, Box, Typography, Button, CircularProgress, Alert, TextField, List, ListItem, Card, CardContent, Paper } from '@mui/material';
 
 const AssignmentDetail = () => {
     const { assignmentId } = useParams();
@@ -58,6 +58,7 @@ const AssignmentDetail = () => {
 
         const formData = new FormData();
         formData.append("file", selectedFile);
+        formData.append("userId", myUser.id);  // Add user ID to the form data
 
         try {
             const response = await fetch(`${config.BASE_URL}/api/assignments/${assignmentId}/submit`, {
@@ -85,46 +86,54 @@ const AssignmentDetail = () => {
 
     return (
         <Container>
-            <Box sx={{ my: 4 }}>
-                <Typography variant="h4">{assignment.name}</Typography>
-                <Typography variant="body1">{assignment.description}</Typography>
-                <Typography variant="body1">Due: {new Date(assignment.dueDateTime).toLocaleString()}</Typography>
-                {assignment.imageUrl && <img src={`${config.BASE_URL}${assignment.imageUrl}`} alt={assignment.name} style={{ maxWidth: '200px', maxHeight: '200px' }} />}
-                <Typography variant="body1">Status: <span style={{ color: getStatusColor(status) }}>{status}</span></Typography>
-                {status === "Missing" && (
-                    <Box>
-                        <input type="file" onChange={handleFileChange} />
-                        <Button variant="contained" color="primary" onClick={handleSubmit}>Submit Assignment</Button>
-                    </Box>
-                )}
-                {status !== "Missing" && (
-                    <Box>
-                        <Typography variant="h6">Feedback</Typography>
-                        <Typography variant="body1">{feedback}</Typography>
-                        <Typography variant="body1">Grade: {grade}</Typography>
-                    </Box>
-                )}
-                {myUser.accountType !== "STUDENT" && assignment.submissions && assignment.submissions.length > 0 && (
-                    <Box>
-                        <Typography variant="h6">Submissions</Typography>
-                        <List>
-                            {assignment.submissions.map((submission) => (
-                                <ListItem key={submission.id}>
-                                    <Card>
-                                        <CardContent>
-                                            <Typography variant="body2">{submission.student.username}</Typography>
-                                            <Typography variant="body2">{new Date(submission.submissionTime).toLocaleString()}</Typography>
-                                            <Typography variant="body2">Status: {submission.status}</Typography>
-                                            {submission.fileUrl && <Button href={`${config.BASE_URL}${submission.fileUrl}`} target="_blank" rel="noopener noreferrer">View Submission</Button>}
-                                            {submission.feedback && <Typography variant="body2">Feedback: {submission.feedback}</Typography>}
-                                            {submission.grade && <Typography variant="body2">Grade: {submission.grade}</Typography>}
-                                        </CardContent>
-                                    </Card>
-                                </ListItem>
-                            ))}
-                        </List>
-                    </Box>
-                )}
+            <Box sx={{ my: 4, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <Paper elevation={3} sx={{ p: 3, maxWidth: '800px', width: '100%' }}>
+                    <Typography variant="h4" align="center" gutterBottom>{assignment.name}</Typography>
+                    <Typography variant="body1" align="center" gutterBottom>{assignment.description}</Typography>
+                    <Typography variant="body1" align="center" gutterBottom>Due: {new Date(assignment.dueDateTime).toLocaleString()}</Typography>
+                    {assignment.imageUrl && (
+                        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+                            <img src={`${config.BASE_URL}${assignment.imageUrl}`} alt={assignment.name} style={{ maxWidth: '200px', maxHeight: '200px' }} />
+                        </Box>
+                    )}
+                    <Typography variant="body1" align="center" color={getStatusColor(status)}>Status: {status}</Typography>
+                    {status === "Missing" && (
+                        <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
+                            <input type="file" onChange={handleFileChange} />
+                            <Button variant="contained" color="primary" onClick={handleSubmit} sx={{ ml: 2 }}>Submit Assignment</Button>
+                        </Box>
+                    )}
+                    {status !== "Missing" && (
+                        <Box sx={{ mt: 2 }}>
+                            <Typography variant="h6" align="center">Feedback</Typography>
+                            <Typography variant="body1" align="center">{feedback}</Typography>
+                            <Typography variant="body1" align="center">Grade: {grade}</Typography>
+                        </Box>
+                    )}
+                    {myUser.accountType !== "STUDENT" && assignment.submissions && assignment.submissions.length > 0 && (
+                        <Box sx={{ mt: 4 }}>
+                            <Typography variant="h6" align="center">Submissions</Typography>
+                            <List>
+                                {assignment.submissions.map((submission) => (
+                                    <ListItem key={submission.id}>
+                                        <Card sx={{ width: '100%' }}>
+                                            <CardContent>
+                                                <Typography variant="h6" align="center">{submission.student.username}</Typography>
+                                                <Typography variant="body2" align="center">{new Date(submission.submissionTime).toLocaleString()}</Typography>
+                                                <Typography variant="body2" align="center">Status: {submission.status}</Typography>
+                                                {submission.fileUrl && (
+                                                    <Button href={`${config.BASE_URL}${submission.fileUrl}`} target="_blank" rel="noopener noreferrer" sx={{ display: 'block', mx: 'auto', mt: 2 }}>View Submission</Button>
+                                                )}
+                                                {submission.feedback && <Typography variant="body2" align="center">Feedback: {submission.feedback}</Typography>}
+                                                {submission.grade && <Typography variant="body2" align="center">Grade: {submission.grade}</Typography>}
+                                            </CardContent>
+                                        </Card>
+                                    </ListItem>
+                                ))}
+                            </List>
+                        </Box>
+                    )}
+                </Paper>
             </Box>
         </Container>
     );

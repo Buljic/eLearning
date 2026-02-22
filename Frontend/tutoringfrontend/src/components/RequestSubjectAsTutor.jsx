@@ -1,29 +1,32 @@
-import React from "react";
-import {useState,useEffect} from "react";
+import React, { useState, useEffect } from "react";
 import useFetchUser from "../customHooks/useFetchUser.js";
 import useFetchSubjects from "../customHooks/useFetchSubjects.js";
+import { Container, Box, Typography, TextField, Button, CircularProgress, Alert, List, ListItem } from '@mui/material';
 import config from '../config.js';
-//TODO kasnije postavi admin-only stranicu za obradu ovih requestova i dodaj image based obradjivanje
-const RequestSubjectAsTutor=()=>{
-    const {user,error,loading}=useFetchUser();
-    const [inputSubject,setInputSubject]=useState('');
-    const [comment,setComment]=useState('');
-    const[writtenQualifications,setWrittenQualifications]=useState('');
-    const [isSearching,setIsSearching]=useState(false);
 
-    const {subjects,error2,loading2}=useFetchSubjects();
+const RequestSubjectAsTutor = () => {
+    const { user, error, loading } = useFetchUser();
+    const [inputSubject, setInputSubject] = useState('');
+    const [comment, setComment] = useState('');
+    const [writtenQualifications, setWrittenQualifications] = useState('');
+    const [isSearching, setIsSearching] = useState(false);
 
-    if(!user)
-    {
-        return <h1>loading</h1>
+    const { subjects, error2, loading2 } = useFetchSubjects();
+
+    if (loading || loading2) {
+        return <CircularProgress />;
     }
-    const handleFormInput=async(event)=>{
+
+    if (error || error2) {
+        return <Alert severity="error">Došlo je do greške: {error?.message || error2?.message}</Alert>;
+    }
+
+    const handleFormInput = async (event) => {
         event.preventDefault();
 
-        try
-        {
-            console.log({inputSubject,writtenQualifications,comment});
-            const requestBody = JSON.stringify({inputSubject, writtenQualifications, comment});
+        try {
+            console.log({ inputSubject, writtenQualifications, comment });
+            const requestBody = JSON.stringify({ inputSubject, writtenQualifications, comment });
             console.log(requestBody);
             const response = await fetch(`${config.BASE_URL}/api/registerForSubjectAsTutor`, {
                 method: 'POST',
@@ -31,89 +34,87 @@ const RequestSubjectAsTutor=()=>{
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({inputSubject,writtenQualifications,comment}),
+                body: requestBody,
             });
-            if (!response.ok)
-            {
-                console.log("Neka greska u slanju ZAHTJEVA ZA SUBJECTOM");
+            if (!response.ok) {
+                console.log("Neka greška u slanju ZAHTJEVA ZA SUBJECTOM");
                 throw new Error("REGISTER FOR SUBJECT ERROR");
+            } else {
+                alert("Uspješno postavljeno");
             }
-            else
-            {
-                alert("Uspjesno postavljeno");
-            }
+        } catch (error) {
+            console.log("Greška sa" + error);
         }
-            catch(error)
-            {
-                console.log("greska sa"+ error);
-            }
-
     };
 
-    const filteredSubjects=inputSubject && typeof inputSubject ==='string'
-    ?
-        subjects.filter(tempSubject=>tempSubject.toLowerCase().includes(inputSubject.toLowerCase()))
-        :
-        [];
+    const filteredSubjects = inputSubject && typeof inputSubject === 'string'
+        ? subjects.filter(tempSubject => tempSubject.toLowerCase().includes(inputSubject.toLowerCase()))
+        : [];
 
-    const handleSuggestionClick=(clickedSubject)=>{
+    const handleSuggestionClick = (clickedSubject) => {
         console.log("Pritisnuo si" + clickedSubject);
         setInputSubject(clickedSubject);
         setIsSearching(false);
     }
-    const handleSearchChange=(event)=>{
+
+    const handleSearchChange = (event) => {
         setInputSubject(event.target.value || '');
         setIsSearching(true);
     }
 
     return (
-        <div>
-            <h1>REGISTRACIJA ZA PREDMETE</h1>
-            <p>Zatrazi predmete za kvalifikaciju</p>
-
-            <div id="subjectRegistrationForm">
-            <form onSubmit={handleFormInput}>
-
-                <div id="subjectSearch">
-            <input
-                id="subjectInputField"
-                type="text"
-                value={inputSubject}
-                onChange={handleSearchChange}
-                placeholder="Subject"
-                onFocus={()=>inputSubject && setIsSearching(true)} />
+        <Container>
+            <Box sx={{ textAlign: 'center', my: 4 }}>
+                <Typography variant="h4" gutterBottom>
+                    REGISTRACIJA ZA PREDMETE
+                </Typography>
+                <Typography variant="body1" gutterBottom>
+                    Zatraži predmete za kvalifikaciju
+                </Typography>
+                <Box component="form" onSubmit={handleFormInput} sx={{ mt: 3 }}>
+                    <TextField
+                        id="subjectInputField"
+                        label="Subject"
+                        fullWidth
+                        value={inputSubject}
+                        onChange={handleSearchChange}
+                        onFocus={() => inputSubject && setIsSearching(true)}
+                        margin="normal"
+                    />
                     {isSearching && inputSubject && (
-                        <ul id="suggestion">
-                            {filteredSubjects.map((tSubject,index)=>(
-                                <li key={index} id={tSubject}>
-                                    <button onClick={()=>handleSuggestionClick(tSubject)}>{tSubject}</button>
-                                </li>
-                            //     TODO Kreiraj button i handle click funkcionalnost
+                        <List id="suggestion">
+                            {filteredSubjects.map((tSubject, index) => (
+                                <ListItem key={index}>
+                                    <Button onClick={() => handleSuggestionClick(tSubject)}>
+                                        {tSubject}
+                                    </Button>
+                                </ListItem>
                             ))}
-
-                        </ul>
+                        </List>
                     )}
-                </div>
-                <input id="textQualificationField"
-                    type="text"
-                       value={writtenQualifications}
-                       onChange={(e)=>setWrittenQualifications(e.target.value)}
-                       placeholder="Unesi svoje kvalifikacije"/><br/>
-                <input id="extraInformationField"
-                    type="text"
-                       value={comment}
-                       onChange={(e)=>setComment(e.target.value)}
-                       placeholder="Unesi dodatne informacije"/>
-
-
-                <br/>
-                <button id="subjectRequestSubmit" type="submit">Submit</button>
-            </form>
-            </div>
-        </div>
+                    <TextField
+                        id="textQualificationField"
+                        label="Unesi svoje kvalifikacije"
+                        fullWidth
+                        value={writtenQualifications}
+                        onChange={(e) => setWrittenQualifications(e.target.value)}
+                        margin="normal"
+                    />
+                    <TextField
+                        id="extraInformationField"
+                        label="Unesi dodatne informacije"
+                        fullWidth
+                        value={comment}
+                        onChange={(e) => setComment(e.target.value)}
+                        margin="normal"
+                    />
+                    <Button id="subjectRequestSubmit" type="submit" variant="contained" color="primary" sx={{ mt: 2 }}>
+                        Submit
+                    </Button>
+                </Box>
+            </Box>
+        </Container>
     );
-
-
-
 }
+
 export default RequestSubjectAsTutor;

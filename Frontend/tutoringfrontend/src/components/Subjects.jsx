@@ -136,56 +136,53 @@ const Subjects = () => {
         getSearchedSubjectInfo();
     }
 
-    return(
-        <div>
-            <p>Profesori s specijalizacijom za predmete</p>
-            {/*forma je zapravo wrapper za ovo i u njoj stavljamo input field i button i sl*/}
-            <form id="searchForm" onSubmit={handleSubmit}>
-            <input id="inputField"
-                type="text"
-                value={searchTerm}
-                onChange={handleSearchChange}
-                //onBlur={()=>setShowSuggestions(false)}
-                onFocus={()=>searchTerm && setShowSuggestions(true)} //na fazon ako smo fokusirani i ako ima nesto da se stavi da je showsuggestion true
-                placeholder="Pretrazi predmete"
-            />
-                <button type="submit" id="subjectsSearch">Pretrazi</button>
-
-        </form>
-            {/*TODO POPRAVI onClick funkciju sa handleSuggestionClick*/}
+    return (
+        <div style={{ textAlign: 'center' }}>
+            <p style={{ marginBottom: '1rem', fontSize: '1.2rem' }}>Profesori s specijalizacijom za predmete</p>
+            <form id="searchForm" onSubmit={handleSubmit} style={{ marginBottom: '1rem' }}>
+                <input
+                    id="inputField"
+                    type="text"
+                    value={searchTerm}
+                    onChange={handleSearchChange}
+                    onFocus={() => searchTerm && setShowSuggestions(true)}
+                    placeholder="Pretrazi predmete"
+                    style={{ padding: '0.5rem', marginRight: '0.5rem', borderRadius: '5px', border: '1px solid #ccc' }}
+                />
+                <button type="submit" id="subjectsSearch" style={{ padding: '0.5rem 1rem', borderRadius: '5px', backgroundColor: '#007bff', color: '#fff', border: 'none' }}>Pretrazi</button>
+            </form>
             {showSuggestions && searchTerm && (
-                <ul id="suggestions">
+                <ul id="suggestions" style={{ listStyleType: 'none', padding: 0 }}>
                     {filteredSubjects.map((subject, index) => (
-                        <li key={index} id={subject}>
-                            <button id={subject} onClick={() => handleSuggestionClick(subject) }>
+                        <li key={index} id={subject} style={{ marginBottom: '0.5rem' }}>
+                            <button id={subject} onClick={() => handleSuggestionClick(subject)} style={{ padding: '0.3rem 0.5rem', borderRadius: '5px', backgroundColor: '#f0f0f0', border: '1px solid #ccc' }}>
                                 {subject}
                             </button>
-
                         </li>
                     ))}
                 </ul>
             )}
-            {/*TODO Implmentovati kartice umjesto listi dole , optimizacija , debouncing*/}
-            {!isSearching ?(
-                <ul>
-
-                    {popularSubjects.map(subject=>(
-                        <div id="popularSubjectsResult">
-                       <Link to={`/tutorsFor/${subject.name}`} key={subject.name}> <li>Ime je "{subject.name}"  Broj tutora {subject.number}</li></Link>
-                        </div>
-                    ) )}
-
+            {!isSearching ? (
+                <ul style={{ listStyleType: 'none', padding: 0 }}>
+                    {popularSubjects.map(subject => (
+                        <li key={subject.name} id="popularSubjectsResult" style={{ marginBottom: '0.5rem' }}>
+                            <Link to={`/tutorsFor/${subject.name}`} key={subject.name} style={{ textDecoration: 'none', color: '#000' }}>
+                                <div style={{ padding: '0.5rem', borderRadius: '5px', border: '1px solid #ccc', backgroundColor: '#f0f0f0', maxWidth: '300px', margin: 'auto' }}>Ime je "{subject.name}"  Broj tutora {subject.number}</div>
+                            </Link>
+                        </li>
+                    ))}
                 </ul>
-            ) :( <ul>
-                    {searchResults.map(subject=>(
-                        <div id="searchSubjectsResult">
-                      <Link to={`/tutorsFor/${subject.name}`} key={subject.name}>  <li >Ime je- "{subject.name}"  Broj tutora {subject.number}</li></Link>
-                        </div>
-                        ) )}
-            </ul>
-
-                        ) }
-
+            ) : (
+                <ul style={{ listStyleType: 'none', padding: 0 }}>
+                    {searchResults.map(subject => (
+                        <li key={subject.name} id="searchSubjectsResult" style={{ marginBottom: '0.5rem' }}>
+                            <Link to={`/tutorsFor/${subject.name}`} key={subject.name} style={{ textDecoration: 'none', color: '#000' }}>
+                                <div style={{ padding: '0.5rem', borderRadius: '5px', border: '1px solid #ccc', backgroundColor: '#f0f0f0', maxWidth: '300px', margin: 'auto' }}>Ime je- "{subject.name}"  Broj tutora {subject.number}</div>
+                            </Link>
+                        </li>
+                    ))}
+                </ul>
+            )}
         </div>
     );
 };

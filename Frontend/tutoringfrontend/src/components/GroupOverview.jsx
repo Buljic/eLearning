@@ -6,7 +6,11 @@ import AssignmentList from "../minicomponents/AssignmentList.jsx";
 import VideoCall from "../minicomponents/VideoCall.jsx";
 import ChatForGroup from "../minicomponents/ChatForGroup.jsx";
 import LessonList from "../minicomponents/LessonList.jsx";
-import { Container, Box, Typography, Button, Tabs, Tab } from '@mui/material';
+import { Container, Box, Typography, Tabs, Tab } from '@mui/material';
+import ChatIcon from '@mui/icons-material/Chat';
+import BookIcon from '@mui/icons-material/Book';
+import AssignmentIcon from '@mui/icons-material/Assignment';
+import VideoCallIcon from '@mui/icons-material/VideoCall';
 import config from '../config.js';
 
 const GroupOverview = () => {
@@ -38,13 +42,25 @@ const GroupOverview = () => {
 
     return (
         <Container>
-            <Box sx={{ my: 4 }}>
-                <Typography variant="h4">Pregled Grupe</Typography>
-                <Tabs value={activeTab} onChange={handleTabChange}>
-                    <Tab label="Chat" value="chat" />
-                    <Tab label="Lekcije" value="lessons" />
-                    <Tab label="Zadaci" value="assignments" />
-                    <Tab label="Video poziv" value="videoCall" />
+            <Box sx={{ my: 4, textAlign: 'center' }}>
+                <Typography variant="h4" gutterBottom>Pregled Grupe</Typography>
+                <Tabs
+                    value={activeTab}
+                    onChange={handleTabChange}
+                    centered
+                    textColor="primary"
+                    indicatorColor="primary"
+                    sx={{
+                        '& .MuiTab-root': {
+                            minWidth: 120,
+                            flexGrow: 1,
+                        },
+                    }}
+                >
+                    <Tab icon={<ChatIcon />} label="Chat" value="chat" />
+                    <Tab icon={<BookIcon />} label="Lekcije" value="lessons" />
+                    <Tab icon={<AssignmentIcon />} label="Zadaci" value="assignments" />
+                    <Tab icon={<VideoCallIcon />} label="Video poziv" value="videoCall" />
                 </Tabs>
                 <Box sx={{ mt: 2 }}>
                     {renderTabContent()}
