@@ -1,6 +1,5 @@
 import React from "react";
 import '../minicomponents/cssfiles/header.css';
-import config from '../config.js';
 const Header = () => {
     return (
         <div className="header-div">

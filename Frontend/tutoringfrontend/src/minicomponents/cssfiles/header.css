@@ -1,15 +1,21 @@
-.header-div{
-    background-color: #183bd6;
-    text-align:center;
-    padding: 10px 0;/*top right bottom left odmicaj od vanjskih granica*/
-    box-shadow: 0px 4px 6px rgba(0,0,0,0.1);
-
-    /*Sticky header*/
-    position: fixed;
-    top: 0;
-    left:0;
-    width: 100%;
-    z-index: 1000; /*Osigurava da header ostane iznad ostalih elemenata*/
-
+.header-div {
+  background: linear-gradient(100deg, #0f3d9a 0%, #0d5bcb 44%, #17a0b5 100%);
+  color: #f5fbff;
+  text-align: center;
+  padding: 16px 12px;
+  box-shadow: 0 8px 24px rgba(10, 40, 95, 0.22);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1000;
 }
-/*format je ".imeklase"*/
+
+.header-div h1 {
+  margin: 0;
+  font-family: "Space Grotesk", "Segoe UI", sans-serif;
+  letter-spacing: 0.06em;
+  font-size: clamp(1rem, 2.2vw, 1.42rem);
+  font-weight: 700;
+}
