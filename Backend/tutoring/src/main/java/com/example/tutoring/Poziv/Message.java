@@ -5,6 +5,7 @@ import java.util.Set;
 public class Message {
     private String type;
     private String sender;
+    private String roomId;
     private String sdp;
     private String candidate;
     private String target;
@@ -35,6 +36,14 @@ public class Message {
 
     public void setSender(String sender) {
         this.sender = sender;
+    }
+
+    public String getRoomId() {
+        return roomId;
+    }
+
+    public void setRoomId(String roomId) {
+        this.roomId = roomId;
     }
 
     public String getSdp() {

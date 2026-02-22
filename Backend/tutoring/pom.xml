@@ -14,7 +14,7 @@
     <name>tutoring</name>
     <description>tutoring</description>
     <properties>
-        <java.version>17</java.version>
+        <java.version>25</java.version>
     </properties>
     <dependencies>
         <dependency>
@@ -40,10 +40,6 @@
                     <artifactId>spring-boot-starter-data-jpa</artifactId>
                 </dependency>
 
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-security</artifactId>
-        </dependency>
 
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -102,15 +98,6 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-websocket</artifactId>
         </dependency>
-
-<!--        za VIDEO CALL-->
-        <dependency>
-            <groupId>io.socket</groupId>
-            <artifactId>socket.io-client</artifactId>
-            <version>2.0.1</version>
-        </dependency>
-
-
 
         <!--        <dependency>-->
 <!--            <groupId>org.springframework.boot</groupId>-->
