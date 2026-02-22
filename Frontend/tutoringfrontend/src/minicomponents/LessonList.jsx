@@ -25,7 +25,6 @@ const LessonList = () => {
         });
         if (response.ok) {
             const data = await response.json();
-            console.log("Fetched lessons: ", data);
             setLessons(data || []);
         } else {
             console.error("Failed to fetch lessons");

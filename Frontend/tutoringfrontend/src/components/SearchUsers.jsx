@@ -28,7 +28,8 @@ const SearchUsers = () => {
             }
         });
         if (!response.ok) {
-            console.log("Problem s fetchanjem usera");
+            setSearchedUsers([]);
+            setIsSearching(false);
             return;
         }
         const data = await response.json();

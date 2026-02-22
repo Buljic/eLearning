@@ -1,8 +1,9 @@
-import { useState, useEffect, useMemo } from 'react';
-import useFetchSubjects from "../customHooks/useFetchSubjects.js";
+import { useEffect, useMemo, useState } from 'react';
+import { Navigate } from 'react-router-dom';
+import { Alert, Box, Button, Container, FormControl, InputLabel, MenuItem, Select, TextField, Typography } from '@mui/material';
+import useFetchSubjects from '../customHooks/useFetchSubjects.js';
 import config from '../config.js';
-import { TextField, Button, Select, MenuItem, FormControl, InputLabel, Typography, Container, Box, Alert } from '@mui/material';
-import { Navigate } from "react-router-dom";
+import { notify } from '../utils/notifications.js';
 
 const CreateGroup = () => {
     const [groupName, setGroupName] = useState('');
@@ -13,9 +14,10 @@ const CreateGroup = () => {
     const [endDate, setEndDate] = useState('');
     const [hoursPerWeek, setHoursPerWeek] = useState(0);
     const [price, setPrice] = useState(0);
-    const { subjects } = useFetchSubjects();
     const [maxStudents, setMaxStudents] = useState(0);
     const [formError, setFormError] = useState('');
+    const { subjects } = useFetchSubjects();
+
     const myUser = useMemo(() => JSON.parse(sessionStorage.getItem('myUser')), []);
     const tutorId = myUser?.id;
 
@@ -37,76 +39,51 @@ const CreateGroup = () => {
 
     const handleAddSubject = () => {
         if (chosenSubjects.length < 5) {
-            setChosenSubjects([...chosenSubjects, '']);
+            setChosenSubjects((prev) => [...prev, '']);
         }
     };
 
     const handleRemoveSubject = (index) => {
-        const newChosenSubjects = chosenSubjects.filter((_, i) => i !== index);
-        setChosenSubjects(newChosenSubjects);
+        const next = chosenSubjects.filter((_, i) => i !== index);
+        setChosenSubjects(next.length ? next : ['']);
     };
 
     const handleSubjectChange = (index, value) => {
-        const newChosenSubjects = [...chosenSubjects];
-        if (newChosenSubjects.includes(value)) {
-            alert('Ne možete dodati isti predmet više puta.');
+        const next = [...chosenSubjects];
+        if (next.includes(value)) {
+            notify('Ne mozete dodati isti predmet vise puta.', 'warning');
             return;
         }
-        newChosenSubjects[index] = value;
-        setChosenSubjects(newChosenSubjects);
+        next[index] = value;
+        setChosenSubjects(next);
     };
 
     const isFormValid = () => {
-        if (groupName.length < 3) {
-            setFormError('Naziv grupe mora imati najmanje 3 slova.');
-            return false;
-        }
-        if (topic.length < 4) {
-            setFormError('Topic mora imati najmanje 4 slova.');
-            return false;
-        }
-        if (chosenSubjects.some(subject => subject === '')) {
-            setFormError('Sva polja za predmete moraju biti popunjena.');
-            return false;
-        }
-        if (description.length === 0) {
-            setFormError('Opis mora biti popunjen.');
-            return false;
-        }
-        if (!startDate) {
-            setFormError('Datum početka mora biti izabran.');
-            return false;
-        }
-        if (!endDate) {
-            setFormError('Datum završetka mora biti izabran.');
-            return false;
-        }
-        if (new Date(endDate) < new Date(startDate)) {
-            setFormError('Datum završetka mora biti nakon datuma početka.');
-            return false;
-        }
+        if (groupName.length < 3) return setValidation('Naziv grupe mora imati najmanje 3 slova.');
+        if (topic.length < 4) return setValidation('Topic mora imati najmanje 4 slova.');
+        if (chosenSubjects.some((subject) => subject === '')) return setValidation('Sva polja za predmete moraju biti popunjena.');
+        if (!description.length) return setValidation('Opis mora biti popunjen.');
+        if (!startDate) return setValidation('Datum pocetka mora biti izabran.');
+        if (!endDate) return setValidation('Datum zavrsetka mora biti izabran.');
+        if (new Date(endDate) < new Date(startDate)) return setValidation('Datum zavrsetka mora biti nakon datuma pocetka.');
         if (new Date(endDate) < new Date(startDate).setDate(new Date(startDate).getDate() + 7)) {
-            setFormError('Datum završetka mora biti najmanje 7 dana nakon datuma početka.');
-            return false;
+            return setValidation('Datum zavrsetka mora biti najmanje 7 dana nakon datuma pocetka.');
         }
-        if (hoursPerWeek <= 0) {
-            setFormError('Sati po sedmici moraju biti veći od 0.');
-            return false;
-        }
-        if (price <= 0) {
-            setFormError('Cijena mora biti veća od 0.');
-            return false;
-        }
-        if (maxStudents <= 0) {
-            setFormError('Maksimalan broj studenata mora biti veći od 0.');
-            return false;
-        }
+        if (hoursPerWeek <= 0) return setValidation('Sati po sedmici moraju biti veci od 0.');
+        if (price <= 0) return setValidation('Cijena mora biti veca od 0.');
+        if (maxStudents <= 0) return setValidation('Maksimalan broj studenata mora biti veci od 0.');
+
         setFormError('');
         return true;
     };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+    const setValidation = (message) => {
+        setFormError(message);
+        return false;
+    };
+
+    const handleSubmit = async (event) => {
+        event.preventDefault();
         if (!isFormValid()) {
             return;
         }
@@ -121,7 +98,7 @@ const CreateGroup = () => {
             hoursPerWeek,
             price,
             tutorId,
-            maxStudents
+            maxStudents,
         };
 
         try {
@@ -136,10 +113,10 @@ const CreateGroup = () => {
             if (!response.ok) {
                 throw new Error('Problem s fetchom');
             }
-            alert('Grupa uspješno kreirana!');
+            notify('Grupa uspjesno kreirana!', 'success');
         } catch (error) {
-            console.error("Greška pri kreiranju grupe", error);
-            alert('Došlo je do greške prilikom kreiranja grupe.');
+            console.error('Greska pri kreiranju grupe', error);
+            notify('Doslo je do greske prilikom kreiranja grupe.', 'error');
         }
     };
 
@@ -149,7 +126,7 @@ const CreateGroup = () => {
                 <TextField
                     label="Naziv Grupe"
                     value={groupName}
-                    onChange={(e) => setGroupName(e.target.value)}
+                    onChange={(event) => setGroupName(event.target.value)}
                     maxLength="31"
                     required
                     error={groupName.length < 3}
@@ -158,7 +135,7 @@ const CreateGroup = () => {
                 <TextField
                     label="Topic"
                     value={topic}
-                    onChange={(e) => setTopic(e.target.value)}
+                    onChange={(event) => setTopic(event.target.value)}
                     maxLength="31"
                     required
                     error={topic.length < 4}
@@ -169,29 +146,32 @@ const CreateGroup = () => {
                     <Box key={index} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         <FormControl sx={{ flexGrow: 1 }}>
                             <InputLabel>Predmet</InputLabel>
-                            <Select
-                                value={subject}
-                                onChange={(e) => handleSubjectChange(index, e.target.value)}
-                                required
-                            >
+                            <Select value={subject} onChange={(event) => handleSubjectChange(index, event.target.value)} required>
                                 <MenuItem value="">Izaberi predmet</MenuItem>
-                                {subjects.map((sub) => (
-                                    <MenuItem key={sub} value={sub}>{sub}</MenuItem>
+                                {subjects.map((item) => (
+                                    <MenuItem key={item} value={item}>
+                                        {item}
+                                    </MenuItem>
                                 ))}
                             </Select>
                         </FormControl>
                         {chosenSubjects.length > 1 && (
-                            <Button type="button" onClick={() => handleRemoveSubject(index)}>Ukloni</Button>
+                            <Button type="button" onClick={() => handleRemoveSubject(index)}>
+                                Ukloni
+                            </Button>
                         )}
                     </Box>
                 ))}
                 {chosenSubjects.length < 5 && (
-                    <Button type="button" onClick={handleAddSubject}>Dodaj Predmet</Button>
+                    <Button type="button" onClick={handleAddSubject}>
+                        Dodaj Predmet
+                    </Button>
                 )}
+
                 <TextField
                     label="Opis"
                     value={description}
-                    onChange={(e) => setDescription(e.target.value)}
+                    onChange={(event) => setDescription(event.target.value)}
                     multiline
                     rows={4}
                     maxLength="255"
@@ -199,51 +179,39 @@ const CreateGroup = () => {
                     error={description.length === 0}
                     helperText={description.length === 0 ? 'Opis mora biti popunjen.' : ''}
                 />
-                <TextField
-                    label="Datum Početka"
-                    type="date"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    InputLabelProps={{ shrink: true }}
-                    required
-                />
-                <TextField
-                    label="Datum Završetka"
-                    type="date"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                    InputLabelProps={{ shrink: true }}
-                    required
-                />
+                <TextField label="Datum Pocetka" type="date" value={startDate} onChange={(event) => setStartDate(event.target.value)} InputLabelProps={{ shrink: true }} required />
+                <TextField label="Datum Zavrsetka" type="date" value={endDate} onChange={(event) => setEndDate(event.target.value)} InputLabelProps={{ shrink: true }} required />
                 <TextField
                     label="Maksimalan broj studenata"
                     type="number"
                     value={maxStudents}
-                    onChange={(e) => setMaxStudents(Math.max(0, e.target.value))}
+                    onChange={(event) => setMaxStudents(Math.max(0, Number(event.target.value)))}
                     required
                     error={maxStudents <= 0}
-                    helperText={maxStudents <= 0 ? 'Maksimalan broj studenata mora biti veći od 0.' : ''}
+                    helperText={maxStudents <= 0 ? 'Maksimalan broj studenata mora biti veci od 0.' : ''}
                 />
                 <TextField
                     label="Cijena (BAM)"
                     type="number"
                     value={price}
-                    onChange={(e) => setPrice(Math.max(0, e.target.value))}
+                    onChange={(event) => setPrice(Math.max(0, Number(event.target.value)))}
                     required
                     error={price <= 0}
-                    helperText={price <= 0 ? 'Cijena mora biti veća od 0.' : ''}
+                    helperText={price <= 0 ? 'Cijena mora biti veca od 0.' : ''}
                 />
                 <TextField
                     label="Sati po Sedmici"
                     type="number"
                     value={hoursPerWeek}
-                    onChange={(e) => setHoursPerWeek(Math.max(0, e.target.value))}
+                    onChange={(event) => setHoursPerWeek(Math.max(0, Number(event.target.value)))}
                     required
                     error={hoursPerWeek <= 0}
-                    helperText={hoursPerWeek <= 0 ? 'Sati po sedmici moraju biti veći od 0.' : ''}
+                    helperText={hoursPerWeek <= 0 ? 'Sati po sedmici moraju biti veci od 0.' : ''}
                 />
                 {formError && <Alert severity="error">{formError}</Alert>}
-                <Button type="submit" variant="contained" color="primary">Kreiraj Grupu</Button>
+                <Button type="submit" variant="contained" color="primary">
+                    Kreiraj Grupu
+                </Button>
             </Box>
         </Container>
     );

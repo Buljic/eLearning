@@ -1,43 +1,37 @@
-import {useEffect,useState} from "react";
+import { useEffect, useState } from 'react';
 import config from '../config.js';
-//Za gettanje svih subjecta u svrhu pravljenja liste
-const useFetchSubjects=()=>{
-    const [subjects,setSubjects]=useState([]);
-    const [error,setError]=useState(null);
-    const [loading,setLoading]=useState(true);
 
-    useEffect(()=>{
-        const getSubjects= async ()=>{
-            try
-            {
+const useFetchSubjects = () => {
+    const [subjects, setSubjects] = useState([]);
+    const [error, setError] = useState(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const getSubjects = async () => {
+            try {
                 const response = await fetch(`${config.BASE_URL}/api/allSubjects`, {
                     method: 'GET',
                     credentials: 'include',
                     headers: {
                         'Content-Type': 'application/json',
-                    }
+                    },
                 });
-                if (!response.ok)
-                {
+                if (!response.ok) {
                     throw new Error('Problem with fetch');
                 }
-                else
-                {
-                    const data = await response.json();
-                    setSubjects(data);
-                }
+                const data = await response.json();
+                setSubjects(Array.isArray(data) ? data : []);
+            } catch (fetchError) {
+                setError(fetchError);
+                console.error('Error with subjects fetch', fetchError);
+            } finally {
+                setLoading(false);
             }
-            catch (error) {
-                    setError(error);
-                    console.log("Error sa fetchom");
-                } finally {
-                    setLoading(false);  // Postavite loading na false kada se završi dohvat podataka
-                }
-            }
-            getSubjects();
-    },[]);
+        };
+        getSubjects();
+    }, []);
 
-    return {subjects,error,loading};
-
+    return { subjects, error, loading };
 };
+
 export default useFetchSubjects;

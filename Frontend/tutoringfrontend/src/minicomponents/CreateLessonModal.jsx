@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import config from '../config.js';
 import { Modal, Box, TextField, Button, Typography } from '@mui/material';
+import { notify } from '../utils/notifications.js';
 
 const CreateLessonModal = ({ show, handleClose, groupId }) => {
     const [title, setTitle] = useState("");
@@ -31,16 +32,16 @@ const CreateLessonModal = ({ show, handleClose, groupId }) => {
             });
 
             if (response.ok) {
-                alert("Lesson created successfully with files");
+                notify('Lesson created successfully with files.', 'success');
                 handleClose();
             } else {
                 const errorData = await response.text();
                 console.error("Failed to create lesson:", errorData);
-                alert("Failed to create lesson: " + errorData);
+                notify(`Failed to create lesson: ${errorData}`, 'error');
             }
         } catch (error) {
             console.error("Network error:", error);
-            alert("Network error: " + error.message);
+            notify(`Network error: ${error.message}`, 'error');
         }
     };
 

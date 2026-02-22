@@ -25,6 +25,8 @@ public class JwtFilter extends OncePerRequestFilter {
             "/",
             "/error",
             "/api/login",
+            "/api/auth/refresh",
+            "/api/auth/logout",
             "/api/createAccount",
             "/api/welcomePage",
             "/uploads/**"
