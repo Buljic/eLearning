@@ -6,6 +6,8 @@ import com.example.tutoring.Entities.DirectMessage;
 import com.example.tutoring.Entities.Embeddeds.DirectMessageId;
 import com.example.tutoring.Entities.Embeddeds.GroupMessageId;
 import com.example.tutoring.Entities.GroupMessage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +17,7 @@ import java.util.List;
 @Service
 public class MessageService
 {
+    private static final Logger logger = LoggerFactory.getLogger(MessageService.class);
     private final JdbcTemplate jdbcTemplate;
 
     public MessageService(JdbcTemplate template)
@@ -149,7 +152,7 @@ public void saveDirectMessage(Long user1, Long user2, String message, String sen
 //        );
 //    }
 public void saveGroupMessage(Long group, Long sender, String message) {
-    System.out.println("Saving group message. Group: " + group + ", Sender: " + sender + ", Message: " + message);
+    logger.debug("Saving group message. group={}, sender={}", group, sender);
 
     GroupMessage groupMessage = new GroupMessage();
     GroupMessageId groupMessageId = new GroupMessageId();
@@ -160,7 +163,7 @@ public void saveGroupMessage(Long group, Long sender, String message) {
     groupMessage.setId(groupMessageId);
     groupMessage.setMessage_text(message);
 
-    System.out.println("GroupMessage to save: " + groupMessage);
+    logger.trace("Group message payload: {}", groupMessage);
 
     String sql = "INSERT INTO group_message(group_id, sender, time, message_text) VALUES (?, ?, ?, ?)";
     jdbcTemplate.update(sql, new Object[]{group, sender, LocalDateTime.now(), message});
@@ -179,7 +182,7 @@ public void saveGroupMessage(Long group, Long sender, String message) {
             message.addProperty("time", rs.getTimestamp("time").toLocalDateTime());
             message.addProperty("message_text", rs.getString("message_text"));
             message.addProperty("sender_name", rs.getString("sender_name"));
-            System.out.println("Fetched group message: " + message.toString());
+            logger.trace("Fetched group message metadata for groupId={}", groupId);
             return message;
         });
 

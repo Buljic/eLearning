@@ -4,6 +4,8 @@ import com.example.tutoring.Entities.Lesson;
 import com.example.tutoring.Entities.Material;
 import com.example.tutoring.Other.LessonMapper;
 import com.example.tutoring.Other.MaterialMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -20,6 +22,7 @@ import java.util.List;
 
 @Service
 public class LessonService {
+    private static final Logger logger = LoggerFactory.getLogger(LessonService.class);
     private final JdbcTemplate jdbcTemplate;
     private final String uploadDir = "uploads/";
 
@@ -61,7 +64,7 @@ public class LessonService {
         jdbcTemplate.update(sql, lesson.getGroup().getGroup_id(), lesson.getTitle(), lesson.getContent(), lesson.getCreatedAt());
         Long lessonId = jdbcTemplate.queryForObject("SELECT LAST_INSERT_ID()", Long.class);
         lesson.setId(lessonId);
-        System.out.println("Saved lesson with ID: " + lessonId);
+        logger.debug("Saved lesson with ID={}", lessonId);
     }
 
     public void saveMaterial(Material material) {
@@ -70,7 +73,7 @@ public class LessonService {
         material.setFileUrl(relativePath); //Relativni path
 
         String sql = "INSERT INTO materials (lesson_id, file_name, file_type, file_url) VALUES (?, ?, ?, ?)";
-        System.out.println("Saving material with lessonId: " + material.getLesson().getId());
+        logger.debug("Saving material for lessonId={}", material.getLesson().getId());
         jdbcTemplate.update(sql, material.getLesson().getId(), material.getFileName(), material.getFileType(), material.getFileUrl());
     }
 }
