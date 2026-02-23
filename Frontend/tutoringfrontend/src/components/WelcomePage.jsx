@@ -1,6 +1,7 @@
 import { Link, Navigate } from "react-router-dom";
 import { Container, Box, Typography, CircularProgress, Alert, Grid, Button, Paper } from "@mui/material";
 import useFetchUser from "../customHooks/useFetchUser";
+import { canActAsProfessor, canActAsStudent } from "../utils/userRoles";
 
 const WelcomePage = () => {
   const { user, error, loading } = useFetchUser();
@@ -21,6 +22,9 @@ const WelcomePage = () => {
     return <Navigate to="/login" replace />;
   }
 
+  const isStudent = canActAsStudent(user);
+  const isProfessor = canActAsProfessor(user);
+
   return (
     <Container sx={{ py: 3 }}>
       <Paper elevation={0} sx={{ p: 3, borderRadius: 3, border: "1px solid #d8e3ef" }}>
@@ -34,14 +38,14 @@ const WelcomePage = () => {
         </Box>
 
         <Grid container spacing={2} justifyContent="center">
-          {(user.accountType === "STUDENT" || user.accountType === "OBOJE") && (
+          {isStudent && (
             <Grid item xs={12} sm={6} md={4}>
               <Button fullWidth variant="contained" component={Link} to="/searchSubjects">
                 Trazi predmete
               </Button>
             </Grid>
           )}
-          {(user.accountType === "PROFESOR" || user.accountType === "OBOJE") && (
+          {isProfessor && (
             <Grid item xs={12} sm={6} md={4}>
               <Button fullWidth variant="contained" component={Link} to="/requestSubjectsAsTutor">
                 Registruj se za predmete
@@ -53,14 +57,14 @@ const WelcomePage = () => {
               Vasi kursevi
             </Button>
           </Grid>
-          {user.accountType === "PROFESOR" && (
+          {isProfessor && (
             <Grid item xs={12} sm={6} md={4}>
               <Button fullWidth variant="contained" component={Link} to="/createGroup">
                 Napravi grupu
               </Button>
             </Grid>
           )}
-          {user.accountType === "PROFESOR" && (
+          {isProfessor && (
             <Grid item xs={12} sm={6} md={4}>
               <Button fullWidth variant="contained" component={Link} to="/groupRequests">
                 Pristigli zahtjevi

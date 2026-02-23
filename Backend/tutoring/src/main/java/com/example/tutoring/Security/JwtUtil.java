@@ -8,15 +8,23 @@ import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 @Component
 public class JwtUtil {
+    private static final Logger logger = LoggerFactory.getLogger(JwtUtil.class);
     private static final String ACCESS_TOKEN_TYPE = "access";
     private static final String REFRESH_TOKEN_TYPE = "refresh";
 
@@ -37,6 +45,8 @@ public class JwtUtil {
 
     @PostConstruct
     public void initSecretKey() {
+        warnIfWeakSecret("access", jwtSecret);
+        warnIfWeakSecret("refresh", jwtRefreshSecret);
         this.accessSecretKey = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
         this.refreshSecretKey = Keys.hmacShaKeyFor(jwtRefreshSecret.getBytes(StandardCharsets.UTF_8));
     }
@@ -49,11 +59,14 @@ public class JwtUtil {
         long nowMillis = System.currentTimeMillis();
         Date now = new Date(nowMillis);
         Date exp = new Date(nowMillis + jwtExpirationMs);
+        List<String> roles = resolveRolesForToken(user);
+        String primaryRole = roles.isEmpty() ? "KORISNIK" : roles.get(0);
 
         return Jwts.builder()
                 .setSubject(user.getUsername())
                 .claim("username", user.getUsername())
-                .claim("role", user.getAccountType().toString())
+                .claim("role", primaryRole)
+                .claim("roles", roles)
                 .claim("typ", ACCESS_TOKEN_TYPE)
                 .setIssuedAt(now)
                 .setExpiration(exp)
@@ -134,7 +147,48 @@ public class JwtUtil {
     }
 
     public String getRoleFromToken(String token) {
+        Set<String> roles = getRolesFromToken(token);
+        if (!roles.isEmpty()) {
+            return roles.stream().findFirst().orElse("KORISNIK");
+        }
         return parseAccessClaims(token).getBody().get("role", String.class);
+    }
+
+    public Set<String> getRolesFromToken(String token) {
+        Claims claims = parseAccessClaims(token).getBody();
+        Set<String> roles = new HashSet<>();
+
+        Object rawRoles = claims.get("roles");
+        if (rawRoles instanceof Collection<?> collection) {
+            for (Object rawRole : collection) {
+                if (rawRole != null) {
+                    roles.add(rawRole.toString());
+                }
+            }
+        }
+
+        String singleRole = claims.get("role", String.class);
+        if (singleRole != null && !singleRole.isBlank()) {
+            roles.add(singleRole);
+        }
+
+        if (roles.contains("OBOJE")) {
+            roles.remove("OBOJE");
+            roles.add("STUDENT");
+            roles.add("PROFESOR");
+        }
+
+        return roles;
+    }
+
+    public boolean tokenHasAnyRole(String token, String... expectedRoles) {
+        Set<String> roles = getRolesFromToken(token);
+        for (String expectedRole : expectedRoles) {
+            if (roles.contains(expectedRole)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public String getUsernameFromRefreshToken(String token) {
@@ -158,5 +212,46 @@ public class JwtUtil {
                 .setSigningKey(accessSecretKey)
                 .build()
                 .parseClaimsJws(token);
+    }
+
+    private List<String> resolveRolesForToken(User user) {
+        Set<String> normalizedRoles = new HashSet<>();
+        user.getEffectiveRoles().forEach(role -> normalizedRoles.add(role.name()));
+
+        if (normalizedRoles.isEmpty()) {
+            normalizedRoles.add("KORISNIK");
+        }
+
+        List<String> ordered = new ArrayList<>();
+        if (normalizedRoles.contains("ADMIN")) {
+            ordered.add("ADMIN");
+        }
+        if (normalizedRoles.contains("PROFESOR")) {
+            ordered.add("PROFESOR");
+        }
+        if (normalizedRoles.contains("STUDENT")) {
+            ordered.add("STUDENT");
+        }
+        if (normalizedRoles.contains("KORISNIK")) {
+            ordered.add("KORISNIK");
+        }
+
+        for (String role : normalizedRoles) {
+            if (!ordered.contains(role)) {
+                ordered.add(role);
+            }
+        }
+
+        return ordered;
+    }
+
+    private void warnIfWeakSecret(String tokenType, String configuredSecret) {
+        if (configuredSecret == null || configuredSecret.length() < 32) {
+            logger.warn("JWT {} secret is shorter than recommended minimum (32 chars).", tokenType);
+            return;
+        }
+        if (configuredSecret.contains("change-me")) {
+            logger.warn("JWT {} secret appears to use a default placeholder value. Configure a strong secret via environment variables.", tokenType);
+        }
     }
 }

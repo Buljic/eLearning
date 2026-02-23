@@ -10,16 +10,18 @@ import ChatIcon from '@mui/icons-material/Chat';
 import BookIcon from '@mui/icons-material/Book';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import VideoCallIcon from '@mui/icons-material/VideoCall';
+import { canActAsProfessor } from '../utils/userRoles.js';
+import { getSessionUser } from '../utils/sessionUser.js';
 
 const GroupOverview = () => {
     const { groupId } = useParams();
     const [activeTab, setActiveTab] = useState("chat");
 
-    const myUser = useMemo(() => JSON.parse(sessionStorage.getItem("myUser")), []);
+    const myUser = useMemo(() => getSessionUser(), []);
     if (!myUser) {
         return <Alert severity="warning">Morate biti prijavljeni da pristupite grupi.</Alert>;
     }
-    const isProfessor = myUser.accountType === "PROFESOR";
+    const isProfessor = canActAsProfessor(myUser);
 
     const renderTabContent = () => {
         switch (activeTab) {

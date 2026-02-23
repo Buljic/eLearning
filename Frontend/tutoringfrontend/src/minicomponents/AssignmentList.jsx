@@ -3,13 +3,14 @@ import { Link } from "react-router-dom";
 import AssignmentCreateModal from "./AssignmentCreateModal";
 import config from '../config.js';
 import { Container, Box, Typography, Button, List, ListItem, CircularProgress, Card, CardContent, Alert } from '@mui/material';
+import { getSessionUser } from "../utils/sessionUser.js";
 
 const AssignmentList = ({ isProfessor, groupId }) => {
     const [assignments, setAssignments] = useState([]);
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
-    const myUser = useMemo(() => JSON.parse(sessionStorage.getItem("myUser")), []);
+    const myUser = useMemo(() => getSessionUser(), []);
 
     useEffect(() => {
         fetchAssignments();

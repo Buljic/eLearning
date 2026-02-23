@@ -1,8 +1,6 @@
 package com.example.tutoring.RESTControllers;
 
 import com.example.tutoring.DTOs.CreateAccountDTO;
-import com.example.tutoring.DTOs.GenericDTO;
-import com.example.tutoring.DTOs.UserDTO;
 import com.example.tutoring.Entities.Student;
 import com.example.tutoring.Entities.Tutor;
 import com.example.tutoring.Entities.User;
@@ -21,13 +19,16 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
+import java.util.Set;
+import java.util.regex.Pattern;
 
 @RestController
 @RequestMapping("/api")
 public class UserLoginController
 {
     private static final Logger logger = LoggerFactory.getLogger(UserLoginController.class);
+    private static final Pattern EMAIL_PATTERN = Pattern.compile("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$");
+    private static final Pattern PHONE_PATTERN = Pattern.compile("^[0-9+\\-\\s]{6,20}$");
     private final UserRepository userRepository;
     private final TutorRepository tutorRepository;
     private final StudentRepository studentRepository;
@@ -54,6 +55,11 @@ public class UserLoginController
     @PostMapping("/createAccount")//request body uzima json npr koji je poslan s requestom
     public ResponseEntity<?> createAccount(@RequestBody CreateAccountDTO createAccountDTO)
     {//na osnovu odredjenog enuma , ovisi kakav account kreiras
+        String validationError = validateCreateAccountPayload(createAccountDTO);
+        if (validationError != null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(validationError);
+        }
+
         if (createAccountDTO.getAccountType() == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Tip naloga je obavezan");
         }
@@ -69,6 +75,7 @@ public class UserLoginController
                 encriptionUtility.encrypt(createAccountDTO.getEmail()),
                 encriptionUtility.encrypt(createAccountDTO.getPhoneNumber()),
                 createAccountDTO.getAccountType());
+        user.setRoles(resolveInitialRoles(createAccountDTO.getAccountType()));
         userRepository.save(user);
         switch (createAccountDTO.getAccountType()) {
             case STUDENT -> {
@@ -112,6 +119,45 @@ public class UserLoginController
         } else {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("NEISPRAVAN TOKEN");
         }
+    }
+
+    private Set<AccountType> resolveInitialRoles(AccountType accountType) {
+        return switch (accountType) {
+            case OBOJE -> Set.of(AccountType.STUDENT, AccountType.PROFESOR);
+            case STUDENT -> Set.of(AccountType.STUDENT);
+            case PROFESOR -> Set.of(AccountType.PROFESOR);
+            case ADMIN -> Set.of(AccountType.ADMIN);
+            case KORISNIK -> Set.of(AccountType.KORISNIK);
+        };
+    }
+
+    private String validateCreateAccountPayload(CreateAccountDTO dto) {
+        if (dto == null) {
+            return "Neispravan zahtjev.";
+        }
+        if (isBlank(dto.getUsername()) || dto.getUsername().length() < 4) {
+            return "Korisnicko ime mora imati najmanje 4 znaka.";
+        }
+        if (isBlank(dto.getPassword()) || dto.getPassword().length() < 8) {
+            return "Lozinka mora imati najmanje 8 znakova.";
+        }
+        if (isBlank(dto.getName()) || dto.getName().length() < 2) {
+            return "Ime je obavezno.";
+        }
+        if (isBlank(dto.getSurname()) || dto.getSurname().length() < 2) {
+            return "Prezime je obavezno.";
+        }
+        if (isBlank(dto.getEmail()) || !EMAIL_PATTERN.matcher(dto.getEmail()).matches()) {
+            return "Email adresa nije validna.";
+        }
+        if (!isBlank(dto.getPhoneNumber()) && !PHONE_PATTERN.matcher(dto.getPhoneNumber()).matches()) {
+            return "Broj telefona nije validan.";
+        }
+        return null;
+    }
+
+    private boolean isBlank(String value) {
+        return value == null || value.isBlank();
     }
 
 

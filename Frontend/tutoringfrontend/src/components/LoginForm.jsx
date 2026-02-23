@@ -26,6 +26,7 @@ function LoginForm() {
       });
 
       if (!response.ok) {
+        sessionStorage.removeItem("myUser");
         setMessage("Neuspjesna prijava. Provjerite podatke i pokusajte ponovo.");
         return;
       }
@@ -39,6 +40,7 @@ function LoginForm() {
       });
 
       if (!userResponse.ok) {
+        sessionStorage.removeItem("myUser");
         setMessage("Prijava je uspjela, ali nije moguce ucitati korisnicke podatke.");
         return;
       }
@@ -48,6 +50,7 @@ function LoginForm() {
       navigate("/welcome");
     } catch (error) {
       console.error("Greska prilikom login-a", error);
+      sessionStorage.removeItem("myUser");
       setMessage("Doslo je do greske. Pokusajte ponovo.");
     } finally {
       setSubmitting(false);

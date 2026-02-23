@@ -29,7 +29,8 @@ function CreateAccount() {
             if (response.ok) {
                 navigate('/login');
             } else {
-                setMessage('Greska prilikom stvaranja racuna');
+                const responseMessage = await response.text();
+                setMessage(responseMessage || 'Greska prilikom stvaranja racuna');
             }
         } catch (error) {
             setMessage('Doslo je do greske... pokusajte ponovo');
@@ -37,7 +38,7 @@ function CreateAccount() {
     };
 
     const isFormValid = username.length >= 4 &&
-        password.length >= 4 &&
+        password.length >= 8 &&
         name.length >= 4 &&
         surname.length >= 4 &&
         email.length >= 4 &&

@@ -4,6 +4,7 @@ import com.example.tutoring.Entities.Embeddeds.GroupRequestId;
 import com.example.tutoring.Entities.GroupRequest;
 import com.example.tutoring.Other.RequestStatus;
 import com.example.tutoring.WebSocket.ChatMessage;
+import jakarta.transaction.Transactional;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -40,6 +41,7 @@ public class GroupRequestService {
     }
 
     @Scheduled(cron = "0 0 0 * * ?")
+    @Transactional
     public void updateRequestStatuses() {
         List<GroupRequest> pendingRequests = jdbcTemplate.query(
                 "SELECT * FROM group_requests WHERE status = 'PENDING' AND request_date < ?",
@@ -72,7 +74,14 @@ public class GroupRequestService {
     private void sendAutomatedMessage(Long userId, String message) {
         ChatMessage chatMessage = new ChatMessage();
         chatMessage.setMessage_text(message);
-        messagingTemplate.convertAndSend("/queue/" + userId, chatMessage);
+        String username = jdbcTemplate.queryForObject(
+                "SELECT username FROM user WHERE id = ?",
+                new Object[]{userId},
+                String.class
+        );
+        if (username != null && !username.isBlank()) {
+            messagingTemplate.convertAndSendToUser(username, "/queue/notifications", chatMessage);
+        }
     }
 
     public Map<String, Object> getRequests(String tutorUsername, int page, int size) {
@@ -115,6 +124,7 @@ public class GroupRequestService {
         return result;
     }
 
+    @Transactional
     public void acceptRequest(Long groupId, Long userId) {
         int updatedRows = jdbcTemplate.update(
                 "UPDATE group_requests SET status = 'PENDING' WHERE user_id = ? AND group_id = ? AND status = 'REQUESTED'",
@@ -127,6 +137,7 @@ public class GroupRequestService {
         sendAutomatedMessage(userId, "Vas zahtjev za grupu " + groupId + " je prihvacen.");
     }
 
+    @Transactional
     public void approveRequest(Long groupId, Long userId) {
         Integer requestExists = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM group_requests WHERE user_id = ? AND group_id = ? AND status = 'PENDING'",
@@ -137,14 +148,14 @@ public class GroupRequestService {
             throw new IllegalStateException("Zahtjev nije u stanju koje dozvoljava odobravanje.");
         }
 
-        int currentAccepted = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM group_requests WHERE group_id = ? AND status = 'ACCEPTED'",
+        int maxStudents = jdbcTemplate.queryForObject(
+                "SELECT max_students FROM group_table WHERE group_id = ? FOR UPDATE",
                 new Object[]{groupId},
                 Integer.class
         );
 
-        int maxStudents = jdbcTemplate.queryForObject(
-                "SELECT max_students FROM group_table WHERE group_id = ?",
+        int currentAccepted = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM group_requests WHERE group_id = ? AND status = 'ACCEPTED'",
                 new Object[]{groupId},
                 Integer.class
         );
@@ -176,6 +187,7 @@ public class GroupRequestService {
         sendAutomatedMessage(userId, "Vas zahtjev za grupu " + groupId + " je odobren.");
     }
 
+    @Transactional
     public void rejectRequest(Long groupId, Long userId) {
         int updatedRows = jdbcTemplate.update(
                 "UPDATE group_requests SET status = 'REJECTED' WHERE user_id = ? AND group_id = ? AND status <> 'ACCEPTED'",

@@ -4,6 +4,8 @@ import { Alert, Box, Button, Container, FormControl, InputLabel, MenuItem, Selec
 import useFetchSubjects from '../customHooks/useFetchSubjects.js';
 import config from '../config.js';
 import { notify } from '../utils/notifications.js';
+import { getSessionUser } from '../utils/sessionUser.js';
+import { canActAsProfessor } from '../utils/userRoles.js';
 
 const CreateGroup = () => {
     const [groupName, setGroupName] = useState('');
@@ -18,7 +20,7 @@ const CreateGroup = () => {
     const [formError, setFormError] = useState('');
     const { subjects } = useFetchSubjects();
 
-    const myUser = useMemo(() => JSON.parse(sessionStorage.getItem('myUser')), []);
+    const myUser = useMemo(() => getSessionUser(), []);
     const tutorId = myUser?.id;
 
     useEffect(() => {
@@ -35,6 +37,9 @@ const CreateGroup = () => {
 
     if (!tutorId) {
         return <Navigate to="/login" replace />;
+    }
+    if (!canActAsProfessor(myUser)) {
+        return <Navigate to="/welcome" replace />;
     }
 
     const handleAddSubject = () => {

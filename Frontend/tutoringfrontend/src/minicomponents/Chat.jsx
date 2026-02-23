@@ -4,25 +4,27 @@ import { Client } from "@stomp/stompjs";
 import { format } from "date-fns";
 import config from "../config.js";
 import "../css/chat.css";
+import { getSessionUser } from "../utils/sessionUser.js";
 
 function determineEndpoints(isGroupChat, chatId, myUserId) {
   if (isGroupChat) {
     return {
-      receiveEndpoint: `/queue/${chatId}`,
+      receiveEndpoint: `/user/queue/group/${chatId}`,
       sendEndpoint: `/app/${chatId}`,
     };
   }
 
-  const isMyUserIdLess = myUserId < chatId;
-  const base = isMyUserIdLess ? `${myUserId}/${chatId}` : `${chatId}/${myUserId}`;
+  const targetUserId = Number(chatId);
+  const isMyUserIdLess = myUserId < targetUserId;
+  const base = isMyUserIdLess ? `${myUserId}/${targetUserId}` : `${targetUserId}/${myUserId}`;
   return {
-    receiveEndpoint: `/queue/${base}`,
+    receiveEndpoint: `/user/queue/direct/${base}`,
     sendEndpoint: `/app/${base}`,
   };
 }
 
 const Chat = ({ chatId, isGroupChat }) => {
-  const myUser = useMemo(() => JSON.parse(sessionStorage.getItem("myUser")), []);
+  const myUser = useMemo(() => getSessionUser(), []);
   const stompClientRef = useRef(null);
 
   const [endpoints, setEndpoints] = useState({ receiveEndpoint: "", sendEndpoint: "" });

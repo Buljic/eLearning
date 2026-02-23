@@ -109,7 +109,7 @@ public class AssignmentController {
         }
 
         List<Assignment> assignments;
-        if (currentUser.getAccountType().equals(AccountType.STUDENT)) {
+        if (currentUser.hasRole(AccountType.STUDENT)) {
             assignments = assignmentService.getAssignmentsByGroupIdWithSubmissionsForUser(groupId, currentUser.getId());
         } else {
             assignments = assignmentService.getAssignmentsByGroupId(groupId);
@@ -278,12 +278,10 @@ public class AssignmentController {
     }
 
     private boolean canActAsProfessor(User user) {
-        AccountType type = user.getAccountType();
-        return type == AccountType.PROFESOR || type == AccountType.OBOJE || type == AccountType.ADMIN;
+        return user.hasRole(AccountType.PROFESOR) || user.hasRole(AccountType.ADMIN);
     }
 
     private boolean canActAsStudent(User user) {
-        AccountType type = user.getAccountType();
-        return type == AccountType.STUDENT || type == AccountType.OBOJE;
+        return user.hasRole(AccountType.STUDENT);
     }
 }

@@ -3,14 +3,17 @@ import { useParams } from "react-router-dom";
 import config from '../config.js';
 import { Container, Box, Typography, Button, CircularProgress, List, ListItem, Card, CardContent, Paper } from '@mui/material';
 import { notify } from '../utils/notifications.js';
+import { canActAsProfessor, canActAsStudent } from '../utils/userRoles.js';
+import { getSessionUser } from '../utils/sessionUser.js';
 
 const AssignmentDetail = () => {
     const { assignmentId } = useParams();
     const [assignment, setAssignment] = useState(null);
     const [status, setStatus] = useState(null);
     const [selectedFile, setSelectedFile] = useState(null);
-    const storedUser = sessionStorage.getItem("myUser");
-    const myUser = JSON.parse(storedUser);
+    const myUser = getSessionUser();
+    const isStudent = canActAsStudent(myUser);
+    const isProfessor = canActAsProfessor(myUser);
 
     useEffect(() => {
         fetchAssignment();
@@ -27,13 +30,16 @@ const AssignmentDetail = () => {
         if (response.ok) {
             const data = await response.json();
             setAssignment(data);
-            setStatus(getStatus(data));
+            setStatus(isStudent ? getStatus(data) : null);
         } else {
             console.error("Failed to fetch assignment");
         }
     };
 
     const getStatus = (assignment) => {
+        if (!isStudent) {
+            return null;
+        }
         if (!assignment.submissions || assignment.submissions.length === 0) return "Missing";
         const submission = assignment.submissions.find(sub => sub.student.id === myUser.id);
         if (!submission) return "Missing";
@@ -46,6 +52,10 @@ const AssignmentDetail = () => {
     };
 
     const handleSubmit = async () => {
+        if (!isStudent) {
+            notify('Samo studenti mogu predati zadatak.', 'warning');
+            return;
+        }
         if (!selectedFile) {
             notify('Please select a file to submit.', 'warning');
             return;
@@ -58,7 +68,6 @@ const AssignmentDetail = () => {
 
         const formData = new FormData();
         formData.append("file", selectedFile);
-        formData.append("userId", myUser.id);  // Add user ID to the form data
 
         try {
             const response = await fetch(`${config.BASE_URL}/api/assignments/${assignmentId}/submit`, {
@@ -78,9 +87,12 @@ const AssignmentDetail = () => {
         }
     };
 
+    if (!myUser) return <Typography>Niste prijavljeni.</Typography>;
     if (!assignment) return <CircularProgress />;
 
-    const submission = assignment.submissions ? assignment.submissions.find(sub => sub.student.id === myUser.id) : null;
+    const submission = isStudent && assignment.submissions
+        ? assignment.submissions.find(sub => sub.student.id === myUser.id)
+        : null;
     const feedback = submission ? submission.feedback : "No feedback yet.";
     const grade = submission ? submission.grade : "No grade yet.";
 
@@ -96,21 +108,23 @@ const AssignmentDetail = () => {
                             <img src={`${config.BASE_URL}${assignment.imageUrl}`} alt={assignment.name} style={{ maxWidth: '200px', maxHeight: '200px' }} />
                         </Box>
                     )}
-                    <Typography variant="body1" align="center" color={getStatusColor(status)}>Status: {status}</Typography>
-                    {status === "Missing" && (
+                    {isStudent && (
+                        <Typography variant="body1" align="center" color={getStatusColor(status)}>Status: {status}</Typography>
+                    )}
+                    {isStudent && status === "Missing" && (
                         <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
                             <input type="file" onChange={handleFileChange} />
                             <Button variant="contained" color="primary" onClick={handleSubmit} sx={{ ml: 2 }}>Submit Assignment</Button>
                         </Box>
                     )}
-                    {status !== "Missing" && (
+                    {isStudent && status !== "Missing" && (
                         <Box sx={{ mt: 2 }}>
                             <Typography variant="h6" align="center">Feedback</Typography>
                             <Typography variant="body1" align="center">{feedback}</Typography>
                             <Typography variant="body1" align="center">Grade: {grade}</Typography>
                         </Box>
                     )}
-                    {myUser.accountType !== "STUDENT" && assignment.submissions && assignment.submissions.length > 0 && (
+                    {isProfessor && assignment.submissions && assignment.submissions.length > 0 && (
                         <Box sx={{ mt: 4 }}>
                             <Typography variant="h6" align="center">Submissions</Typography>
                             <List>

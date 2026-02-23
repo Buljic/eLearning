@@ -2,6 +2,8 @@ package com.example.tutoring.DTOs;
 
 import com.example.tutoring.Other.AccountType;
 
+import java.util.Set;
+
 public class UserDTO
 {
     private Long id;
@@ -12,6 +14,7 @@ public class UserDTO
     private String password;
     private String phoneNumber;
     private AccountType accountType;
+    private Set<AccountType> roles;
 
     public Long getId()
     {
@@ -91,5 +94,15 @@ public class UserDTO
     public void setAccountType(AccountType accountType)
     {
         this.accountType = accountType;
+    }
+
+    public Set<AccountType> getRoles()
+    {
+        return roles;
+    }
+
+    public void setRoles(Set<AccountType> roles)
+    {
+        this.roles = roles;
     }
 }

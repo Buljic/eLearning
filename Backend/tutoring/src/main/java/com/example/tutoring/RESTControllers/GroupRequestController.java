@@ -48,7 +48,7 @@ public class GroupRequestController {
         if (token == null || !jwtUtil.validateToken(token)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
         }
-        if (!isTutorRole(jwtUtil.getRoleFromToken(token))) {
+        if (!jwtUtil.tokenHasAnyRole(token, "PROFESOR")) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access denied");
         }
         if (page < 0 || size <= 0 || size > MAX_PAGE_SIZE) {
@@ -122,7 +122,7 @@ public class GroupRequestController {
         if (token == null || !jwtUtil.validateToken(token)) {
             return null;
         }
-        if (!isTutorRole(jwtUtil.getRoleFromToken(token))) {
+        if (!jwtUtil.tokenHasAnyRole(token, "PROFESOR")) {
             return null;
         }
 
@@ -132,9 +132,5 @@ public class GroupRequestController {
         }
 
         return tutorId;
-    }
-
-    private boolean isTutorRole(String role) {
-        return "PROFESOR".equals(role) || "OBOJE".equals(role) || "ADMIN".equals(role);
     }
 }
