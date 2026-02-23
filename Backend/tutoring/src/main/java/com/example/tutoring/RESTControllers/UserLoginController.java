@@ -14,6 +14,8 @@ import com.example.tutoring.Security.EncriptionUtility;
 import com.example.tutoring.Security.JwtUtil;
 import com.example.tutoring.Services.UserService;
 import jakarta.servlet.http.HttpServletRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -25,6 +27,7 @@ import java.util.Map;
 @RequestMapping("/api")
 public class UserLoginController
 {
+    private static final Logger logger = LoggerFactory.getLogger(UserLoginController.class);
     private final UserRepository userRepository;
     private final TutorRepository tutorRepository;
     private final StudentRepository studentRepository;
@@ -51,6 +54,9 @@ public class UserLoginController
     @PostMapping("/createAccount")//request body uzima json npr koji je poslan s requestom
     public ResponseEntity<?> createAccount(@RequestBody CreateAccountDTO createAccountDTO)
     {//na osnovu odredjenog enuma , ovisi kakav account kreiras
+        if (createAccountDTO.getAccountType() == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Tip naloga je obavezan");
+        }
         if(userRepository.existsByUsername(createAccountDTO.getUsername()))
         {
           return  ResponseEntity
@@ -64,30 +70,33 @@ public class UserLoginController
                 encriptionUtility.encrypt(createAccountDTO.getPhoneNumber()),
                 createAccountDTO.getAccountType());
         userRepository.save(user);
-        if(createAccountDTO.getAccountType()== AccountType.STUDENT)
-        {
-            Student student=new Student();
-            student.setUser(user);
-            user.setStudentProfile(student);
-            studentRepository.save(student);
-            System.out.println("Kreiran novi student:" +student.getUser().getName());
-        }else if(createAccountDTO.getAccountType()==AccountType.PROFESOR)
-        {
-            Tutor tutor=new Tutor();
-            tutor.setUser(user);
-            user.setTutorProfile(tutor);
-            tutorRepository.save(tutor);
-            System.out.println("Kreiran novi profesor:" + tutor.getUser().getName() );
-        }
-        else {
-            Student student=new Student();
-            student.setUser(user);
-            Tutor tutor=new Tutor();
-            tutor.setUser(user);
-            studentRepository.save(student);
-            tutorRepository.save(tutor);
-            user.setStudentProfile(student);
-            user.setTutorProfile(tutor);
+        switch (createAccountDTO.getAccountType()) {
+            case STUDENT -> {
+                Student student = new Student();
+                student.setUser(user);
+                user.setStudentProfile(student);
+                studentRepository.save(student);
+                logger.info("Kreiran novi student: {}", student.getUser().getName());
+            }
+            case PROFESOR -> {
+                Tutor tutor = new Tutor();
+                tutor.setUser(user);
+                user.setTutorProfile(tutor);
+                tutorRepository.save(tutor);
+                logger.info("Kreiran novi profesor: {}", tutor.getUser().getName());
+            }
+            case OBOJE -> {
+                Student student = new Student();
+                student.setUser(user);
+                Tutor tutor = new Tutor();
+                tutor.setUser(user);
+                studentRepository.save(student);
+                tutorRepository.save(tutor);
+                user.setStudentProfile(student);
+                user.setTutorProfile(tutor);
+                logger.info("Kreiran novi korisnik sa oba profila: {}", user.getUsername());
+            }
+            default -> logger.info("Kreiran novi korisnik bez student/tutor profila: {}", user.getUsername());
         }
         return ResponseEntity.ok().body("Racun kreiran");
 
@@ -96,24 +105,13 @@ public class UserLoginController
     public ResponseEntity<?> welcomePage(HttpServletRequest request)
     {
         String token=jwtUtil.extractJwtFromCookie(request);
-        if(token!=null)
+        if(token != null && jwtUtil.validateToken(token))
         {
-            System.out.println("ok obradjuje ga bar");
             String username= jwtUtil.getUsernameFromToken(token);
-            System.out.println("------------------");
-            UserDTO i=userService.getUserInfo(username);
-            System.out.println("Podaci iz welcome pagea");
-                System.out.println(i.getId());
-                System.out.println(i.getUsername());
-                System.out.println(i.getName());
-                System.out.println(i.getSurname());
-                System.out.println(i.getEmail());
-                System.out.println(i.getPassword());
-                System.out.println(i.getPhoneNumber());
-                System.out.println(i.getAccountType());
-
             return ResponseEntity.status(HttpStatus.OK).body(userService.getUserInfo(username));
-        }else return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("NEISPRAVNO");
+        } else {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("NEISPRAVAN TOKEN");
+        }
     }
 
 

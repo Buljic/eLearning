@@ -2,15 +2,13 @@ package com.example.tutoring.AutomaticUpdateOperations;
 
 import com.example.tutoring.Entities.Embeddeds.GroupRequestId;
 import com.example.tutoring.Entities.GroupRequest;
-import com.example.tutoring.Other.CustomGroupRequestMapper;
-import com.example.tutoring.Other.GroupRequestMapper;
 import com.example.tutoring.Other.RequestStatus;
 import com.example.tutoring.WebSocket.ChatMessage;
-import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
@@ -25,79 +23,20 @@ public class GroupRequestService {
         this.jdbcTemplate = jdbcTemplate;
         this.messagingTemplate = messagingTemplate;
     }
-//    // Metoda za provjeru i update statusa zahtjeva
-//    @Scheduled(cron = "0 0 0 * * ?")
-//    public void updateRequestStatuses() {
-//        System.out.println("Update Requests Status");
-//        List<GroupRequest> pendingRequests = jdbcTemplate.query(
-//                "SELECT * FROM group_requests WHERE status = 'PENDING' AND request_date < ?",
-//                new Object[]{LocalDate.now()},
-//                new BeanPropertyRowMapper<>(GroupRequest.class)
-//        );
-//
-//        for (GroupRequest request : pendingRequests) {
-//            jdbcTemplate.update("UPDATE group_requests SET status = 'REJECTED' WHERE user_id = ? AND group_id = ?",
-//                    request.getId().getUserId(), request.getId().getGroupId());
-//            sendAutomatedMessage(request.getId().getUserId(), "Vaš zahtjev za grupu " + request.getId().getGroupId() + " je odbijen jer niste platili na vrijeme.");
-//        }
-//    }
-//
-//    // Metoda za slanje automatske poruke
-//    private void sendAutomatedMessage(Long userId, String message) {
-//        ChatMessage chatMessage = new ChatMessage();
-//        chatMessage.setMessage_text(message);
-//        messagingTemplate.convertAndSend("/queue/" + userId, chatMessage);
-//    }
-//
-//    // Metoda za pronalazak zahtjeva prema ID-u
-//    public GroupRequest findRequestById(GroupRequestId requestId) {
-//        List<GroupRequest> results = jdbcTemplate.query(
-//                "SELECT * FROM group_requests WHERE user_id = ? AND group_id = ?",
-//                new Object[]{requestId.getUserId(), requestId.getGroupId()},
-//                new BeanPropertyRowMapper<>(GroupRequest.class)
-//        );
-//        return results.isEmpty() ? null : results.get(0);
-//    }
-//
-//    // Metoda za update statusa zahtjeva
-//    public void updateRequestStatus(GroupRequest request, RequestStatus status) {
-//        jdbcTemplate.update("UPDATE group_requests SET status = ? WHERE user_id = ? AND group_id = ?",
-//                status.name(), request.getId().getUserId(), request.getId().getGroupId());
-//
-//        String statusMessage = "";
-//        switch (status) {
-//            case ACCEPTED:
-//                statusMessage = "Vaš zahtjev za grupu " + request.getId().getGroupId() + " je prihvaćen.";
-//                break;
-//            case PENDING:
-//                statusMessage = "Vaš zahtjev za grupu " + request.getId().getGroupId() + " je na čekanju.";
-//                break;
-//            case REJECTED:
-//                statusMessage = "Vaš zahtjev za grupu " + request.getId().getGroupId() + " je odbijen.";
-//                break;
-//        }
-//        sendAutomatedMessage(request.getId().getUserId(), statusMessage);
-//    }
-//
-//    // Metoda za paginaciju zahtjeva
-//    public Map<String, Object> getPaginatedRequests(int page, int size) {
-//        int offset = page * size;
-//        List<GroupRequest> requests = jdbcTemplate.query(
-//                "SELECT * FROM group_requests LIMIT ? OFFSET ?",
-//                new Object[]{size, offset},
-//                new BeanPropertyRowMapper<>(GroupRequest.class)
-//        );
-//
-//        int total = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM group_requests", Integer.class);
-//        Map<String, Object> result = new HashMap<>();
-//        result.put("requests", requests);
-//        result.put("totalPages", (int) Math.ceil((double) total / size));
-//        return result;
-//    }
 
     public List<GroupRequest> getAcceptedGroupRequests() {
         String sql = "SELECT gr.*, u.username FROM group_requests gr JOIN user u ON gr.user_id = u.id WHERE status = 'ACCEPTED' AND request_date <= CURRENT_DATE";
-        return jdbcTemplate.query(sql, new CustomGroupRequestMapper());
+        return jdbcTemplate.query(sql, (rs, rowNum) -> {
+            GroupRequest request = new GroupRequest();
+            GroupRequestId id = new GroupRequestId();
+            id.setUserId(rs.getLong("user_id"));
+            id.setGroupId(rs.getLong("group_id"));
+            request.setId(id);
+            request.setStatus(RequestStatus.valueOf(rs.getString("status")));
+            request.setRequestDate(rs.getDate("request_date").toLocalDate());
+            request.setUsername(rs.getString("username"));
+            return request;
+        });
     }
 
     @Scheduled(cron = "0 0 0 * * ?")
@@ -116,9 +55,17 @@ public class GroupRequestService {
                     return request;
                 }
         );
+
         for (GroupRequest request : pendingRequests) {
-            jdbcTemplate.update("UPDATE group_requests SET status = 'REJECTED' WHERE user_id = ? AND group_id = ?", request.getId().getUserId(), request.getId().getGroupId());
-            sendAutomatedMessage(request.getId().getUserId(), "Vaš zahtjev za grupu " + request.getId().getGroupId() + " je odbijen jer niste platili na vrijeme.");
+            jdbcTemplate.update(
+                    "UPDATE group_requests SET status = 'REJECTED' WHERE user_id = ? AND group_id = ?",
+                    request.getId().getUserId(),
+                    request.getId().getGroupId()
+            );
+            sendAutomatedMessage(
+                    request.getId().getUserId(),
+                    "Vas zahtjev za grupu " + request.getId().getGroupId() + " je odbijen jer niste platili na vrijeme."
+            );
         }
     }
 
@@ -169,11 +116,27 @@ public class GroupRequestService {
     }
 
     public void acceptRequest(Long groupId, Long userId) {
-        jdbcTemplate.update("UPDATE group_requests SET status = 'PENDING' WHERE user_id = ? AND group_id = ?", userId, groupId);
-        sendAutomatedMessage(userId, "Vaš zahtjev za grupu " + groupId + " je prihvaćen.");
+        int updatedRows = jdbcTemplate.update(
+                "UPDATE group_requests SET status = 'PENDING' WHERE user_id = ? AND group_id = ? AND status = 'REQUESTED'",
+                userId,
+                groupId
+        );
+        if (updatedRows == 0) {
+            throw new IllegalStateException("Zahtjev nije u stanju koje dozvoljava prihvatanje.");
+        }
+        sendAutomatedMessage(userId, "Vas zahtjev za grupu " + groupId + " je prihvacen.");
     }
 
     public void approveRequest(Long groupId, Long userId) {
+        Integer requestExists = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM group_requests WHERE user_id = ? AND group_id = ? AND status = 'PENDING'",
+                new Object[]{userId, groupId},
+                Integer.class
+        );
+        if (requestExists == null || requestExists == 0) {
+            throw new IllegalStateException("Zahtjev nije u stanju koje dozvoljava odobravanje.");
+        }
+
         int currentAccepted = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM group_requests WHERE group_id = ? AND status = 'ACCEPTED'",
                 new Object[]{groupId},
@@ -187,15 +150,41 @@ public class GroupRequestService {
         );
 
         if (currentAccepted >= maxStudents) {
-            throw new RuntimeException("Nema dovoljno mjesta u grupi za prihvaćanje zahtjeva.");
+            throw new RuntimeException("Nema dovoljno mjesta u grupi za prihvatanje zahtjeva.");
         }
 
-        jdbcTemplate.update("UPDATE group_requests SET status = 'ACCEPTED' WHERE user_id = ? AND group_id = ?", userId, groupId);
-        sendAutomatedMessage(userId, "Vaš zahtjev za grupu " + groupId + " je odobren.");
+        jdbcTemplate.update(
+                "UPDATE group_requests SET status = 'ACCEPTED' WHERE user_id = ? AND group_id = ?",
+                userId,
+                groupId
+        );
+
+        Integer alreadyInGroup = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM user_group WHERE user_id = ? AND group_id = ?",
+                new Object[]{userId, groupId},
+                Integer.class
+        );
+        if (alreadyInGroup == null || alreadyInGroup == 0) {
+            jdbcTemplate.update(
+                    "INSERT INTO user_group (user_id, group_id, date_joined) VALUES (?, ?, ?)",
+                    userId,
+                    groupId,
+                    LocalDate.now()
+            );
+        }
+
+        sendAutomatedMessage(userId, "Vas zahtjev za grupu " + groupId + " je odobren.");
     }
 
     public void rejectRequest(Long groupId, Long userId) {
-        jdbcTemplate.update("UPDATE group_requests SET status = 'REJECTED' WHERE user_id = ? AND group_id = ?", userId, groupId);
-        sendAutomatedMessage(userId, "Vaš zahtjev za grupu " + groupId + " je odbijen.");
+        int updatedRows = jdbcTemplate.update(
+                "UPDATE group_requests SET status = 'REJECTED' WHERE user_id = ? AND group_id = ? AND status <> 'ACCEPTED'",
+                userId,
+                groupId
+        );
+        if (updatedRows == 0) {
+            throw new IllegalStateException("Zahtjev nije moguce odbiti.");
+        }
+        sendAutomatedMessage(userId, "Vas zahtjev za grupu " + groupId + " je odbijen.");
     }
 }
