@@ -51,6 +51,8 @@ class AuthControllerIntegrationTests {
         var allSetCookies = response.getHeaders(HttpHeaders.SET_COOKIE);
         assertThat(allSetCookies).anySatisfy(cookie -> assertThat(cookie).contains("JWT="));
         assertThat(allSetCookies).anySatisfy(cookie -> assertThat(cookie).contains("JWT_REFRESH="));
+        assertThat(response.getCookie("JWT_REFRESH")).isNotNull();
+        assertThat(response.getCookie("JWT_REFRESH").getPath()).isEqualTo("/api/auth");
     }
 
     @Test
@@ -74,6 +76,9 @@ class AuthControllerIntegrationTests {
 
         assertThat(refreshSetCookies).anySatisfy(cookie -> assertThat(cookie).contains("JWT="));
         assertThat(refreshSetCookies).anySatisfy(cookie -> assertThat(cookie).contains("JWT_REFRESH="));
+        assertThat(refreshSetCookies.stream()
+                .filter(cookie -> cookie.contains("JWT_REFRESH="))
+                .anyMatch(cookie -> cookie.contains("Path=/api/auth"))).isTrue();
     }
 
     @Test

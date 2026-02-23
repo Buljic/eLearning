@@ -12,11 +12,16 @@ import com.example.tutoring.Security.JwtUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import org.springframework.dao.DataAccessException;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+import java.sql.PreparedStatement;
+import java.sql.Statement;
 import java.time.LocalDate;
 import java.util.*;
 
@@ -241,42 +246,83 @@ public class UserService
             if (subjects == null || subjects.isEmpty() || subjects.stream().anyMatch(subject -> subject == null || subject.isBlank())) {
                 throw new IllegalArgumentException("Morate izabrati barem jedan validan predmet.");
             }
+            if (startDate.isBefore(LocalDate.now())) {
+                throw new IllegalArgumentException("Datum pocetka ne moze biti u proslosti.");
+            }
             if (endDate.isBefore(startDate)) {
                 throw new IllegalArgumentException("Datum zavrsetka mora biti nakon datuma pocetka.");
             }
 
+            String normalizedGroupName = groupName.trim();
+            String normalizedTopic = topic.trim();
+            String normalizedDescription = description.trim();
+            List<String> normalizedSubjects = subjects.stream()
+                    .map(String::trim)
+                    .filter(subject -> !subject.isEmpty())
+                    .distinct()
+                    .toList();
+
             String checkDuplicateSql = "SELECT COUNT(*) FROM group_table WHERE group_name = ? AND headtutor_id = ?;";
-            int count = jdbcTemplate.queryForObject(checkDuplicateSql, new Object[]{groupName, tutorId}, Integer.class);
+            int count = jdbcTemplate.queryForObject(checkDuplicateSql, new Object[]{normalizedGroupName, tutorId}, Integer.class);
             if (count > 0) {
                 throw new IllegalStateException("Tutor vec ima grupu s istim imenom.");
             }
 
             // TODO: Migrate from single headtutor_id to group_tutor mapping when co-professor support per group is introduced.
             String insertGroupSql = "INSERT INTO group_table (group_name, topic, description, start_date, end_date, hours_per_week, price, max_students, creation_date, headtutor_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);";
-            int groupInsertResult = jdbcTemplate.update(insertGroupSql, groupName, topic, description, startDate, endDate, hoursPerWeek, price, maxStudents, LocalDate.now(), tutorId);
-            if (groupInsertResult != 1) {
-                throw new Exception("Failed to insert group");
+            KeyHolder groupKeyHolder = new GeneratedKeyHolder();
+            int groupInsertResult = jdbcTemplate.update(connection -> {
+                PreparedStatement preparedStatement = connection.prepareStatement(insertGroupSql, Statement.RETURN_GENERATED_KEYS);
+                preparedStatement.setString(1, normalizedGroupName);
+                preparedStatement.setString(2, normalizedTopic);
+                preparedStatement.setString(3, normalizedDescription);
+                preparedStatement.setObject(4, startDate);
+                preparedStatement.setObject(5, endDate);
+                preparedStatement.setInt(6, hoursPerWeek);
+                preparedStatement.setDouble(7, price);
+                preparedStatement.setInt(8, maxStudents);
+                preparedStatement.setObject(9, LocalDate.now());
+                preparedStatement.setLong(10, tutorId);
+                return preparedStatement;
+            }, groupKeyHolder);
+            if (groupInsertResult != 1 || groupKeyHolder.getKey() == null) {
+                throw new Exception("Failed to insert group.");
             }
+            Long groupId = groupKeyHolder.getKey().longValue();
 
-            String insertGroupSubjectSql = "INSERT INTO group_subject (group_id, subject_id) VALUES ((SELECT group_id FROM group_table WHERE group_name = ? AND headtutor_id = ?), (SELECT id FROM subject WHERE subject_name = ?));";
-            for (String subject : subjects) {
-                int groupSubjectInsertResult = jdbcTemplate.update(insertGroupSubjectSql, groupName, tutorId, subject);
+            String insertGroupSubjectSql = "INSERT INTO group_subject (group_id, subject_id) VALUES (?, ?);";
+            for (String subject : normalizedSubjects) {
+                Long subjectId;
+                try {
+                    subjectId = jdbcTemplate.queryForObject(
+                            "SELECT id FROM subject WHERE subject_name = ?",
+                            new Object[]{subject},
+                            Long.class
+                    );
+                } catch (EmptyResultDataAccessException e) {
+                    throw new IllegalArgumentException("Nepostojeci predmet: " + subject);
+                }
+                if (subjectId == null) {
+                    throw new IllegalArgumentException("Nepostojeci predmet: " + subject);
+                }
+
+                int groupSubjectInsertResult = jdbcTemplate.update(insertGroupSubjectSql, groupId, subjectId);
                 if (groupSubjectInsertResult != 1) {
                     throw new Exception("Failed to insert group subject for: " + subject);
                 }
             }
 
-            String insertUserGroupSql = "INSERT INTO user_group (date_joined, group_id, user_id) VALUES (?, (SELECT group_id FROM group_table WHERE group_name = ? AND headtutor_id = ?), ?);";
-            int userGroupInsertResult = jdbcTemplate.update(insertUserGroupSql, LocalDate.now(), groupName, tutorId, tutorId);
+            String insertUserGroupSql = "INSERT INTO user_group (date_joined, group_id, user_id) VALUES (?, ?, ?);";
+            int userGroupInsertResult = jdbcTemplate.update(insertUserGroupSql, LocalDate.now(), groupId, tutorId);
             if (userGroupInsertResult != 1) {
                 throw new Exception("Failed to insert tutor into user_group");
             }
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            throw e;
         } catch (DataAccessException e) {
-            throw new Exception("Greska pri pristupu bazi podataka: " + e.getMessage());
-        } catch (NumberFormatException e) {
-            throw new Exception("Greska pri parsiranju numerickih vrijednosti: " + e.getMessage());
+            throw new Exception("Greska pri pristupu bazi podataka.");
         } catch (Exception e) {
-            throw new Exception("Greska pri kreiranju grupe: " + e.getMessage());
+            throw new Exception("Greska pri kreiranju grupe.");
         }
     }
 

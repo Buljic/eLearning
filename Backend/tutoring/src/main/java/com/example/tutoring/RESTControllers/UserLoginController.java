@@ -19,6 +19,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.EnumSet;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -29,6 +30,17 @@ public class UserLoginController
     private static final Logger logger = LoggerFactory.getLogger(UserLoginController.class);
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$");
     private static final Pattern PHONE_PATTERN = Pattern.compile("^[0-9+\\-\\s]{6,20}$");
+    private static final int MAX_USERNAME_LENGTH = 64;
+    private static final int MAX_NAME_LENGTH = 80;
+    private static final int MAX_SURNAME_LENGTH = 80;
+    private static final int MAX_EMAIL_LENGTH = 254;
+    private static final int MAX_PHONE_LENGTH = 20;
+    private static final int MAX_PASSWORD_LENGTH = 128;
+    private static final Set<AccountType> SELF_REGISTRATION_ALLOWED_TYPES = EnumSet.of(
+            AccountType.STUDENT,
+            AccountType.PROFESOR,
+            AccountType.OBOJE
+    );
     private final UserRepository userRepository;
     private final TutorRepository tutorRepository;
     private final StudentRepository studentRepository;
@@ -60,24 +72,33 @@ public class UserLoginController
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(validationError);
         }
 
-        if (createAccountDTO.getAccountType() == null) {
+        AccountType requestedAccountType = createAccountDTO.getAccountType();
+        if (requestedAccountType == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Tip naloga je obavezan");
         }
-        if(userRepository.existsByUsername(createAccountDTO.getUsername()))
+        if (!SELF_REGISTRATION_ALLOWED_TYPES.contains(requestedAccountType)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Odabrani tip naloga nije dozvoljen za samostalnu registraciju.");
+        }
+
+        String normalizedUsername = createAccountDTO.getUsername().trim();
+        if (userRepository.existsByUsernameIgnoreCase(normalizedUsername))
         {
           return  ResponseEntity
                     .status(HttpStatus.BAD_REQUEST)
                     .body("Korisnicko ime vec postoji");
         }
-        User user=new User(createAccountDTO.getUsername(),bCryptPasswordEncoder.encode(createAccountDTO.getPassword())
-        ,createAccountDTO.getName(),
-                createAccountDTO.getSurname(),
-                encriptionUtility.encrypt(createAccountDTO.getEmail()),
-                encriptionUtility.encrypt(createAccountDTO.getPhoneNumber()),
-                createAccountDTO.getAccountType());
-        user.setRoles(resolveInitialRoles(createAccountDTO.getAccountType()));
+
+        String normalizedPhone = normalizePhone(createAccountDTO.getPhoneNumber());
+        String encryptedPhone = normalizedPhone.isBlank() ? null : encriptionUtility.encrypt(normalizedPhone);
+        User user=new User(normalizedUsername,bCryptPasswordEncoder.encode(createAccountDTO.getPassword())
+        ,createAccountDTO.getName().trim(),
+                createAccountDTO.getSurname().trim(),
+                encriptionUtility.encrypt(createAccountDTO.getEmail().trim()),
+                encryptedPhone,
+                requestedAccountType);
+        user.setRoles(resolveInitialRoles(requestedAccountType));
         userRepository.save(user);
-        switch (createAccountDTO.getAccountType()) {
+        switch (requestedAccountType) {
             case STUDENT -> {
                 Student student = new Student();
                 student.setUser(user);
@@ -135,22 +156,30 @@ public class UserLoginController
         if (dto == null) {
             return "Neispravan zahtjev.";
         }
-        if (isBlank(dto.getUsername()) || dto.getUsername().length() < 4) {
+        String username = dto.getUsername() == null ? null : dto.getUsername().trim();
+        if (isBlank(username) || username.length() < 4 || username.length() > MAX_USERNAME_LENGTH) {
             return "Korisnicko ime mora imati najmanje 4 znaka.";
         }
-        if (isBlank(dto.getPassword()) || dto.getPassword().length() < 8) {
+        if (isBlank(dto.getPassword()) || dto.getPassword().length() < 8 || dto.getPassword().length() > MAX_PASSWORD_LENGTH) {
             return "Lozinka mora imati najmanje 8 znakova.";
         }
-        if (isBlank(dto.getName()) || dto.getName().length() < 2) {
+        String name = dto.getName() == null ? null : dto.getName().trim();
+        if (isBlank(name) || name.length() < 2 || name.length() > MAX_NAME_LENGTH) {
             return "Ime je obavezno.";
         }
-        if (isBlank(dto.getSurname()) || dto.getSurname().length() < 2) {
+        String surname = dto.getSurname() == null ? null : dto.getSurname().trim();
+        if (isBlank(surname) || surname.length() < 2 || surname.length() > MAX_SURNAME_LENGTH) {
             return "Prezime je obavezno.";
         }
-        if (isBlank(dto.getEmail()) || !EMAIL_PATTERN.matcher(dto.getEmail()).matches()) {
+        String email = dto.getEmail() == null ? null : dto.getEmail().trim();
+        if (isBlank(email) || email.length() > MAX_EMAIL_LENGTH || !EMAIL_PATTERN.matcher(email).matches()) {
             return "Email adresa nije validna.";
         }
-        if (!isBlank(dto.getPhoneNumber()) && !PHONE_PATTERN.matcher(dto.getPhoneNumber()).matches()) {
+        String phoneNumber = normalizePhone(dto.getPhoneNumber());
+        if (phoneNumber.length() > MAX_PHONE_LENGTH) {
+            return "Broj telefona nije validan.";
+        }
+        if (!isBlank(phoneNumber) && !PHONE_PATTERN.matcher(phoneNumber).matches()) {
             return "Broj telefona nije validan.";
         }
         return null;
@@ -158,6 +187,10 @@ public class UserLoginController
 
     private boolean isBlank(String value) {
         return value == null || value.isBlank();
+    }
+
+    private String normalizePhone(String phone) {
+        return phone == null ? "" : phone.trim();
     }
 
 

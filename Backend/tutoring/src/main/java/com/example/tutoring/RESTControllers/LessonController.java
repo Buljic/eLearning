@@ -42,6 +42,7 @@ public class LessonController {
     private final StorageService storageService;
     private final GroupService groupService;
     private final UserService userService;
+    private final ObjectMapper objectMapper;
     private static final Logger logger = LoggerFactory.getLogger(LessonController.class);
 
     @Value ("${file.upload-dir}")
@@ -52,13 +53,15 @@ public class LessonController {
             JwtUtil jwtUtil,
             StorageService storageService,
             GroupService groupService,
-            UserService userService
+            UserService userService,
+            ObjectMapper objectMapper
     ) {
         this.lessonService = lessonService;
         this.jwtUtil = jwtUtil;
         this.storageService = storageService;
         this.groupService = groupService;
         this.userService = userService;
+        this.objectMapper = objectMapper;
     }
 
 //    @PostMapping("/lessons")
@@ -174,7 +177,7 @@ public class LessonController {
 
         Lesson lesson;
         try {
-            lesson = new ObjectMapper().readValue(lessonData, Lesson.class);
+            lesson = objectMapper.readValue(lessonData, Lesson.class);
         } catch (JsonProcessingException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Failed to parse lesson data: " + e.getMessage());
         }
@@ -193,7 +196,11 @@ public class LessonController {
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to save lesson");
             }
 
-            for (MultipartFile file : files) {
+            MultipartFile[] safeFiles = files == null ? new MultipartFile[0] : files;
+            for (MultipartFile file : safeFiles) {
+                if (file == null || file.isEmpty()) {
+                    continue;
+                }
                 String fileName = storageService.store(file);
                 Material material = new Material();
                 Lesson savedLesson = new Lesson();
@@ -205,8 +212,10 @@ public class LessonController {
                 lessonService.saveMaterial(material);
             }
             return ResponseEntity.status(HttpStatus.CREATED).body("Lesson created successfully with files");
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred.");
         }
     }
 
@@ -248,11 +257,12 @@ public class LessonController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Cannot upload materials outside your groups");
         }
 
-        String fileName = file.getOriginalFilename();
+        if (file == null || file.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("File is required");
+        }
         try {
             // Logiranje direktorija i imena fajlova
             logger.info("Upload directory: " + uploadDir);
-            logger.info("Stored file: " + fileName);
 
             String storedFileName = storageService.store(file);
             Material material = new Material();
@@ -265,8 +275,10 @@ public class LessonController {
             lessonService.saveMaterial(material);
             logger.info("Saving material with lessonId: " + material.getLesson().getId());
             return ResponseEntity.status(HttpStatus.CREATED).body("File uploaded successfully");
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to upload file: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to upload file.");
         }
     }
 

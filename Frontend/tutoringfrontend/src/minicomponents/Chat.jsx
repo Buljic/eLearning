@@ -6,17 +6,23 @@ import config from "../config.js";
 import "../css/chat.css";
 import { getSessionUser } from "../utils/sessionUser.js";
 
+const MAX_MESSAGE_LENGTH = 4000;
+
 function determineEndpoints(isGroupChat, chatId, myUserId) {
+  const normalizedChatId = Number(chatId);
+  if (!Number.isInteger(normalizedChatId) || normalizedChatId <= 0) {
+    return null;
+  }
+
   if (isGroupChat) {
     return {
-      receiveEndpoint: `/user/queue/group/${chatId}`,
-      sendEndpoint: `/app/${chatId}`,
+      receiveEndpoint: `/user/queue/group/${normalizedChatId}`,
+      sendEndpoint: `/app/${normalizedChatId}`,
     };
   }
 
-  const targetUserId = Number(chatId);
-  const isMyUserIdLess = myUserId < targetUserId;
-  const base = isMyUserIdLess ? `${myUserId}/${targetUserId}` : `${targetUserId}/${myUserId}`;
+  const isMyUserIdLess = myUserId < normalizedChatId;
+  const base = isMyUserIdLess ? `${myUserId}/${normalizedChatId}` : `${normalizedChatId}/${myUserId}`;
   return {
     receiveEndpoint: `/user/queue/direct/${base}`,
     sendEndpoint: `/app/${base}`,
@@ -110,6 +116,9 @@ const Chat = ({ chatId, isGroupChat }) => {
     if (!chatId || !myUser?.id) return;
 
     const resolvedEndpoints = determineEndpoints(isGroupChat, chatId, myUser.id);
+    if (!resolvedEndpoints) {
+      return;
+    }
     setEndpoints(resolvedEndpoints);
     setMessages([]);
     setPage(0);
@@ -143,7 +152,7 @@ const Chat = ({ chatId, isGroupChat }) => {
 
   const sendMessage = () => {
     const trimmedMessage = messageText.trim();
-    if (!trimmedMessage || !stompClientRef.current?.connected) {
+    if (!trimmedMessage || trimmedMessage.length > MAX_MESSAGE_LENGTH || !stompClientRef.current?.connected) {
       return;
     }
 
@@ -164,6 +173,7 @@ const Chat = ({ chatId, isGroupChat }) => {
 
   if (!chatId) return "Ucitavanje...";
   if (!myUser?.id) return "Niste prijavljeni.";
+  if (!endpoints.receiveEndpoint || !endpoints.sendEndpoint) return "Neispravan chat.";
 
   return (
     <section className="chat-panel">
@@ -193,6 +203,7 @@ const Chat = ({ chatId, isGroupChat }) => {
           type="text"
           value={messageText}
           onChange={(event) => setMessageText(event.target.value)}
+          maxLength={MAX_MESSAGE_LENGTH}
           onKeyDown={(event) => {
             if (event.key === "Enter") {
               sendMessage();

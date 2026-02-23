@@ -5,37 +5,42 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.Locale;
+import java.util.Set;
+import java.util.UUID;
 
 @Service
 public class StorageService {
+    private static final Set<String> ALLOWED_EXTENSIONS = Set.of(
+            "png", "jpg", "jpeg", "gif", "webp",
+            "pdf", "txt", "csv", "md", "rtf", "doc", "docx", "odt",
+            "ppt", "pptx", "odp", "xls", "xlsx", "ods",
+            "mp4", "mp3", "wav", "m4a",
+            "zip", "rar", "7z"
+    );
+
     @Value("${file.upload-dir}")
     private String uploadDir;
 
     public String store(MultipartFile file) {
-        try {
-            File directory = new File(uploadDir);
-            if (!directory.exists()) {
-                directory.mkdirs();
-            }
-
-            Path destination = Paths.get(uploadDir, file.getOriginalFilename());
-            file.transferTo(destination);
-
-            return file.getOriginalFilename();
-        } catch (Exception e) {
-            throw new RuntimeException("Neuspjelo spremanje slike!", e);
-        }
+        return storeInSubdirectory(file, "");
     }
 
     public void delete(String filename) {
         try {
-            Path fileToDelete = Paths.get(uploadDir, filename);
+            if (filename == null || filename.isBlank()) {
+                return;
+            }
+            Path root = ensureDirectory(Paths.get(uploadDir));
+            Path fileToDelete = root.resolve(filename).normalize();
+            if (!fileToDelete.startsWith(root)) {
+                throw new RuntimeException("Neispravna putanja fajla.");
+            }
             Files.deleteIfExists(fileToDelete);
         } catch (IOException e) {
             throw new RuntimeException("Neuspjelo brisanje slike!", e);
@@ -43,33 +48,59 @@ public class StorageService {
     }
 
     public String storeAssignment(MultipartFile file) {
-        try {
-            Path assignmentDir = Paths.get(uploadDir, "assignments");
-            // Kreiraj direktorij ako ne postoji
-            if (!Files.exists(assignmentDir)) {
-                Files.createDirectories(assignmentDir);
-            }
-            Path copyLocation = assignmentDir.resolve(StringUtils.cleanPath(file.getOriginalFilename()));
-            Files.copy(file.getInputStream(), copyLocation, StandardCopyOption.REPLACE_EXISTING);
-            return file.getOriginalFilename();
-        } catch (Exception e) {
-            throw new RuntimeException("Could not store file " + file.getOriginalFilename() + ". Please try again!", e);
-        }
+        return storeInSubdirectory(file, "assignments");
     }
 
     public String storeAssignmentSubmission(MultipartFile file) {
+        return storeInSubdirectory(file, "assignmentsubmits");
+    }
+
+    private String storeInSubdirectory(MultipartFile file, String subdirectory) {
         try {
-            Path submissionDir = Paths.get(uploadDir, "assignmentsubmits");
-            // Kreiraj direktorij ako ne postoji
-            if (!Files.exists(submissionDir)) {
-                Files.createDirectories(submissionDir);
+            if (file == null || file.isEmpty()) {
+                throw new RuntimeException("Fajl je prazan ili ne postoji.");
             }
-            Path copyLocation = submissionDir.resolve(StringUtils.cleanPath(file.getOriginalFilename()));
-            Files.copy(file.getInputStream(), copyLocation, StandardCopyOption.REPLACE_EXISTING);
-            return file.getOriginalFilename();
+
+            String originalFilename = StringUtils.cleanPath(file.getOriginalFilename() == null ? "" : file.getOriginalFilename());
+            if (originalFilename.isBlank()) {
+                throw new RuntimeException("Naziv fajla nije validan.");
+            }
+
+            String extension = extractSafeExtension(originalFilename);
+            String generatedFilename = UUID.randomUUID() + "." + extension;
+
+            Path root = ensureDirectory(Paths.get(uploadDir));
+            Path targetDir = subdirectory == null || subdirectory.isBlank()
+                    ? root
+                    : ensureDirectory(root.resolve(subdirectory));
+            Path targetFile = targetDir.resolve(generatedFilename).normalize();
+            if (!targetFile.startsWith(targetDir)) {
+                throw new RuntimeException("Neispravna putanja fajla.");
+            }
+
+            Files.copy(file.getInputStream(), targetFile, StandardCopyOption.REPLACE_EXISTING);
+            return generatedFilename;
         } catch (Exception e) {
-            throw new RuntimeException("Could not store file " + file.getOriginalFilename() + ". Please try again!", e);
+            throw new RuntimeException("Neuspjelo spremanje fajla.", e);
         }
+    }
+
+    private Path ensureDirectory(Path path) throws IOException {
+        Path normalized = path.toAbsolutePath().normalize();
+        Files.createDirectories(normalized);
+        return normalized;
+    }
+
+    private String extractSafeExtension(String filename) {
+        int dotIndex = filename.lastIndexOf('.');
+        if (dotIndex < 0 || dotIndex == filename.length() - 1) {
+            throw new RuntimeException("Ekstenzija fajla nije podrzana.");
+        }
+        String extension = filename.substring(dotIndex + 1).toLowerCase(Locale.ROOT);
+        if (!ALLOWED_EXTENSIONS.contains(extension)) {
+            throw new RuntimeException("Ekstenzija fajla nije podrzana.");
+        }
+        return extension;
     }
 }
 

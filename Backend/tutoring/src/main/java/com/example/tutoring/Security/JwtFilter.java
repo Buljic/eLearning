@@ -30,8 +30,7 @@ public class JwtFilter extends OncePerRequestFilter {
             "/api/login",
             "/api/auth/refresh",
             "/api/auth/logout",
-            "/api/createAccount",
-            "/uploads/**"
+            "/api/createAccount"
     );
 
     private final JwtUtil jwtUtil;
