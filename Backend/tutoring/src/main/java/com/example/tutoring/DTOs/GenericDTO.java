@@ -38,13 +38,31 @@ public class GenericDTO
     }
 
     public Integer getInt(String key) {
-        String value = getString(key);
-        return (value != null && !value.isEmpty()) ? Integer.parseInt(value) : null;
+        Object value = properties.get(key);
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof Number number) {
+            return number.intValue();
+        }
+        if (value instanceof String stringValue && !stringValue.isEmpty()) {
+            return Integer.parseInt(stringValue);
+        }
+        return null;
     }
 
     public Long getLong(String key) {
-        String value = getString(key);
-        return (value != null && !value.isEmpty()) ? Long.parseLong(value) : null;
+        Object value = properties.get(key);
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof Number number) {
+            return number.longValue();
+        }
+        if (value instanceof String stringValue && !stringValue.isEmpty()) {
+            return Long.parseLong(stringValue);
+        }
+        return null;
     }
 
     //cisto radi cisce sintakse iako isto radi kao i addProperty
@@ -53,8 +71,17 @@ public class GenericDTO
     }
 
     public Double getDouble(String key) {
-        String value = getString(key);
-        return (value != null && !value.isEmpty()) ? Double.parseDouble(value) : null;
+        Object value = properties.get(key);
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof Number number) {
+            return number.doubleValue();
+        }
+        if (value instanceof String stringValue && !stringValue.isEmpty()) {
+            return Double.parseDouble(stringValue);
+        }
+        return null;
     }
 
     public List<String> getList(String key) {

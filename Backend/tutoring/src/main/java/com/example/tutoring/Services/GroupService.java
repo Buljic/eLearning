@@ -1,10 +1,10 @@
 package com.example.tutoring.Services;
 
 import com.example.tutoring.Entities.Group;
-import com.example.tutoring.Entities.User;
 import com.example.tutoring.Other.RequestStatus;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -13,6 +13,7 @@ import java.time.LocalDate;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
 @Service
 public class GroupService {
@@ -21,28 +22,35 @@ public class GroupService {
 
     public Group findGroupById(Long groupId) {
         String sql = "SELECT * FROM group_table WHERE group_id = ?";
-        return jdbcTemplate.queryForObject(sql, new Object[]{groupId}, new BeanPropertyRowMapper<>(Group.class));
+        try {
+            return jdbcTemplate.queryForObject(sql, new Object[]{groupId}, new BeanPropertyRowMapper<>(Group.class));
+        } catch (EmptyResultDataAccessException ignored) {
+            return null;
+        }
     }
 
     @Transactional
-    public void requestAccess(Long groupId, Long userId) throws Exception {
-        // Provjera da li korisnik vec ima zahtjev za istu grupu
+    public void requestAccess(Long groupId, Long userId) {
+        Group group = findGroupById(groupId);
+        if (group == null) {
+            throw new NoSuchElementException("Grupa ne postoji.");
+        }
+        if (isUserInGroup(userId, groupId)) {
+            throw new IllegalStateException("Vec ste clan ove grupe.");
+        }
+
         String checkRequestSql = "SELECT COUNT(*) FROM group_requests WHERE group_id = ? AND user_id = ?";
         int count = jdbcTemplate.queryForObject(checkRequestSql, new Object[]{groupId, userId}, Integer.class);
 
         if (count > 0) {
-            throw new Exception("Već ste poslali zahtjev za ovu grupu.");
+            throw new IllegalStateException("Vec ste poslali zahtjev za ovu grupu.");
         }
 
-        // Provjera da li je grupa vec pocela
-        String checkGroupStartSql = "SELECT start_date FROM group_table WHERE group_id = ?";
-        Date startDate = jdbcTemplate.queryForObject(checkGroupStartSql, new Object[]{groupId}, Date.class);
-
+        Date startDate = group.getStartDate();
         if (startDate != null && startDate.before(new Date())) {
-            throw new Exception("Grupa je već počela, ne možete se pridružiti.");
+            throw new IllegalStateException("Grupa je vec pocela, ne mozete se pridruziti.");
         }
 
-        // Dodavanje zahtjeva
         String insertRequestSql = "INSERT INTO group_requests (user_id, group_id, request_date, status) VALUES (?, ?, ?, ?)";
         jdbcTemplate.update(insertRequestSql, userId, groupId, LocalDate.now(), RequestStatus.REQUESTED.toString());
     }
@@ -61,5 +69,11 @@ public class GroupService {
         List<Map<String, Object>> users = jdbcTemplate.queryForList(sql, groupId);
 
         return users.stream().anyMatch(user -> "PROFESOR".equals(user.get("account_type")));
+    }
+
+    public boolean isTutorOwnerOfGroup(Long tutorId, Long groupId) {
+        String sql = "SELECT COUNT(*) FROM group_table WHERE group_id = ? AND headtutor_id = ?";
+        Integer count = jdbcTemplate.queryForObject(sql, new Object[]{groupId, tutorId}, Integer.class);
+        return count != null && count > 0;
     }
 }

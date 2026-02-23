@@ -1,29 +1,32 @@
 package com.example.tutoring.RESTControllers;
 
-
 import com.example.tutoring.DTOs.AssignmentRequest;
 import com.example.tutoring.Entities.Assignment;
 import com.example.tutoring.Entities.AssignmentSubmission;
 import com.example.tutoring.Entities.Group;
 import com.example.tutoring.Entities.User;
 import com.example.tutoring.Other.AccountType;
-import com.example.tutoring.Repositories.UserRepository;
 import com.example.tutoring.Security.JwtUtil;
 import com.example.tutoring.Services.AssignmentService;
+import com.example.tutoring.Services.GroupService;
 import com.example.tutoring.Services.StorageService;
 import com.example.tutoring.Services.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.InvalidDefinitionException;
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.beans.factory.annotation.Value;
+
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api")
@@ -33,166 +36,191 @@ public class AssignmentController {
     private final StorageService storageService;
     private final ObjectMapper objectMapper;
     private final UserService userService;
+    private final GroupService groupService;
 
-    @Autowired
-    private UserRepository userRepository;
-    @Value("${file.upload-dir}")
-    private String uploadDir;
-
-    @Autowired
-    public AssignmentController(AssignmentService assignmentService, JwtUtil jwtUtil, StorageService storageService, ObjectMapper objectMapper,
-                                UserService userService) {
+    public AssignmentController(
+            AssignmentService assignmentService,
+            JwtUtil jwtUtil,
+            StorageService storageService,
+            ObjectMapper objectMapper,
+            UserService userService,
+            GroupService groupService
+    ) {
         this.assignmentService = assignmentService;
         this.jwtUtil = jwtUtil;
         this.storageService = storageService;
         this.objectMapper = objectMapper;
         this.userService = userService;
+        this.groupService = groupService;
     }
 
     @PostMapping(value = "/assignments", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<?> createAssignment(HttpServletRequest request, @RequestPart("assignment") String assignmentData, @RequestPart("file") MultipartFile file) {
-        String token = jwtUtil.extractJwtFromCookie(request);
-        if (token != null) {
-            String role = jwtUtil.getRoleFromToken(token);
-            if (role.equals("PROFESOR")) {
-                AssignmentRequest assignmentRequest;
-                try {
-                    System.out.println("Received JSON: " + assignmentData);
-                    assignmentRequest = objectMapper.readValue(assignmentData, AssignmentRequest.class);
-                    Assignment assignment = new Assignment();
-                    assignment.setName(assignmentRequest.getName());
-                    assignment.setDescription(assignmentRequest.getDescription());
-                    assignment.setDueDateTime(assignmentRequest.getDueDateTime());
-                    assignment.setPoints(assignmentRequest.getPoints());
-
-                    Group group = new Group();
-                    group.setGroup_id(assignmentRequest.getGroup_id());
-                    assignment.setGroup(group);
-
-                    if (!file.isEmpty()) {
-                        String fileName = storageService.storeAssignment(file);
-                        assignment.setImageUrl("/uploads/assignments/" + fileName);
-                    }
-                    assignmentService.saveAssignment(assignment);
-                    return ResponseEntity.status(HttpStatus.CREATED).body("Assignment created successfully");
-                } catch (InvalidDefinitionException e) {
-                    e.printStackTrace();
-                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to parse assignment data: " + e.getMessage());
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to create assignment");
-                }
-            } else {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Only professors can create assignments");
-            }
-        } else {
+    public ResponseEntity<?> createAssignment(
+            HttpServletRequest request,
+            @RequestPart("assignment") String assignmentData,
+            @RequestPart("file") MultipartFile file
+    ) {
+        User currentUser = authenticate(request);
+        if (currentUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
+        }
+        if (!canActAsProfessor(currentUser)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Only professors can create assignments");
+        }
+
+        try {
+            AssignmentRequest assignmentRequest = objectMapper.readValue(assignmentData, AssignmentRequest.class);
+            if (assignmentRequest.getGroup_id() == null || !groupService.isTutorOwnerOfGroup(currentUser.getId(), assignmentRequest.getGroup_id())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You can create assignments only for your own groups");
+            }
+
+            Assignment assignment = new Assignment();
+            assignment.setName(assignmentRequest.getName());
+            assignment.setDescription(assignmentRequest.getDescription());
+            assignment.setDueDateTime(assignmentRequest.getDueDateTime());
+            assignment.setPoints(assignmentRequest.getPoints());
+
+            Group group = new Group();
+            group.setGroup_id(assignmentRequest.getGroup_id());
+            assignment.setGroup(group);
+
+            if (file != null && !file.isEmpty()) {
+                String fileName = storageService.storeAssignment(file);
+                assignment.setImageUrl("/uploads/assignments/" + fileName);
+            }
+
+            assignmentService.saveAssignment(assignment);
+            return ResponseEntity.status(HttpStatus.CREATED).body("Assignment created successfully");
+        } catch (InvalidDefinitionException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Failed to parse assignment data: " + e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to create assignment");
         }
     }
 
-//    @GetMapping("/{groupId}/assignments")
-//    public ResponseEntity<List<Assignment>> getAssignments(@PathVariable Long groupId) {
-//        List<Assignment> assignments = assignmentService.getAssignmentsByGroupId(groupId);
-//        return ResponseEntity.ok(assignments);
-//    }
-@GetMapping("/{groupId}/assignments")
-public ResponseEntity<List<Assignment>> getAssignments(@PathVariable Long groupId, HttpServletRequest request) {
-    String token = jwtUtil.extractJwtFromCookie(request);
-    if (token != null && jwtUtil.validateToken(token)) {
-        String username = jwtUtil.getUsernameFromToken(token);
-        User user = userService.getUserByUsername(username);
+    @GetMapping("/{groupId}/assignments")
+    public ResponseEntity<List<Assignment>> getAssignments(@PathVariable Long groupId, HttpServletRequest request) {
+        User currentUser = authenticate(request);
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+        }
+        if (!canAccessGroup(currentUser, groupId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
+        }
+
         List<Assignment> assignments;
-        if (user != null && user.getAccountType().equals(AccountType.STUDENT)) {
-            assignments = assignmentService.getAssignmentsByGroupIdWithSubmissionsForUser(groupId, user.getId());
+        if (currentUser.getAccountType().equals(AccountType.STUDENT)) {
+            assignments = assignmentService.getAssignmentsByGroupIdWithSubmissionsForUser(groupId, currentUser.getId());
         } else {
             assignments = assignmentService.getAssignmentsByGroupId(groupId);
         }
-        return ResponseEntity.ok(assignments);
-    } else {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
-    }
-}
 
+        return ResponseEntity.ok(assignments);
+    }
 
     @GetMapping("/assignments/{assignmentId}")
     public ResponseEntity<Assignment> getAssignment(@PathVariable Long assignmentId, HttpServletRequest request) {
-        String token = jwtUtil.extractJwtFromCookie(request);
-        if (token != null && jwtUtil.validateToken(token)) {
-            Assignment assignment = assignmentService.getAssignmentById(assignmentId);
-            return ResponseEntity.ok(assignment);
-        } else {
+        User currentUser = authenticate(request);
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+        }
+
+        Long groupId = assignmentService.getGroupIdByAssignmentId(assignmentId);
+        if (groupId == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
+        if (!canAccessGroup(currentUser, groupId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
         }
+
+        Assignment assignment = assignmentService.getAssignmentById(assignmentId);
+        return ResponseEntity.ok(assignment);
     }
 
-//    @PostMapping("/assignments/{assignmentId}/submit")
-//    public ResponseEntity<?> submitAssignment(HttpServletRequest request, @PathVariable Long assignmentId, @RequestPart("file") MultipartFile file) {
-//        String token = jwtUtil.extractJwtFromCookie(request);
-//        if (token != null) {
-//            String role = jwtUtil.getRoleFromToken(token);
-//            if (role.equals("STUDENT")) {
-//                AssignmentSubmission submission = new AssignmentSubmission();
-//                try {
-//                    String fileName = storageService.storeAssignmentSubmission(file);
-//                    submission.setFileUrl("/uploads/assignmentsubmits/" + fileName);
-//                    submission.setAssignment(new Assignment(assignmentId));
-//                    submission.setStudent(new User(jwtUtil.getUsernameFromToken(token))); // Pretpostavljamo da imamo konstruktor User(String username)
-//                    assignmentService.saveSubmission(submission);
-//                    return ResponseEntity.status(HttpStatus.CREATED).body("Submission created successfully");
-//                } catch (Exception e) {
-//                    e.printStackTrace();
-//                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to submit assignment");
-//                }
-//            } else {
-//                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Only students can submit assignments");
-//            }
-//        } else {
-//            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
-//        }
-//    }
-@PostMapping("/assignments/{assignmentId}/submit")
-public ResponseEntity<?> submitAssignment(HttpServletRequest request, @PathVariable Long assignmentId, @RequestPart("file") MultipartFile file) {
-    String token = jwtUtil.extractJwtFromCookie(request);
-    if (token != null) {
-        String role = jwtUtil.getRoleFromToken(token);
-        if (role.equals("STUDENT")) {
-            AssignmentSubmission submission = new AssignmentSubmission();
-            try {
-                String fileName = storageService.storeAssignmentSubmission(file);
-                submission.setFileUrl("/uploads/assignmentsubmits/" + fileName);
-                submission.setAssignment(new Assignment(assignmentId));
-
-                // Dohvaćanje cijelog User objekta iz baze podataka
-                String username = jwtUtil.getUsernameFromToken(token);
-                Optional<User> userOpt = userRepository.findByUsername(username);
-                if (userOpt.isPresent()) {
-                    submission.setStudent(userOpt.get());
-                } else {
-                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
-                }
-
-                assignmentService.saveSubmission(submission);
-                return ResponseEntity.status(HttpStatus.CREATED).body("Submission created successfully");
-            } catch (Exception e) {
-                e.printStackTrace();
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to submit assignment");
-            }
-        } else {
+    @PostMapping("/assignments/{assignmentId}/submit")
+    public ResponseEntity<?> submitAssignment(
+            HttpServletRequest request,
+            @PathVariable Long assignmentId,
+            @RequestPart("file") MultipartFile file
+    ) {
+        User currentUser = authenticate(request);
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
+        }
+        if (!canActAsStudent(currentUser)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Only students can submit assignments");
         }
-    } else {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
+
+        Long groupId = assignmentService.getGroupIdByAssignmentId(assignmentId);
+        if (groupId == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Assignment not found");
+        }
+        if (!groupService.isUserInGroup(currentUser.getId(), groupId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You are not part of this group");
+        }
+        if (assignmentService.hasSubmissionForAssignment(assignmentId, currentUser.getId())) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("Submission already exists for this assignment");
+        }
+
+        try {
+            String fileName = storageService.storeAssignmentSubmission(file);
+            AssignmentSubmission submission = new AssignmentSubmission();
+            submission.setFileUrl("/uploads/assignmentsubmits/" + fileName);
+            submission.setAssignment(new Assignment(assignmentId));
+            submission.setStudent(currentUser);
+            assignmentService.saveSubmission(submission);
+            return ResponseEntity.status(HttpStatus.CREATED).body("Submission created successfully");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to submit assignment");
+        }
     }
-}
 
     @GetMapping("/assignments/{assignmentId}/submissions")
-    public ResponseEntity<List<AssignmentSubmission>> getSubmissions(@PathVariable Long assignmentId) {
+    public ResponseEntity<List<AssignmentSubmission>> getSubmissions(@PathVariable Long assignmentId, HttpServletRequest request) {
+        User currentUser = authenticate(request);
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+        }
+        if (!canActAsProfessor(currentUser)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
+        }
+
+        Long groupId = assignmentService.getGroupIdByAssignmentId(assignmentId);
+        if (groupId == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
+        if (!groupService.isTutorOwnerOfGroup(currentUser.getId(), groupId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
+        }
+
         List<AssignmentSubmission> submissions = assignmentService.getSubmissionsByAssignmentId(assignmentId);
         return ResponseEntity.ok(submissions);
     }
 
     @PostMapping("/assignments/{assignmentId}/submissions/{submissionId}/feedback")
-    public ResponseEntity<?> provideFeedback(@PathVariable Long submissionId, @RequestBody AssignmentSubmission feedback) {
+    public ResponseEntity<?> provideFeedback(
+            @PathVariable Long assignmentId,
+            @PathVariable Long submissionId,
+            @RequestBody AssignmentSubmission feedback,
+            HttpServletRequest request
+    ) {
+        User currentUser = authenticate(request);
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
+        }
+        if (!canActAsProfessor(currentUser)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Only professors can provide feedback");
+        }
+
+        Long assignmentGroupId = assignmentService.getGroupIdByAssignmentId(assignmentId);
+        Long submissionGroupId = assignmentService.getGroupIdBySubmissionId(submissionId);
+        if (assignmentGroupId == null || submissionGroupId == null || !assignmentGroupId.equals(submissionGroupId)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Submission does not belong to assignment");
+        }
+        if (!groupService.isTutorOwnerOfGroup(currentUser.getId(), assignmentGroupId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Cannot grade submissions outside your groups");
+        }
+
         try {
             AssignmentSubmission submission = assignmentService.getSubmissionById(submissionId);
             submission.setFeedback(feedback.getFeedback());
@@ -200,44 +228,62 @@ public ResponseEntity<?> submitAssignment(HttpServletRequest request, @PathVaria
             assignmentService.updateSubmission(submission);
             return ResponseEntity.ok("Feedback provided successfully");
         } catch (Exception e) {
-            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to provide feedback");
         }
     }
 
-//    @GetMapping("/{groupId}/assignments/forStudent")
-//    public ResponseEntity<List<Assignment>> getAssignmentsForStudent(@PathVariable Long groupId, HttpServletRequest request) {
-//        String token = jwtUtil.extractJwtFromCookie(request);
-//        if (token != null && jwtUtil.validateToken(token)) {
-//            String username = jwtUtil.getUsernameFromToken(token);
-//            User user = userService.getUserByUsername(username);
-//            if (user != null && user.getAccountType().equals(AccountType.STUDENT)) {
-//                List<Assignment> assignments = assignmentService.getAssignmentsByGroupIdWithSubmissionsForUser(groupId, user.getId());
-//                return ResponseEntity.ok(assignments);
-//            } else {
-//                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
-//            }
-//        } else {
-//            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
-//        }
-//    }
-
     @GetMapping("/assignments/{assignmentId}/withSubmissions")
     public ResponseEntity<Assignment> getAssignmentWithSubmissions(@PathVariable Long assignmentId, HttpServletRequest request) {
-        String token = jwtUtil.extractJwtFromCookie(request);
-        if (token != null && jwtUtil.validateToken(token)) {
-            String username = jwtUtil.getUsernameFromToken(token);
-            User user = userService.getUserByUsername(username);
-            if (user != null && user.getAccountType().equals(AccountType.STUDENT)) {
-                Assignment assignment = assignmentService.getAssignmentWithSubmissions(assignmentId, user.getId());
-                return ResponseEntity.ok(assignment);
-            } else {
-                Assignment assignment = assignmentService.getAssignmentById(assignmentId);
-                return ResponseEntity.ok(assignment);
-            }
-        } else {
+        User currentUser = authenticate(request);
+        if (currentUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+        }
+
+        Long groupId = assignmentService.getGroupIdByAssignmentId(assignmentId);
+        if (groupId == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
+        if (!canAccessGroup(currentUser, groupId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
+        }
+
+        if (canActAsStudent(currentUser)) {
+            Assignment assignment = assignmentService.getAssignmentWithSubmissions(assignmentId, currentUser.getId());
+            return ResponseEntity.ok(assignment);
+        }
+
+        Assignment assignment = assignmentService.getAssignmentById(assignmentId);
+        return ResponseEntity.ok(assignment);
+    }
+
+    private User authenticate(HttpServletRequest request) {
+        String token = jwtUtil.extractJwtFromCookie(request);
+        if (token == null || !jwtUtil.validateToken(token)) {
+            return null;
+        }
+
+        String username = jwtUtil.getUsernameFromToken(token);
+        try {
+            return userService.getUserByUsername(username);
+        } catch (Exception ignored) {
+            return null;
         }
     }
 
+    private boolean canAccessGroup(User user, Long groupId) {
+        if (groupService.isUserInGroup(user.getId(), groupId)) {
+            return true;
+        }
+        return canActAsProfessor(user) && groupService.isTutorOwnerOfGroup(user.getId(), groupId);
+    }
+
+    private boolean canActAsProfessor(User user) {
+        AccountType type = user.getAccountType();
+        return type == AccountType.PROFESOR || type == AccountType.OBOJE || type == AccountType.ADMIN;
+    }
+
+    private boolean canActAsStudent(User user) {
+        AccountType type = user.getAccountType();
+        return type == AccountType.STUDENT || type == AccountType.OBOJE;
+    }
 }

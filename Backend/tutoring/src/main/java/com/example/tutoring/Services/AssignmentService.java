@@ -6,6 +6,7 @@ import com.example.tutoring.Other.AssignmentMapper;
 import com.example.tutoring.Other.AssignmentSubmissionMapper;
 import com.example.tutoring.Other.AssignmentWithSubmissionsMapper;
 import com.example.tutoring.Other.SubmissionStatus;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
@@ -111,6 +112,39 @@ public void saveSubmission(AssignmentSubmission submission) {
     public Assignment getAssignmentById(Long assignmentId) {
         String sql = "SELECT * FROM assignment WHERE id = ?";
         return jdbcTemplate.queryForObject(sql, new Object[]{assignmentId}, new AssignmentMapper());
+    }
+
+    public Long getGroupIdByAssignmentId(Long assignmentId) {
+        try {
+            return jdbcTemplate.queryForObject(
+                    "SELECT group_id FROM assignment WHERE id = ?",
+                    new Object[]{assignmentId},
+                    Long.class
+            );
+        } catch (EmptyResultDataAccessException ignored) {
+            return null;
+        }
+    }
+
+    public Long getGroupIdBySubmissionId(Long submissionId) {
+        try {
+            return jdbcTemplate.queryForObject(
+                    "SELECT a.group_id FROM assignment_submission s JOIN assignment a ON a.id = s.assignment_id WHERE s.id = ?",
+                    new Object[]{submissionId},
+                    Long.class
+            );
+        } catch (EmptyResultDataAccessException ignored) {
+            return null;
+        }
+    }
+
+    public boolean hasSubmissionForAssignment(Long assignmentId, Long userId) {
+        Integer count = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM assignment_submission WHERE assignment_id = ? AND user_id = ?",
+                new Object[]{assignmentId, userId},
+                Integer.class
+        );
+        return count != null && count > 0;
     }
 
 //    public List<Assignment> getAssignmentsByGroupIdWithSubmissionsForUser(Long groupId, Long userId) {

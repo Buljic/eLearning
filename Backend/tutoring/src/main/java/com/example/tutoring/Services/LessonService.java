@@ -4,6 +4,7 @@ import com.example.tutoring.Entities.Lesson;
 import com.example.tutoring.Entities.Material;
 import com.example.tutoring.Other.LessonMapper;
 import com.example.tutoring.Other.MaterialMapper;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -41,6 +42,18 @@ public class LessonService {
     public List<Material> getMaterialsByLessonId(Long lessonId) {
         String sql = "SELECT * FROM materials WHERE lesson_id = ?";
         return jdbcTemplate.query(sql, new Object[]{lessonId}, new MaterialMapper());
+    }
+
+    public Long getGroupIdByLessonId(Long lessonId) {
+        try {
+            return jdbcTemplate.queryForObject(
+                    "SELECT group_id FROM lessons WHERE id = ?",
+                    new Object[]{lessonId},
+                    Long.class
+            );
+        } catch (EmptyResultDataAccessException ignored) {
+            return null;
+        }
     }
 
     public void saveLesson(Lesson lesson) {

@@ -1,164 +1,41 @@
 package com.example.tutoring.VideoCall;
 
 import com.example.tutoring.Entities.User;
-import com.example.tutoring.Other.AccountType;
-import com.example.tutoring.Poziv.*;
-import com.example.tutoring.Repositories.UserRepository;
+import com.example.tutoring.Poziv.Message;
 import com.example.tutoring.Services.GroupService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-
-import org.springframework.messaging.handler.annotation.*;
-import org.springframework.stereotype.Controller;
+import com.example.tutoring.Services.UserService;
+import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.stereotype.Controller;
 
-import java.util.*;
+import java.security.Principal;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-//@RestController
-//@RequestMapping ("/api/videoCall")
-//public class VideoCallController {
-//
-//    private final SimpMessagingTemplate messagingTemplate;
-//    private final UserRepository userRepository;
-//    private final GroupService groupService;
-//    private final Map<String, Long> sessionCodes = new ConcurrentHashMap<>();
-//    private Set<String> currentUsers = new HashSet<>();
-//    public VideoCallController(SimpMessagingTemplate messagingTemplate, UserRepository userRepository,
-//                               GroupService groupService) {
-//        this.messagingTemplate = messagingTemplate;
-//        this.userRepository = userRepository;
-//        this.groupService = groupService;
-//    }
-//
-////    @PostMapping("/setCode")
-////    public ResponseEntity<Void> setSessionCode(@RequestBody Map<String, String> payload) {
-////        try {
-////            String code = payload.get("code");
-////            Long groupId = Long.parseLong(payload.get("groupId"));
-////            System.out.println("Received code: " + code + ", groupId: " + groupId);
-////            sessionCodes.put(code, groupId);
-////            System.out.println("Session code set: " + code + " for group: " + groupId);
-////            return ResponseEntity.ok().build();
-////        } catch (Exception e) {
-////            e.printStackTrace();
-////            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-////        }
-////    }
-////
-////    @MessageMapping("/video/join/{code}")
-////    public void joinCall(@Payload String message, @DestinationVariable String code) {
-////        System.out.println("Join request received for code: " + code + " with message: " + message);
-////        messagingTemplate.convertAndSend("/topic/call/" + code, message);
-////        System.out.println("User joined call for code: " + code);
-////    }
-////
-////    @MessageMapping("/video/leave/{code}")
-////    public void leaveCall(@Payload String message, @DestinationVariable String code) {
-////        messagingTemplate.convertAndSend("/topic/call/" + code, message);
-////        System.out.println("User left call for code: " + code + " with message: " + message);
-////    }
-////
-////    @MessageMapping("/video/signal/{code}")
-////    public void handleSignal(@Payload String signal, @DestinationVariable String code) {
-////        messagingTemplate.convertAndSend("/topic/call/" + code, signal);
-////        System.out.println("Signal handled for code: " + code + " with signal: " + signal);
-////    }
-//    //TODO
-////@MessageMapping("/videoCall/send")
-////public void handleSignalingMessage(@Payload SignalingMessage message,
-////                                   @Header ("simpSessionId") String sessionId) throws Exception {
-////    // Broadcasting signal to other peers in the same room
-////    messagingTemplate.convertAndSend("/topic/videoCall/" + message.getRoomId(), message);
-////}
-//
-//    @Autowired
-//    private VideoCallService videoCallService;
-//
-////    @MessageMapping("/videoCall/join")
-////    @SendTo("/topic/videoCall")
-////    public Message join(Message message) {
-////        return message;
-////    }
-////
-////    @MessageMapping("/videoCall/offer")
-////    @SendTo("/topic/videoCall")
-////    public Message offer(Message message) {
-////        return message;
-////    }
-////
-////    @MessageMapping("/videoCall/answer")
-////    @SendTo("/topic/videoCall")
-////    public Message answer(Message message) {
-////        return message;
-////    }
-////
-////    @MessageMapping("/videoCall/ice-candidate")
-////    @SendTo("/topic/videoCall")
-////    public Message iceCandidate(Message message) {
-////        return message;
-////    }
-////
-////    @MessageMapping("/videoCall/leave")
-////    @SendTo("/topic/videoCall")
-////    public Message leave(Message message) {
-////        return message;
-////    }
-//@MessageMapping("/videoCall/join")
-//@SendTo("/topic/videoCall")
-//public Message join(Message message) {
-//    currentUsers.add(message.getSender());
-//    logCurrentUsers();
-//    return message;
-//}
-//
-//    @MessageMapping("/videoCall/offer")
-//    @SendTo("/topic/videoCall")
-//    public Message offer(Message message) {
-//        return message;
-//    }
-//
-//    @MessageMapping("/videoCall/answer")
-//    @SendTo("/topic/videoCall")
-//    public Message answer(Message message) {
-//        return message;
-//    }
-//
-//    @MessageMapping("/videoCall/ice-candidate")
-//    @SendTo("/topic/videoCall")
-//    public Message iceCandidate(Message message) {
-//        return message;
-//    }
-//
-//    @MessageMapping("/videoCall/leave")
-//    @SendTo("/topic/videoCall")
-//    public Message leave(Message message) {
-//        currentUsers.remove(message.getSender());
-//        logCurrentUsers();
-//        return message;
-//    }
-//
-//    private void logCurrentUsers() {
-//        System.out.println("CURRENT USERS IN VIDEO CALL: " + currentUsers);
-//    }
-//}
 @Controller
 public class VideoCallController {
 
     private final ConcurrentMap<String, Set<String>> usersByRoom = new ConcurrentHashMap<>();
     private final SimpMessagingTemplate messagingTemplate;
+    private final UserService userService;
+    private final GroupService groupService;
 
-    public VideoCallController(SimpMessagingTemplate messagingTemplate)
-    {
+    public VideoCallController(
+            SimpMessagingTemplate messagingTemplate,
+            UserService userService,
+            GroupService groupService
+    ) {
         this.messagingTemplate = messagingTemplate;
+        this.userService = userService;
+        this.groupService = groupService;
     }
 
     @MessageMapping("/videoCall/join")
-    public void join(Message message) {
-        if (message.getRoomId() == null || message.getSender() == null) {
+    public void join(Message message, Principal principal) {
+        String username = getAuthenticatedUsername(principal);
+        if (username == null || message == null || message.getRoomId() == null || !canAccessRoom(message.getRoomId(), username)) {
             return;
         }
 
@@ -167,66 +44,97 @@ public class VideoCallController {
                 room -> ConcurrentHashMap.newKeySet()
         );
 
-        roomUsers.add(message.getSender());
-        logCurrentUsers(message.getRoomId());
+        roomUsers.add(username);
 
-        // Notify all existing users about the new user
-        messagingTemplate.convertAndSend("/topic/videoCall/" + message.getRoomId(), message);
+        Message joinMessage = new Message();
+        joinMessage.setType("join");
+        joinMessage.setSender(username);
+        joinMessage.setRoomId(message.getRoomId());
+        messagingTemplate.convertAndSend("/topic/videoCall/" + message.getRoomId(), joinMessage);
 
-        // Notify the new user about all existing users
         Message existingUsersMessage = new Message();
         existingUsersMessage.setType("existingUsers");
-        existingUsersMessage.setSender(message.getSender());
+        existingUsersMessage.setSender(username);
         existingUsersMessage.setRoomId(message.getRoomId());
-        existingUsersMessage.setTarget(message.getSender());
-        existingUsersMessage.setExistingUsers(new HashSet<>(roomUsers));
+        existingUsersMessage.setTarget(username);
+
+        Set<String> existingUsers = new HashSet<>(roomUsers);
+        existingUsers.remove(username);
+        existingUsersMessage.setExistingUsers(existingUsers);
+
         messagingTemplate.convertAndSend("/topic/videoCall/" + message.getRoomId(), existingUsersMessage);
     }
 
     @MessageMapping("/videoCall/offer")
-    public void offer(Message message) {
-        if (message.getRoomId() == null) {
-            return;
-        }
-        messagingTemplate.convertAndSend("/topic/videoCall/" + message.getRoomId(), message);
+    public void offer(Message message, Principal principal) {
+        relaySignalingMessage(message, principal, true);
     }
 
     @MessageMapping("/videoCall/answer")
-    public void answer(Message message) {
-        if (message.getRoomId() == null) {
-            return;
-        }
-        messagingTemplate.convertAndSend("/topic/videoCall/" + message.getRoomId(), message);
+    public void answer(Message message, Principal principal) {
+        relaySignalingMessage(message, principal, true);
     }
 
     @MessageMapping("/videoCall/ice-candidate")
-    public void iceCandidate(Message message) {
-        if (message.getRoomId() == null) {
-            return;
-        }
-        messagingTemplate.convertAndSend("/topic/videoCall/" + message.getRoomId(), message);
+    public void iceCandidate(Message message, Principal principal) {
+        relaySignalingMessage(message, principal, true);
     }
 
     @MessageMapping("/videoCall/leave")
-    public void leave(Message message) {
-        if (message.getRoomId() == null || message.getSender() == null) {
+    public void leave(Message message, Principal principal) {
+        String username = getAuthenticatedUsername(principal);
+        if (username == null || message == null || message.getRoomId() == null || !canAccessRoom(message.getRoomId(), username)) {
             return;
         }
 
         Set<String> roomUsers = usersByRoom.get(message.getRoomId());
         if (roomUsers != null) {
-            roomUsers.remove(message.getSender());
+            roomUsers.remove(username);
             if (roomUsers.isEmpty()) {
                 usersByRoom.remove(message.getRoomId());
             }
         }
 
-        logCurrentUsers(message.getRoomId());
+        Message leaveMessage = new Message();
+        leaveMessage.setType("leave");
+        leaveMessage.setSender(username);
+        leaveMessage.setRoomId(message.getRoomId());
+
+        messagingTemplate.convertAndSend("/topic/videoCall/" + message.getRoomId(), leaveMessage);
+    }
+
+    private void relaySignalingMessage(Message message, Principal principal, boolean requireTarget) {
+        String username = getAuthenticatedUsername(principal);
+        if (username == null || message == null || message.getRoomId() == null || !canAccessRoom(message.getRoomId(), username)) {
+            return;
+        }
+        if (requireTarget && (message.getTarget() == null || message.getTarget().isBlank())) {
+            return;
+        }
+
+        message.setSender(username);
         messagingTemplate.convertAndSend("/topic/videoCall/" + message.getRoomId(), message);
     }
 
-    private void logCurrentUsers(String roomId) {
-        Set<String> roomUsers = usersByRoom.getOrDefault(roomId, Collections.emptySet());
-        System.out.println("CURRENT USERS IN VIDEO CALL ROOM " + roomId + ": " + roomUsers);
+    private String getAuthenticatedUsername(Principal principal) {
+        if (principal == null || principal.getName() == null || principal.getName().isBlank()) {
+            return null;
+        }
+        return principal.getName();
+    }
+
+    private boolean canAccessRoom(String roomId, String username) {
+        if ("global".equalsIgnoreCase(roomId)) {
+            return true;
+        }
+        Long groupId;
+        try {
+            groupId = Long.parseLong(roomId);
+        } catch (NumberFormatException ignored) {
+            return false;
+        }
+
+        User user = userService.findUserByUsername(username);
+        return groupService.isUserInGroup(user.getId(), groupId);
     }
 }

@@ -17,6 +17,7 @@ import java.util.*;
 @RestController
 @RequestMapping("/api")
 public class UserPageController {
+    private static final int MAX_GROUPS_PAGE_SIZE = 100;
     private final SubjectRepository subjectRepository;
     private final UserService userService;
     private final JwtUtil jwtUtil;
@@ -93,7 +94,15 @@ public class UserPageController {
     }
 
     @GetMapping("/getAttendedGroups")
-    public ResponseEntity<?> getAttendedCourses(@RequestParam Long userId) {
+    public ResponseEntity<?> getAttendedCourses(@RequestParam Long userId, HttpServletRequest request) {
+        String token = jwtUtil.extractJwtFromCookie(request);
+        if (token == null || !jwtUtil.validateToken(token)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
+        }
+        Long authenticatedUserId = userService.getUserIdFromToken(token);
+        if (!authenticatedUserId.equals(userId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Forbidden");
+        }
         return ResponseEntity.ok(userService.findAttendedCourses(userId));
     }
 
@@ -103,9 +112,17 @@ public class UserPageController {
     }
 
     @PostMapping("/createGroup")
-    public ResponseEntity<?> createGroup(@RequestBody GenericDTO request) {
+    public ResponseEntity<?> createGroup(HttpServletRequest httpRequest, @RequestBody GenericDTO request) {
         try {
-            userService.createGroup(request);
+            String token = jwtUtil.extractJwtFromCookie(httpRequest);
+            if (token == null || !jwtUtil.validateToken(token)) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
+            }
+            if (!"PROFESOR".equals(jwtUtil.getRoleFromToken(token))) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Samo profesori mogu kreirati grupu.");
+            }
+            Long tutorId = userService.getUserIdFromToken(token);
+            userService.createGroup(request, tutorId);
             return ResponseEntity.ok("Grupa uspjesno kreirana");
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
@@ -119,6 +136,10 @@ public class UserPageController {
             @RequestParam int size
     ) {
         try {
+            if (page < 0 || size <= 0 || size > MAX_GROUPS_PAGE_SIZE) {
+                return ResponseEntity.badRequest().body("Invalid pagination values");
+            }
+
             Map<String, Object> convertedFilters = new HashMap<>();
             for (Map.Entry<String, String> entry : filters.entrySet()) {
                 String key = entry.getKey();
@@ -171,14 +192,18 @@ public class UserPageController {
             Long userId = userService.getUserIdFromToken(token);
             groupService.requestAccess(groupId, userId);
             return ResponseEntity.ok("Zahtjev za pristup je uspjesno poslan.");
-        } catch (Exception e) {
-            String message = e.getMessage() == null ? "" : e.getMessage();
-            if (message.contains("Vec ste poslali zahtjev za ovu grupu.")) {
+        } catch (IllegalStateException e) {
+            String message = e.getMessage() == null ? "Zahtjev nije moguce obraditi." : e.getMessage();
+            if (message.contains("Vec ste poslali zahtjev")) {
                 return ResponseEntity.status(HttpStatus.CONFLICT).body(message);
             }
-            if (message.contains("Grupa je vec pocela, ne mozete se pridruziti.")) {
-                return ResponseEntity.badRequest().body(message);
+            if (message.contains("Vec ste clan")) {
+                return ResponseEntity.status(HttpStatus.CONFLICT).body(message);
             }
+            return ResponseEntity.badRequest().body(message);
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Doslo je do greske. Pokusajte ponovo kasnije.");
         }
     }
