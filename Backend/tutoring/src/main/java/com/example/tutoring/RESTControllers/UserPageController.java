@@ -3,8 +3,6 @@ package com.example.tutoring.RESTControllers;
 import com.example.tutoring.DTOs.GenericDTO;
 import com.example.tutoring.DTOs.StringNumber;
 import com.example.tutoring.Entities.Group;
-import com.example.tutoring.Entities.User;
-import com.example.tutoring.Other.AccountType;
 import com.example.tutoring.Repositories.SubjectRepository;
 import com.example.tutoring.Security.JwtUtil;
 import com.example.tutoring.Services.GroupService;
@@ -14,182 +12,130 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
 import java.util.*;
 
 @RestController
 @RequestMapping("/api")
-public class UserPageController
-{
+public class UserPageController {
     private final SubjectRepository subjectRepository;
     private final UserService userService;
     private final JwtUtil jwtUtil;
     private final GroupService groupService;
 
-    //Mora biti bean kako bi bila injektovana negdje
-    UserPageController(SubjectRepository subjectRepository, UserService userService, JwtUtil jwtUtil,
-                       GroupService groupService)
-    {
+    public UserPageController(
+            SubjectRepository subjectRepository,
+            UserService userService,
+            JwtUtil jwtUtil,
+            GroupService groupService
+    ) {
         this.subjectRepository = subjectRepository;
         this.userService = userService;
         this.jwtUtil = jwtUtil;
         this.groupService = groupService;
     }
 
-    @GetMapping ("/allSubjects")
-    public ResponseEntity<?> giveAllSubjects()
-    {
-        List<String> subjectList = subjectRepository.findAllSubjects();
-        for (String i : subjectList)
-        {
-            System.out.println("ELEMENT SVIH SUBJECTS" + i);
-        }
-        return ResponseEntity.status(HttpStatus.OK).body(subjectList);
+    @GetMapping("/allSubjects")
+    public ResponseEntity<?> giveAllSubjects() {
+        return ResponseEntity.ok(subjectRepository.findAllSubjects());
     }
 
-    @GetMapping ("/mostTutorSubjects")
-    public ResponseEntity<?> giveSubjectsWithMostTutors(HttpServletRequest request)
-    {
+    @GetMapping("/mostTutorSubjects")
+    public ResponseEntity<?> giveSubjectsWithMostTutors() {
         List<StringNumber> list = userService.findMostTutorSubjects();
-        for (StringNumber i : list)
-        {
-            System.out.println("MOSTTUTORSUBJECTS :" + i.getName() + ":broj tutora:" + i.getNumber());
-        }
-        return ResponseEntity.status(HttpStatus.OK).body(userService.findMostTutorSubjects());
+        return ResponseEntity.ok(list);
     }
 
-    //NEMOJ HARDCODEAT QUERY PARAMETRE jer je lakse ovako skalirati
-    @GetMapping ("/subjects/search")/*? term=searchTerm"*/
-    public ResponseEntity<?> giveSearchedSubjects(@RequestParam String searchTerm)
-    {
-        System.out.println("ONO STO SE TRAZI JE :" + searchTerm + ":");
-        if (searchTerm == null || searchTerm.trim().isEmpty())
-        {
-            return ResponseEntity.status(HttpStatus.OK)
-                    .body(subjectRepository.findAllSubjects());//Ako se proslijedi prazan
-            //request da samo vrati sve predmete
+    @GetMapping("/subjects/search")
+    public ResponseEntity<?> giveSearchedSubjects(@RequestParam String searchTerm) {
+        if (searchTerm == null || searchTerm.trim().isEmpty()) {
+            return ResponseEntity.ok(subjectRepository.findAllSubjects());
         }
-        List<StringNumber> list = userService.findSearchedSubjects(searchTerm);
-        for (int i = 0; i < list.size(); i++)
-        {
-            System.out.print("ELEMENT" + i + ". je " + list.get(i).getName());
-        }
-        if (list.isEmpty())
-        {
-            return ResponseEntity.status(HttpStatus.OK).body("Prazno je"); //TODO treba nesto drugo vratiti
-        }
-        return ResponseEntity.status(HttpStatus.OK).body(list);
+        // Always return a list to keep API contract stable on frontend.
+        return ResponseEntity.ok(userService.findSearchedSubjects(searchTerm));
     }
 
-    @GetMapping ("/getTutorsFor")
-    public ResponseEntity<?> getTutorsForSubject(@RequestParam String subject)
-    {
-        if (subject == null)
-        {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Prazan subject parameter");
+    @GetMapping("/getTutorsFor")
+    public ResponseEntity<?> getTutorsForSubject(@RequestParam String subject) {
+        if (subject == null || subject.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body("Prazan subject parameter");
         }
-        List<GenericDTO> lista=userService.getTutorsForSubjectWithInfo(subject);
-        System.out.println(lista);
-        return ResponseEntity.status(HttpStatus.OK).body(lista);
+        List<GenericDTO> tutors = userService.getTutorsForSubjectWithInfo(subject);
+        return ResponseEntity.ok(tutors);
     }
 
-    @PostMapping ("/registerForSubjectAsTutor")
-    public ResponseEntity<?> requestASubject(HttpServletRequest request,
-                                             @RequestBody GenericDTO genericDTO)/*(HttpServletRequest request)*///@RequestBody GenericDTO genericDTO)
-    {
+    @PostMapping("/registerForSubjectAsTutor")
+    public ResponseEntity<?> requestASubject(HttpServletRequest request, @RequestBody GenericDTO genericDTO) {
         String token = jwtUtil.extractJwtFromCookie(request);
-        if (token != null)//mslm ovo se ne moze desiti ali opet  TODO catch nacin obradi uradi za return za ovu metodu u userService
-        {
-//        String jsonData = request.getReader().lines().collect(Collectors.joining());
-//        System.out.println(jsonData);
-            String username = jwtUtil.getUsernameFromToken(token);
-            System.out.println(genericDTO);
-            userService.insertIntoTutorSubjectRequest((String)genericDTO.getProperty("inputSubject"),
-                    username, (String)genericDTO.getProperty("comment"));
-            return ResponseEntity.status(HttpStatus.OK).body("Racun kreiran");
+        if (token == null || !jwtUtil.validateToken(token)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
         }
-        else
-        {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Nepostojuc User");
-        }
+
+        String username = jwtUtil.getUsernameFromToken(token);
+        userService.insertIntoTutorSubjectRequest(
+                (String) genericDTO.getProperty("inputSubject"),
+                username,
+                (String) genericDTO.getProperty("comment")
+        );
+        return ResponseEntity.ok("Zahtjev uspjesno kreiran");
     }
+
     @GetMapping("/getUser/{username}")
-    public ResponseEntity<?> getCertainUserInfo(@PathVariable String username)
-    {
-        System.out.println("NJEGOV USERNAME JE:"+username+":");
-        GenericDTO user=userService.getUserInfoExtended(username);
-        System.out.println(user.getProperty("account_type"));
-        Object type=user.getProperty("account_type");
-        System.out.println(type.getClass()+"|||");
-        if(type instanceof AccountType)
-        {
-            System.out.println("jesteWWWWWW");
+    public ResponseEntity<?> getCertainUserInfo(@PathVariable String username) {
+        GenericDTO user = userService.getUserInfoExtended(username);
+        Object accountType = user.getProperty("account_type");
+
+        if ("PROFESOR".equals(accountType)) {
+            List<GenericDTO> subjects = userService.findTutorsSubjectsWithInfo((Long) user.getProperty("id"));
+            user.addProperty("subjects", subjects);
         }
-        if(((String)user.getProperty("account_type")) .equals(/*AccountType.*/"PROFESOR"))
-        {
-            //TODO moze se implementovati kao recenzije za neki predmet npr i badges ili nesto slicno a za to se treba napraviti nova baza
-             //TODO IMPLEMENTUJ PRIKAZIVANJE I SUBJECTA KAO <String<String,Object>> struktura
-            List< GenericDTO> subjects=userService.findTutorsSubjectsWithInfo((Long)user.getProperty("id"));
-            user.addProperty("subjects",subjects);
-            System.out.println("ISPISANI PREDMETI"+ subjects);
-            return ResponseEntity.status(HttpStatus.OK).body(user);
-        }
-        System.out.println("Trazeni user je "+ user);
-        return ResponseEntity.status(HttpStatus.OK).body(user);
+
+        return ResponseEntity.ok(user);
     }
 
     @GetMapping("/getAttendedGroups")
-    public ResponseEntity<?> getAttendedCourses(@RequestParam Long userId){
-        System.out.println(userId+"OVO JE NAS USER");
-        List<GenericDTO> dto= userService.findAttendedCourses(userId);
-        for (GenericDTO dto1:dto)
-        {
-            System.out.println(dto1+"Ovo je attended kurs");
-        }
-       return ResponseEntity.status(HttpStatus.OK).body( userService.findAttendedCourses(userId));
+    public ResponseEntity<?> getAttendedCourses(@RequestParam Long userId) {
+        return ResponseEntity.ok(userService.findAttendedCourses(userId));
     }
+
     @GetMapping("/getUsers")
-    public ResponseEntity<?> getSearchedUsers(@RequestParam String searchTerm)
-    {
-        return ResponseEntity.status(HttpStatus.OK).body(userService.getSearchedUsers(searchTerm));
+    public ResponseEntity<?> getSearchedUsers(@RequestParam String searchTerm) {
+        return ResponseEntity.ok(userService.getSearchedUsers(searchTerm));
     }
 
     @PostMapping("/createGroup")
-    public ResponseEntity<?> createGroup(@RequestBody GenericDTO request)
-    {
-        System.out.println("Doslo je do njega");
+    public ResponseEntity<?> createGroup(@RequestBody GenericDTO request) {
         try {
-            System.out.println("Request data: " + request.getProperties());
             userService.createGroup(request);
-            return ResponseEntity.status(HttpStatus.OK).body("Grupa uspješno kreirana");
+            return ResponseEntity.ok("Grupa uspjesno kreirana");
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
     @GetMapping("/getGroups")
-    public ResponseEntity<?> getGroups(@RequestParam Map<String, String> filters,
-                                       @RequestParam int page,
-                                       @RequestParam int size) {
+    public ResponseEntity<?> getGroups(
+            @RequestParam Map<String, String> filters,
+            @RequestParam int page,
+            @RequestParam int size
+    ) {
         try {
             Map<String, Object> convertedFilters = new HashMap<>();
             for (Map.Entry<String, String> entry : filters.entrySet()) {
                 String key = entry.getKey();
                 String value = entry.getValue();
 
-                if (key.equals("subjects")) {
-                    if (value.isEmpty()) {
-                        convertedFilters.put(key, Collections.emptyList());
-                    } else {
-                        List<String> subjects = Arrays.asList(value.split(","));
-                        convertedFilters.put(key, subjects);
-                    }
-                } else if (key.endsWith("_from") || key.endsWith("_to") || key.equals("start_date") || key.equals("end_date")) {
+                if (value == null || value.trim().isEmpty()) {
+                    continue;
+                }
+
+                if ("subjects".equals(key)) {
+                    convertedFilters.put(key, Arrays.asList(value.split(",")));
+                } else if (key.endsWith("_from") || key.endsWith("_to") || "start_date".equals(key) || "end_date".equals(key)) {
                     convertedFilters.put(key, value);
-                } else if (key.equals("price") || key.equals("price_from") || key.equals("price_to")) {
+                } else if ("price".equals(key) || "price_from".equals(key) || "price_to".equals(key)) {
                     convertedFilters.put(key, Double.parseDouble(value));
-                } else if (key.equals("max_students") || key.equals("max_students_from") || key.equals("max_students_to") ||
-                        key.equals("hours_per_week") || key.equals("hours_per_week_from") || key.equals("hours_per_week_to")) {
+                } else if ("max_students".equals(key) || "max_students_from".equals(key) || "max_students_to".equals(key)
+                        || "hours_per_week".equals(key) || "hours_per_week_from".equals(key) || "hours_per_week_to".equals(key)) {
                     convertedFilters.put(key, Integer.parseInt(value));
                 } else {
                     convertedFilters.put(key, value);
@@ -199,12 +145,14 @@ public class UserPageController
             GenericDTO filterDTO = new GenericDTO(convertedFilters);
             List<GenericDTO> groups = userService.getFilteredGroups(filterDTO, page, size);
             int totalCount = userService.getTotalCount(filterDTO);
+
             Map<String, Object> response = new HashMap<>();
             response.put("groups", groups);
             response.put("totalCount", totalCount);
             return ResponseEntity.ok(response);
+        } catch (NumberFormatException e) {
+            return ResponseEntity.badRequest().body("Invalid numeric filter value");
         } catch (Exception e) {
-            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error fetching groups");
         }
     }
@@ -213,24 +161,25 @@ public class UserPageController
     public ResponseEntity<?> requestAccess(@PathVariable Long groupId, HttpServletRequest request) {
         try {
             String token = jwtUtil.extractJwtFromCookie(request);
-            if (token == null) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Neispravan ili nedostajući JWT");
+            if (token == null || !jwtUtil.validateToken(token)) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Neispravan ili nedostajuci JWT");
             }
-            String accountType = jwtUtil.getRoleFromToken(token); // Iako je accountType, koristimo getRoleFromToken
+            String accountType = jwtUtil.getRoleFromToken(token);
             if (!"STUDENT".equals(accountType)) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Samo studenti mogu tražiti pristup grupama.");
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Samo studenti mogu traziti pristup grupama.");
             }
-            Long userId = userService.getUserIdFromToken(token); // Pretpostavimo da postoji metoda u UserService
+            Long userId = userService.getUserIdFromToken(token);
             groupService.requestAccess(groupId, userId);
-            return ResponseEntity.ok("Zahtjev za pristup je uspješno poslan.");
+            return ResponseEntity.ok("Zahtjev za pristup je uspjesno poslan.");
         } catch (Exception e) {
-            if (e.getMessage().contains("Već ste poslali zahtjev za ovu grupu.")) {
-                return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
-            } else if (e.getMessage().contains("Grupa je već počela, ne možete se pridružiti.")) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-            } else {
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Došlo je do greške. Pokušajte ponovo kasnije.");
+            String message = e.getMessage() == null ? "" : e.getMessage();
+            if (message.contains("Vec ste poslali zahtjev za ovu grupu.")) {
+                return ResponseEntity.status(HttpStatus.CONFLICT).body(message);
             }
+            if (message.contains("Grupa je vec pocela, ne mozete se pridruziti.")) {
+                return ResponseEntity.badRequest().body(message);
+            }
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Doslo je do greske. Pokusajte ponovo kasnije.");
         }
     }
 
@@ -238,24 +187,18 @@ public class UserPageController
     public ResponseEntity<?> getGroupDetails(@PathVariable Long groupId, HttpServletRequest request) {
         try {
             String token = jwtUtil.extractJwtFromCookie(request);
-            if (token == null) {
-                System.out.println("JWT token not found in the request.");
+            if (token == null || !jwtUtil.validateToken(token)) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
             }
-            String role = jwtUtil.getRoleFromToken(token);
-            if (role == null || role.isEmpty()) {
-                System.out.println("Invalid JWT token.");
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid JWT token");
-            }
+
             Group group = groupService.findGroupById(groupId);
             if (group == null) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Group not found");
             }
+
             return ResponseEntity.ok(group);
         } catch (Exception e) {
-            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Internal Server Error");
         }
     }
-
 }
