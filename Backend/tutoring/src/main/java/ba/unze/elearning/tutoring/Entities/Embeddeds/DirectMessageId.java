@@ -4,6 +4,7 @@ import jakarta.persistence.Embeddable;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 @Embeddable
 public class DirectMessageId implements Serializable
@@ -51,5 +52,21 @@ public class DirectMessageId implements Serializable
     public void setTime(LocalDateTime time)
     {
         this.time = time;
+    }
+
+    @Override
+    public boolean equals(Object o)
+    {
+        if (this == o) return true;
+        if (!(o instanceof DirectMessageId that)) return false;
+        return Objects.equals(user1, that.user1)
+                && Objects.equals(user2, that.user2)
+                && Objects.equals(time, that.time);
+    }
+
+    @Override
+    public int hashCode()
+    {
+        return Objects.hash(user1, user2, time);
     }
 }

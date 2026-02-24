@@ -1,12 +1,9 @@
 package ba.unze.elearning.tutoring.Entities.Embeddeds;
 
-import ba.unze.elearning.tutoring.Entities.Subject;
-import ba.unze.elearning.tutoring.Entities.Tutor;
 import jakarta.persistence.Embeddable;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 @Embeddable
 public class TutorSubjectId implements Serializable
@@ -33,5 +30,20 @@ public class TutorSubjectId implements Serializable
     public void setSubject(Long subject)
     {
         this.subject = subject;
+    }
+
+    @Override
+    public boolean equals(Object o)
+    {
+        if (this == o) return true;
+        if (!(o instanceof TutorSubjectId that)) return false;
+        return Objects.equals(tutor, that.tutor)
+                && Objects.equals(subject, that.subject);
+    }
+
+    @Override
+    public int hashCode()
+    {
+        return Objects.hash(tutor, subject);
     }
 }
