@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import SockJS from 'sockjs-client';
-import Stomp from 'stompjs';
+import { Client } from '@stomp/stompjs';
 import config from '../config';
 
 const VideoCall = ({ groupId }) => {
@@ -48,7 +48,10 @@ const VideoCall = ({ groupId }) => {
         if (!stompClientRef.current || !stompClientRef.current.connected) {
             return;
         }
-        stompClientRef.current.send(destination, {}, JSON.stringify(payload));
+        stompClientRef.current.publish({
+            destination,
+            body: JSON.stringify(payload),
+        });
     };
 
     const flushPendingIceCandidates = async (sender) => {
@@ -218,16 +221,19 @@ const VideoCall = ({ groupId }) => {
         }
 
         let mounted = true;
-        const socket = new SockJS(`${config.BASE_URL}/api/ws/videoCall`);
-        const stompClient = Stomp.over(socket);
-        stompClientRef.current = stompClient;
+        const client = new Client({
+            webSocketFactory: () => new SockJS(`${config.BASE_URL}/api/ws/videoCall`),
+            reconnectDelay: 3000,
+            debug: () => {},
+        });
+        stompClientRef.current = client;
 
-        stompClient.connect({}, () => {
+        client.onConnect = () => {
             if (!mounted) {
                 return;
             }
 
-            stompClient.subscribe(`/topic/videoCall/${roomId}`, (rawMessage) => {
+            client.subscribe(`/topic/videoCall/${roomId}`, (rawMessage) => {
                 const message = JSON.parse(rawMessage.body);
                 if (message.roomId && message.roomId !== roomId) {
                     return;
@@ -267,7 +273,8 @@ const VideoCall = ({ groupId }) => {
                 roomId,
                 sender: myUsername,
             });
-        });
+        };
+        client.activate();
 
         navigator.mediaDevices.getUserMedia({ video: true, audio: true })
             .then((stream) => {
@@ -296,7 +303,7 @@ const VideoCall = ({ groupId }) => {
             pendingIceCandidatesRef.current = {};
 
             if (stompClientRef.current) {
-                stompClientRef.current.disconnect();
+                stompClientRef.current.deactivate();
                 stompClientRef.current = null;
             }
 

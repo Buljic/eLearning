@@ -13,14 +13,11 @@
   "dependencies": {
     "@emotion/react": "^11.11.4",
     "@emotion/styled": "^11.11.5",
-    "@esbuild-plugins/node-globals-polyfill": "^0.2.3",
     "@mui/icons-material": "^5.15.19",
     "@mui/material": "^5.15.19",
     "@stomp/stompjs": "^7.0.0",
     "axios": "^1.7.2",
-    "buffer": "^6.0.3",
     "date-fns": "^3.6.0",
-    "process": "^0.11.10",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-modal": "^3.16.1",
@@ -28,10 +25,7 @@
     "reactjs-popup": "^2.0.6",
     "simple-peer": "^9.11.1",
     "socket.io-client": "^4.7.5",
-    "sockjs-client": "^1.6.1",
-    "stompjs": "^2.3.3",
-    "timers-browserify": "^2.0.12",
-    "vite-plugin-node-polyfills": "^0.22.0"
+    "sockjs-client": "^1.6.1"
   },
   "devDependencies": {
     "@types/react": "^18.2.37",

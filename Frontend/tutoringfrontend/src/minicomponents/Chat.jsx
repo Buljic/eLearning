@@ -1,189 +1,209 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import SockJS from "sockjs-client";
-import Stomp from "stompjs";
+import { Client } from "@stomp/stompjs";
 import { format } from "date-fns";
-import config from '../config.js';
+import config from "../config.js";
+import "../css/chat.css";
+
 function determineEndpoints(isGroupChat, chatId, myUserId) {
-    if (isGroupChat) {
-        return {
-            receiveEndpoint: `/queue/${chatId}`,
-            sendEndpoint: `/app/${chatId}`,
-            baseEndpoint: `${chatId}`
-        };
-    } else {
-        const isMyUserIdLess = myUserId < chatId;
-        const base = isMyUserIdLess ? `${myUserId}/${chatId}` : `${chatId}/${myUserId}`;
-        return {
-            receiveEndpoint: `/queue/${base}`,
-            sendEndpoint: `/app/${base}`,
-            baseEndpoint: base
-        };
-    }
+  if (isGroupChat) {
+    return {
+      receiveEndpoint: `/queue/${chatId}`,
+      sendEndpoint: `/app/${chatId}`,
+    };
+  }
+
+  const isMyUserIdLess = myUserId < chatId;
+  const base = isMyUserIdLess ? `${myUserId}/${chatId}` : `${chatId}/${myUserId}`;
+  return {
+    receiveEndpoint: `/queue/${base}`,
+    sendEndpoint: `/app/${base}`,
+  };
 }
 
 const Chat = ({ chatId, isGroupChat }) => {
-    const storedUser = sessionStorage.getItem("myUser");
-    const myUser = JSON.parse(storedUser);
+  const myUser = useMemo(() => JSON.parse(sessionStorage.getItem("myUser")), []);
+  const stompClientRef = useRef(null);
 
-    const stompClient = useRef(null);
-    const [ourEndpointToReceive, setOurEndpointToReceive] = useState("");
-    const [ourEndpointToSend, setOurEndpointToSend] = useState("");
-    const [baseEndpoint, setBaseEndpoint] = useState("");
-    const [messages, setMessages] = useState([]);
-    const [page, setPage] = useState(0);
-    const [hasMoreMessages, setHasMoreMessages] = useState(true);
+  const [endpoints, setEndpoints] = useState({ receiveEndpoint: "", sendEndpoint: "" });
+  const [messages, setMessages] = useState([]);
+  const [page, setPage] = useState(0);
+  const [hasMoreMessages, setHasMoreMessages] = useState(true);
+  const [messageText, setMessageText] = useState("");
 
-    useEffect(() => {
-        if (!chatId) return; // Avoid further execution if chatId is not available
+  const appendMessage = useCallback((messageBody) => {
+    const messageTime = messageBody.id?.time
+      ? format(new Date(messageBody.id.time), "yyyy-MM-dd HH:mm:ss")
+      : messageBody.time
+        ? format(new Date(messageBody.time), "yyyy-MM-dd HH:mm:ss")
+        : format(new Date(), "yyyy-MM-dd HH:mm:ss");
 
-        const allEndpoints = determineEndpoints(isGroupChat, chatId, myUser.id);
-        setOurEndpointToReceive(allEndpoints.receiveEndpoint);
-        setOurEndpointToSend(allEndpoints.sendEndpoint);
-        setBaseEndpoint(allEndpoints.baseEndpoint);
-
-        if (!stompClient.current) {
-            let socket;
-            if (isGroupChat) {
-                socket = new SockJS(`${config.BASE_URL}/api/chatGroup`);
-            } else {
-                socket = new SockJS(`${config.BASE_URL}/api/chatTo`);
-            }
-            stompClient.current = Stomp.over(socket);
-
-            stompClient.current.connect({}, function (frame) {
-                console.log("Connected: " + frame);
-
-                stompClient.current.subscribe(allEndpoints.receiveEndpoint, (messageOutput) => {
-                    const message = JSON.parse(messageOutput.body);
-                    console.log("Received message: ", message);
-                    appendMessage(message, isGroupChat);
-                });
-            });
-        }
-
-        fetchPreviousMessages();
-
-        return () => {
-            if (stompClient.current && stompClient.current.connected) {
-                stompClient.current.disconnect(() => {
-                    console.log("Disconnected!");
-                });
-            }
-        };
-    }, [chatId, isGroupChat, myUser.id]);
-
-    const appendMessage = (messageBody, isGroupChat) => {
-        const messageTime = messageBody.id && messageBody.id.time
-            ? format(new Date(messageBody.id.time), "yyyy-MM-dd HH:mm:ss")
-            : format(new Date(), "yyyy-MM-dd HH:mm:ss");
-
-        const messageElement = {
-            id: messageBody.id ? messageBody.id.time : new Date().toISOString(),
-            text: messageBody.message_text,
-            time: messageTime,
-            sender: messageBody.senderName || messageBody.sender_name,
-            senderId: messageBody.senderId || (messageBody.id ? messageBody.id.user1 : myUser.id),
-            user1: messageBody.id ? messageBody.id.user1 : myUser.id,
-            user2: messageBody.id ? messageBody.id.user2 : chatId,
-        };
-
-        setMessages(prevMessages => {
-            const updatedMessages = [...prevMessages, messageElement];
-            return updatedMessages.sort((a, b) => new Date(a.time) - new Date(b.time));
-        });
+    const messageElement = {
+      id: messageBody.id?.time || messageBody.id || new Date().toISOString(),
+      text: messageBody.messageText || messageBody.message_text || "",
+      time: messageTime,
+      sender: messageBody.senderName || messageBody.sender_name || "",
+      senderId: messageBody.senderId || messageBody.id?.user1 || null,
+      user1: messageBody.id?.user1 || messageBody.senderId || null,
+      user2: messageBody.id?.user2 || chatId,
     };
 
-    const fetchPreviousMessages = async () => {
-        if (!hasMoreMessages) return;
+    setMessages((prevMessages) => {
+      const updatedMessages = [...prevMessages, messageElement];
+      return updatedMessages.sort((a, b) => new Date(a.time) - new Date(b.time));
+    });
+  }, [chatId]);
 
-        let fetchEndpoint = '';
-        if (isGroupChat) {
-            fetchEndpoint = `${config.BASE_URL}/api/${chatId}/getOldGroupMessages?page=${page}&size=10`;
-        } else {
-            fetchEndpoint = `${config.BASE_URL}/api/${myUser.id}/${chatId}/getOldDirectMessages?page=${page}&size=10`;
-        }
-        try {
-            const response = await fetch(fetchEndpoint, {
-                method: 'GET',
-                credentials: 'include',
-                headers: {
-                    'Content-Type': 'application/json',
-                }
-            });
-            if (!response.ok) {
-                console.log("Problem fetching old messages");
-                return;
-            }
-            const messagesData = await response.json();
-            console.log("Fetched messages: ", messagesData);
-            if (messagesData.length === 0) {
-                setHasMoreMessages(false);
-            } else {
-                const newMessages = messagesData.map(msg => ({
-                    id: msg.id.time, // Using the time as a unique identifier
-                    text: msg.messageText,
-                    time: format(new Date(msg.id.time), "yyyy-MM-dd HH:mm:ss"),
-                    sender: msg.senderName || msg.sender_name,
-                    senderId: msg.id.user1,  // Assuming user1 is the senderId
-                    user1: msg.id.user1,
-                    user2: msg.id.user2,
-                }));
-                setMessages(prevMessages => {
-                    const updatedMessages = [...newMessages, ...prevMessages];
-                    return updatedMessages.sort((a, b) => new Date(a.time) - new Date(b.time));
-                });
-                setPage(prevPage => prevPage + 1);
-            }
-        } catch (error) {
-            console.log("Error fetching old messages: ", error);
-        }
+  const fetchPreviousMessages = useCallback(async (nextPage, reset = false) => {
+    if (!hasMoreMessages && !reset) return;
+
+    let fetchEndpoint = "";
+    if (isGroupChat) {
+      fetchEndpoint = `${config.BASE_URL}/api/${chatId}/getOldGroupMessages?page=${nextPage}&size=10`;
+    } else {
+      fetchEndpoint = `${config.BASE_URL}/api/${myUser.id}/${chatId}/getOldDirectMessages?page=${nextPage}&size=10`;
+    }
+
+    try {
+      const response = await fetch(fetchEndpoint, {
+        method: "GET",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        return;
+      }
+
+      const messagesData = await response.json();
+      if (messagesData.length === 0) {
+        setHasMoreMessages(false);
+        return;
+      }
+
+      const normalized = messagesData.map((msg) => ({
+        id: msg.id?.time || msg.time || msg.id,
+        text: msg.messageText || msg.message_text || "",
+        time: format(new Date(msg.id?.time || msg.time), "yyyy-MM-dd HH:mm:ss"),
+        sender: msg.senderName || msg.sender_name || "",
+        senderId: msg.id?.user1 || msg.senderId || null,
+        user1: msg.id?.user1 || msg.senderId || null,
+        user2: msg.id?.user2 || chatId,
+      }));
+
+      setMessages((prevMessages) => {
+        const merged = reset ? normalized : [...normalized, ...prevMessages];
+        return merged.sort((a, b) => new Date(a.time) - new Date(b.time));
+      });
+
+      setPage(nextPage + 1);
+    } catch (error) {
+      console.error("Error fetching old messages:", error);
+    }
+  }, [chatId, hasMoreMessages, isGroupChat, myUser.id]);
+
+  useEffect(() => {
+    if (!chatId || !myUser?.id) return;
+
+    const resolvedEndpoints = determineEndpoints(isGroupChat, chatId, myUser.id);
+    setEndpoints(resolvedEndpoints);
+    setMessages([]);
+    setPage(0);
+    setHasMoreMessages(true);
+
+    const endpoint = isGroupChat ? "/api/chatGroup" : "/api/chatTo";
+    const client = new Client({
+      webSocketFactory: () => new SockJS(`${config.BASE_URL}${endpoint}`),
+      reconnectDelay: 3000,
+      debug: () => {},
+    });
+
+    client.onConnect = () => {
+      client.subscribe(resolvedEndpoints.receiveEndpoint, (messageOutput) => {
+        const message = JSON.parse(messageOutput.body);
+        appendMessage(message);
+      });
     };
 
-    const sendMessage = () => {
-        let messageElement = document.getElementById("messageInput");
-        let messageText = messageElement.value;
-        if (messageText.trim() !== "") {
-            const chatMessage = {
-                message_text: messageText,
-                senderId: myUser.id,
-                senderName: myUser.username,  // Adding senderName
-                user2: !isGroupChat ? chatId : undefined,
-            };
-            stompClient.current.send(ourEndpointToSend, {}, JSON.stringify(chatMessage));
-            messageElement.value = '';
-        }
+    client.activate();
+    stompClientRef.current = client;
+    fetchPreviousMessages(0, true);
+
+    return () => {
+      if (stompClientRef.current) {
+        stompClientRef.current.deactivate();
+        stompClientRef.current = null;
+      }
+    };
+  }, [appendMessage, chatId, fetchPreviousMessages, isGroupChat, myUser]);
+
+  const sendMessage = () => {
+    const trimmedMessage = messageText.trim();
+    if (!trimmedMessage || !stompClientRef.current?.connected) {
+      return;
+    }
+
+    const chatMessage = {
+      message_text: trimmedMessage,
+      senderId: myUser.id,
+      senderName: myUser.username,
+      user2: !isGroupChat ? chatId : undefined,
     };
 
-    if (!chatId) return "Učitavanje...";
+    stompClientRef.current.publish({
+      destination: endpoints.sendEndpoint,
+      body: JSON.stringify(chatMessage),
+    });
 
-    return (
-        <div>
-            <div style={{display: 'flex', justifyContent: 'center', marginTop: '10px'}}>
-                <button onClick={fetchPreviousMessages}>Učitaj više</button>
-            </div>
+    setMessageText("");
+  };
 
-            <div id="chatBox">
-                {messages.map((msg, index) => (
-                    <div key={index} className={msg.senderId === myUser.id ? 'sent-message' : 'received-message'}>
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: msg.senderId === myUser.id ? 'flex-end' : 'flex-start', marginBottom: '10px' }}>
-                            <span style={{ backgroundColor: msg.senderId === myUser.id ? '#b3e5fc' : '#f1f1f1', borderRadius: '10px', padding: '10px', maxWidth: '70%' }}>
-                                <b>{msg.text}</b>
-                                <br />
-                                <span style={{ fontSize: '10px', color: 'gray', textAlign: 'right' }}><i>{msg.time}</i></span>
-                                <br />
-                                <span style={{ fontSize: '12px', color: 'black', textAlign: 'right' }}>{msg.sender}</span>
-                            </span>
-                        </div>
-                    </div>
-                ))}
-            </div>
+  if (!chatId) return "Ucitavanje...";
+  if (!myUser?.id) return "Niste prijavljeni.";
 
-            <div className="input-area">
-                <input type="text" id="messageInput" />
-                <button type="submit" onClick={sendMessage}>Slanje</button>
+  return (
+    <section className="chat-panel">
+      <div className="chat-toolbar">
+        <button className="chat-button-secondary" onClick={() => fetchPreviousMessages(page)}>
+          Ucitaj vise
+        </button>
+      </div>
+
+      <div className="chat-box">
+        {messages.map((msg) => {
+          const isMine = msg.senderId === myUser.id || msg.user1 === myUser.id;
+          return (
+            <div key={msg.id} className={`chat-row ${isMine ? "chat-row-mine" : "chat-row-other"}`}>
+              <article className={`chat-bubble ${isMine ? "chat-bubble-mine" : "chat-bubble-other"}`}>
+                <p className="chat-text">{msg.text}</p>
+                <p className="chat-meta">{msg.time}</p>
+                <p className="chat-author">{msg.sender}</p>
+              </article>
             </div>
-        </div>
-    );
-}
+          );
+        })}
+      </div>
+
+      <div className="chat-input-area">
+        <input
+          type="text"
+          value={messageText}
+          onChange={(event) => setMessageText(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              sendMessage();
+            }
+          }}
+          placeholder="Unesi poruku..."
+        />
+        <button className="chat-button-primary" type="button" onClick={sendMessage}>
+          Slanje
+        </button>
+      </div>
+    </section>
+  );
+};
 
 export default Chat;

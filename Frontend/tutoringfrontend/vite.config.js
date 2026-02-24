@@ -9,7 +9,7 @@ export default defineConfig({
         manualChunks: {
           react: ['react', 'react-dom', 'react-router-dom'],
           mui: ['@mui/material', '@mui/icons-material', '@emotion/react', '@emotion/styled'],
-          realtime: ['sockjs-client', 'stompjs']
+          realtime: ['sockjs-client', '@stomp/stompjs']
         }
       }
     }

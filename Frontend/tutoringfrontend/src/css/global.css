@@ -1,6 +1,23 @@
-body{
-    font-family: Arial, sans-serif;
-    background-color: aliceblue;
-    margin: 0;
-    padding: 110px 0 0;
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap");
+
+:root {
+  --page-bg: linear-gradient(145deg, #edf4fb 0%, #f7fbff 45%, #f0f7f4 100%);
+  --ink: #10243a;
+  --muted-ink: #4c5f75;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  color: var(--ink);
+  background: var(--page-bg);
+  min-height: 100vh;
+  padding: 96px 0 0;
+}
+
+a {
+  color: inherit;
 }
