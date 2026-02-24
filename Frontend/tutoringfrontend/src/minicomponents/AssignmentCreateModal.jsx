@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from 'react';
 import config from '../config.js';
 const AssignmentCreateModal = ({ show, handleClose, groupId }) => {
     const [name, setName] = useState("");

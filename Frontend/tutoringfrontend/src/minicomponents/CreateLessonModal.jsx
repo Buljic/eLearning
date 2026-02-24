@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from 'react';
 import config from '../config.js';
 import { Modal, Box, TextField, Button, Typography } from '@mui/material';
 

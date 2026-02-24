@@ -1,9 +1,7 @@
-import React from "react";
-import config from '../config.js';
 const Lessons = ({ groupId }) => {
     return (
         <div>
-            <h2>Lekcije</h2>
+            <h2>Lekcije za grupu {groupId}</h2>
         </div>
     );
 };

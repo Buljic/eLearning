@@ -56,7 +56,7 @@
 // }
 //
 // export default AttendedSubjects;
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 import { Link } from "react-router-dom";
 import { Container, Box, Typography, CircularProgress, List, ListItem, Button } from '@mui/material';
 import config from '../config.js';

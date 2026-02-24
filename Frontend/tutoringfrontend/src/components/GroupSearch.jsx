@@ -1,9 +1,9 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import GroupFilterForm from "../minicomponents/GroupFilterForm.jsx";
 import config from '../config.js';
 import Pagination from "../minicomponents/Pagination.jsx";
 import GroupResults from "../minicomponents/GroupResult.jsx";
-import { Box } from '@mui/material';
+import { Box, Alert, Typography, Paper } from '@mui/material';
 
 const GroupSearch = () => {
     const [isSearching, setIsSearching] = useState(false);
@@ -24,8 +24,9 @@ const GroupSearch = () => {
         subjects: []
     });
     const [page, setPage] = useState(0);
-    const [size, setSize] = useState(3);
+    const [size] = useState(3);
     const [totalPages, setTotalPages] = useState(0);
+    const [error, setError] = useState("");
 
     const handleFilterChange = (newFilters) => {
         setFilters(newFilters);
@@ -39,21 +40,26 @@ const GroupSearch = () => {
     };
 
     const getSearchedGroups = async (pageToFetch = page) => {
-        const queryParams = new URLSearchParams(filters).toString();
-        const response = await fetch(`${config.BASE_URL}/api/getGroups?page=${pageToFetch}&size=${size}&${queryParams}`, {
-            method: 'GET',
-            credentials: 'include',
-            headers: {
-                'Content-Type': 'application/json',
+        try {
+            setError("");
+            const queryParams = new URLSearchParams(filters).toString();
+            const response = await fetch(`${config.BASE_URL}/api/getGroups?page=${pageToFetch}&size=${size}&${queryParams}`, {
+                method: 'GET',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+            if (!response.ok) {
+                setError("Neuspjesno preuzimanje grupa.");
+                return;
             }
-        });
-        if (!response.ok) {
-            console.log("Problem s fetchanjem grupa");
-            return;
+            const data = await response.json();
+            setSearchedGroups(data.groups || []);
+            setTotalPages(Math.ceil((data.totalCount || 0) / size));
+        } catch (e) {
+            setError("Doslo je do greske pri pretrazi.");
         }
-        const data = await response.json();
-        setSearchedGroups(data.groups);
-        setTotalPages(Math.ceil(data.totalCount / size));
     };
 
     const handlePageChange = (newPage) => {
@@ -62,9 +68,13 @@ const GroupSearch = () => {
     };
 
     return (
-        <Box sx={{ display: 'flex', gap: 2, padding: 2 }}>
-            <GroupFilterForm filters={filters} onFilterChange={handleFilterChange} onSubmit={handleSubmit} />
+        <Box sx={{ display: 'flex', gap: 2, p: { xs: 1, md: 2 }, flexDirection: { xs: "column", md: "row" } }}>
+            <Paper sx={{ p: 2, borderRadius: 3, border: "1px solid #d8e3ef" }}>
+                <Typography variant="h6" sx={{ mb: 1 }}>Filteri</Typography>
+                <GroupFilterForm filters={filters} onFilterChange={handleFilterChange} onSubmit={handleSubmit} />
+            </Paper>
             <Box sx={{ flex: 2, maxHeight: 'calc(100vh - 20px)', overflow: 'auto' }}>
+                {error && <Alert severity="error" sx={{ mb: 1 }}>{error}</Alert>}
                 <GroupResults isSearching={isSearching} groups={searchedGroups} />
                 <Pagination currentPage={page} totalPages={totalPages} onPageChange={handlePageChange} />
             </Box>

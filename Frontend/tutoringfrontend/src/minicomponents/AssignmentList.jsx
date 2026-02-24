@@ -1,40 +1,48 @@
-import React, { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import AssignmentCreateModal from "./AssignmentCreateModal";
 import config from '../config.js';
-import { Container, Box, Typography, Button, List, ListItem, CircularProgress, Card, CardContent } from '@mui/material';
+import { Container, Box, Typography, Button, List, ListItem, CircularProgress, Card, CardContent, Alert } from '@mui/material';
 
-const AssignmentList = ({ isProfessor }) => {
-    const { groupId } = useParams();
+const AssignmentList = ({ isProfessor, groupId }) => {
     const [assignments, setAssignments] = useState([]);
-    const [showCreateModal, setShowCreateModal] = useState(false); // Definisanje state-a za modal
-    const storedUser = sessionStorage.getItem("myUser");
-    const myUser = JSON.parse(storedUser);
+    const [showCreateModal, setShowCreateModal] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
+    const myUser = useMemo(() => JSON.parse(sessionStorage.getItem("myUser")), []);
 
     useEffect(() => {
         fetchAssignments();
-    }, []);
+    }, [groupId]);
 
     const fetchAssignments = async () => {
-        const response = await fetch(`${config.BASE_URL}/api/${groupId}/assignments`, {
-            method: 'GET',
-            credentials: 'include',
-            headers: {
-                'Content-Type': 'application/json',
+        setLoading(true);
+        setError("");
+        try {
+            const response = await fetch(`${config.BASE_URL}/api/${groupId}/assignments`, {
+                method: 'GET',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+            if (!response.ok) {
+                setError("Neuspjesno ucitavanje zadataka.");
+                setAssignments([]);
+                return;
             }
-        });
-        if (response.ok) {
             const data = await response.json();
             setAssignments(data || []);
-            console.log("Fetched assignments:", data);
-        } else {
-            console.error("Failed to fetch assignments");
+        } catch (e) {
+            setError("Greska prilikom ucitavanja zadataka.");
             setAssignments([]);
+        } finally {
+            setLoading(false);
         }
     };
 
     const getStatus = (assignment) => {
-        if (!assignment.submissions) return "Missing";
+        if (!myUser?.id || !assignment.submissions) return "Missing";
         const submission = assignment.submissions.find(sub => sub.student.id === myUser.id);
         if (!submission) return "Missing";
         if (new Date(submission.submissionTime) > new Date(assignment.dueDateTime)) return "Late";
@@ -49,8 +57,12 @@ const AssignmentList = ({ isProfessor }) => {
                     <Button variant="contained" color="primary" onClick={() => setShowCreateModal(true)}>Create New Assignment</Button>
                 )}
                 <AssignmentCreateModal show={showCreateModal} handleClose={() => setShowCreateModal(false)} groupId={groupId} />
-                {assignments.length === 0 ? (
+                {loading ? (
                     <CircularProgress />
+                ) : error ? (
+                    <Alert severity="error">{error}</Alert>
+                ) : assignments.length === 0 ? (
+                    <Alert severity="info">Trenutno nema zadataka za ovu grupu.</Alert>
                 ) : (
                     <List>
                         {assignments.map((assignment) => (
