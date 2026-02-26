@@ -39,3 +39,27 @@ build/
 
 # Windows datoteke
 Thumbs.db
+
+# Local env files (keep *.example in repo)
+.env
+.env.*
+!.env.example
+Backend/tutoring/.env
+Frontend/tutoringfrontend/.env
+
+# Runtime/uploads artifacts (assignments, submissions, lesson files)
+uploads/assignments/**
+uploads/assignmentsubmits/**
+uploads/lessons/**
+uploads/**/*.png
+uploads/**/*.jpg
+uploads/**/*.jpeg
+uploads/**/*.gif
+uploads/**/*.webp
+uploads/**/*.pdf
+uploads/**/*.doc
+uploads/**/*.docx
+uploads/**/*.zip
+
+# Local scripts (keep only on this machine)
+scripts/
