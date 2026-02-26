@@ -15,89 +15,148 @@ import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
-//Znaci fakticki ova klasa tj bean se koristi za najbitniju logiku tj kreiranje
-//i verifikaciju samog jwta a ona sama po sebi nikako ne djeluje vec koristimo ovu klasu
-//da pozivamo njene metode i kreiramo te kljuceve i verfikujemo iste
 @Component
-public class JwtUtil
-{
+public class JwtUtil {
+    private static final String ACCESS_TOKEN_TYPE = "access";
+    private static final String REFRESH_TOKEN_TYPE = "refresh";
+
     @Value("${security.jwt.secret}")
     private String jwtSecret;
+
+    @Value("${security.jwt.refresh-secret:${security.jwt.secret}}")
+    private String jwtRefreshSecret;
 
     @Value("${security.jwt.expiration-ms:7200000}")
     private long jwtExpirationMs;
 
-    private SecretKey secretKey;
+    @Value("${security.jwt.refresh-expiration-ms:2592000000}")
+    private long refreshExpirationMs;
+
+    private SecretKey accessSecretKey;
+    private SecretKey refreshSecretKey;
 
     @PostConstruct
     public void initSecretKey() {
-        this.secretKey = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
+        this.accessSecretKey = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
+        this.refreshSecretKey = Keys.hmacShaKeyFor(jwtRefreshSecret.getBytes(StandardCharsets.UTF_8));
     }
 
+    public String generateToken(User user) {
+        return generateAccessToken(user);
+    }
 
-    public String generateToken(User user)
-    {
-        long nowMillis=System.currentTimeMillis();
-        Date now=new Date(nowMillis);
-        long expMillis=nowMillis+jwtExpirationMs;//da token istekne za 2 sata
-        Date exp=new Date(expMillis);
+    public String generateAccessToken(User user) {
+        long nowMillis = System.currentTimeMillis();
+        Date now = new Date(nowMillis);
+        Date exp = new Date(nowMillis + jwtExpirationMs);
 
-        return Jwts.builder()//jwts je klasa a builder staticka metoda koja vraca JwtsBuilder objekat
+        return Jwts.builder()
                 .setSubject(user.getUsername())
-                .claim("username",user.getUsername())
-                .claim("role",user.getAccountType().toString())
+                .claim("username", user.getUsername())
+                .claim("role", user.getAccountType().toString())
+                .claim("typ", ACCESS_TOKEN_TYPE)
                 .setIssuedAt(now)
                 .setExpiration(exp)
-                .signWith(secretKey)
-                .compact();//metoda koja se poziva nad onim jwtsbuilder objektom da sve ovo pretvori u string
-        //ne sprema se ovaj kljuc na serveru jer je stateless veza
+                .signWith(accessSecretKey)
+                .compact();
     }
-    public boolean validateToken(String token)
-    {
-        try{
-            //(JSON Web Signature)
-            //claims u smislu izjave o korisniku tj identittu korisnika... tj kao payload reprezentacija
-            Jws<Claims> claims=//json web signature //claims je za tvrdnje o korisnikua n
-                    Jwts.parser()//parser cita tekstualne podatke i intrepertira ih, a ovdje analizira jwt string dekodira ga provjerava
-                            //potpis i izvlaci info iz njega tj 'claims'
-                            .setSigningKey(secretKey)
-                            .build()
-                            //vraca kao jwtparser koji ce biti koristen za dekodiranje i nad kojim pozivamo metodu
-                            //koja proslijedi mu token nas
-                            .parseClaimsJws(token);//vraca jwsclaims objekat
-            return true;
 
-        }
-        catch (Exception e){
+    public String generateRefreshToken(User user) {
+        long nowMillis = System.currentTimeMillis();
+        Date now = new Date(nowMillis);
+        Date exp = new Date(nowMillis + refreshExpirationMs);
+
+        return Jwts.builder()
+                .setSubject(user.getUsername())
+                .claim("username", user.getUsername())
+                .claim("typ", REFRESH_TOKEN_TYPE)
+                .setIssuedAt(now)
+                .setExpiration(exp)
+                .signWith(refreshSecretKey)
+                .compact();
+    }
+
+    public boolean validateToken(String token) {
+        return validateAccessToken(token);
+    }
+
+    public boolean validateAccessToken(String token) {
+        return validateTypedToken(token, accessSecretKey, ACCESS_TOKEN_TYPE);
+    }
+
+    public boolean validateRefreshToken(String token) {
+        return validateTypedToken(token, refreshSecretKey, REFRESH_TOKEN_TYPE);
+    }
+
+    private boolean validateTypedToken(String token, SecretKey key, String expectedType) {
+        try {
+            Jws<Claims> claims = Jwts.parser()
+                    .setSigningKey(key)
+                    .build()
+                    .parseClaimsJws(token);
+            String tokenType = claims.getBody().get("typ", String.class);
+            return expectedType.equals(tokenType);
+        } catch (Exception e) {
             return false;
         }
     }
 
     public String extractJwtFromCookie(HttpServletRequest request) {
-        if (request.getCookies() != null) {
-            for (Cookie cookie : request.getCookies()) {
-                if ("JWT".equals(cookie.getName())) {
-                    return cookie.getValue();
-                }
+        String accessToken = extractTokenFromCookie(request, "JWT");
+        if (accessToken != null) {
+            return accessToken;
+        }
+        return extractTokenFromCookie(request, "ACCESS_TOKEN");
+    }
+
+    public String extractRefreshJwtFromCookie(HttpServletRequest request) {
+        String refreshToken = extractTokenFromCookie(request, "JWT_REFRESH");
+        if (refreshToken != null) {
+            return refreshToken;
+        }
+        return extractTokenFromCookie(request, "REFRESH_TOKEN");
+    }
+
+    private String extractTokenFromCookie(HttpServletRequest request, String cookieName) {
+        if (request.getCookies() == null) {
+            return null;
+        }
+        for (Cookie cookie : request.getCookies()) {
+            if (cookieName.equals(cookie.getName())) {
+                return cookie.getValue();
             }
         }
         return null;
     }
 
-    public String getUsernameFromToken(String token)
-    {
-        Jws<Claims> claimsJws=Jwts.parser().
-                setSigningKey(secretKey)
-                .build()
-                .parseClaimsJws(token);
-        return claimsJws.getBody().get("username",String.class);
+    public String getUsernameFromToken(String token) {
+        return parseAccessClaims(token).getBody().get("username", String.class);
     }
-    public String getRoleFromToken(String token)
-    {
-        Jws<Claims> claimsJws=Jwts.parser().
-                setSigningKey(secretKey)
+
+    public String getRoleFromToken(String token) {
+        return parseAccessClaims(token).getBody().get("role", String.class);
+    }
+
+    public String getUsernameFromRefreshToken(String token) {
+        Jws<Claims> claimsJws = Jwts.parser()
+                .setSigningKey(refreshSecretKey)
                 .build()
                 .parseClaimsJws(token);
-        return claimsJws.getBody().get("role",String.class);
+        return claimsJws.getBody().get("username", String.class);
+    }
+
+    public long getAccessTokenExpirationMs() {
+        return jwtExpirationMs;
+    }
+
+    public long getRefreshTokenExpirationMs() {
+        return refreshExpirationMs;
+    }
+
+    private Jws<Claims> parseAccessClaims(String token) {
+        return Jwts.parser()
+                .setSigningKey(accessSecretKey)
+                .build()
+                .parseClaimsJws(token);
     }
 }

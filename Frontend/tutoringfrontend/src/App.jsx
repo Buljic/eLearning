@@ -1,32 +1,58 @@
-import { Suspense, lazy } from 'react';
+import { Suspense, lazy, useEffect } from 'react';
 import { BrowserRouter as Router, Navigate, Route, Routes } from 'react-router-dom';
-import Header from "./minicomponents/Header.jsx";
+import Header from './minicomponents/Header.jsx';
+import NotificationHost from './minicomponents/NotificationHost.jsx';
+import config from './config.js';
 
 const LoginForm = lazy(() => import('./components/LoginForm'));
 const WelcomePage = lazy(() => import('./components/WelcomePage'));
-const Homepage = lazy(() => import("./components/Homepage.jsx"));
-const CreateAccount = lazy(() => import("./components/CreateAccount.jsx"));
-const Subjects = lazy(() => import("./components/Subjects.jsx"));
-const TutorsForSubject = lazy(() => import("./components/TutorsForSubject.jsx"));
-const RequestSubjectAsTutor = lazy(() => import("./components/RequestSubjectAsTutor.jsx"));
-const UserInfo = lazy(() => import("./components/UserInfo.jsx"));
-const ChatTo = lazy(() => import("./components/ChatTo.jsx"));
-const ChatGroup = lazy(() => import("./components/ChatGroup.jsx"));
-const AttendedSubjects = lazy(() => import("./components/AttendedSubjects.jsx"));
-const SearchUsers = lazy(() => import("./components/SearchUsers.jsx"));
-const CreateGroup = lazy(() => import("./components/CreateGroup.jsx"));
-const GroupSearch = lazy(() => import("./components/GroupSearch.jsx"));
-const GroupDetails = lazy(() => import("./components/GroupDetails.jsx"));
-const GroupRequests = lazy(() => import("./components/GroupRequests.jsx"));
-const GroupOverview = lazy(() => import("./components/GroupOverview.jsx"));
-const AssignmentSubmissions = lazy(() => import("./minicomponents/AssignmentSubmissions.jsx"));
-const SubmissionDetail = lazy(() => import("./minicomponents/SubmissionDetail.jsx"));
-const AssignmentDetail = lazy(() => import("./minicomponents/AssignmentDetail.jsx"));
+const Homepage = lazy(() => import('./components/Homepage.jsx'));
+const CreateAccount = lazy(() => import('./components/CreateAccount.jsx'));
+const Subjects = lazy(() => import('./components/Subjects.jsx'));
+const TutorsForSubject = lazy(() => import('./components/TutorsForSubject.jsx'));
+const RequestSubjectAsTutor = lazy(() => import('./components/RequestSubjectAsTutor.jsx'));
+const UserInfo = lazy(() => import('./components/UserInfo.jsx'));
+const ChatTo = lazy(() => import('./components/ChatTo.jsx'));
+const ChatGroup = lazy(() => import('./components/ChatGroup.jsx'));
+const AttendedSubjects = lazy(() => import('./components/AttendedSubjects.jsx'));
+const SearchUsers = lazy(() => import('./components/SearchUsers.jsx'));
+const CreateGroup = lazy(() => import('./components/CreateGroup.jsx'));
+const GroupSearch = lazy(() => import('./components/GroupSearch.jsx'));
+const GroupDetails = lazy(() => import('./components/GroupDetails.jsx'));
+const GroupRequests = lazy(() => import('./components/GroupRequests.jsx'));
+const GroupOverview = lazy(() => import('./components/GroupOverview.jsx'));
+const AssignmentSubmissions = lazy(() => import('./minicomponents/AssignmentSubmissions.jsx'));
+const SubmissionDetail = lazy(() => import('./minicomponents/SubmissionDetail.jsx'));
+const AssignmentDetail = lazy(() => import('./minicomponents/AssignmentDetail.jsx'));
 
 function App() {
+    useEffect(() => {
+        const refresh = async () => {
+            try {
+                await fetch(`${config.BASE_URL}/api/auth/refresh`, {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                });
+            } catch (error) {
+                console.error('Silent token refresh failed:', error);
+            }
+        };
+
+        refresh();
+        const intervalId = window.setInterval(refresh, 10 * 60 * 1000);
+
+        return () => {
+            window.clearInterval(intervalId);
+        };
+    }, []);
+
     return (
         <>
             <Header />
+            <NotificationHost />
 
             <Router>
                 <Suspense fallback={<div style={{ padding: '1rem' }}>Loading...</div>}>
@@ -62,6 +88,5 @@ function App() {
         </>
     );
 }
-
 
 export default App;

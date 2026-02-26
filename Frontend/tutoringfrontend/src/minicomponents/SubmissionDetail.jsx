@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from "react-router-dom";
 import config from '../config.js';
+import { notify } from '../utils/notifications.js';
 const SubmissionDetail = () => {
     const { submissionId } = useParams();
     const [submission, setSubmission] = useState(null);
@@ -49,11 +50,11 @@ const SubmissionDetail = () => {
             if (!response.ok) {
                 throw new Error("Failed to update submission");
             }
-            alert("Submission updated successfully!");
+            notify('Submission updated successfully!', 'success');
             fetchSubmission(); // Refresh the submission details
         } catch (error) {
             console.error("Error updating submission:", error);
-            alert("Failed to update submission");
+            notify('Failed to update submission.', 'error');
         }
     };
 

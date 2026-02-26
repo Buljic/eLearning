@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from "react-router-dom";
 import config from '../config.js';
 import { Container, Box, Typography, Button, CircularProgress, List, ListItem, Card, CardContent, Paper } from '@mui/material';
+import { notify } from '../utils/notifications.js';
 
 const AssignmentDetail = () => {
     const { assignmentId } = useParams();
@@ -27,7 +28,6 @@ const AssignmentDetail = () => {
             const data = await response.json();
             setAssignment(data);
             setStatus(getStatus(data));
-            console.log("Fetched assignment:", data);
         } else {
             console.error("Failed to fetch assignment");
         }
@@ -47,12 +47,12 @@ const AssignmentDetail = () => {
 
     const handleSubmit = async () => {
         if (!selectedFile) {
-            alert("Please select a file to submit.");
+            notify('Please select a file to submit.', 'warning');
             return;
         }
 
         if (status === "Submitted" || status === "Late") {
-            alert("Assignment has already been submitted or is late.");
+            notify('Assignment has already been submitted or is late.', 'warning');
             return;
         }
 
@@ -67,14 +67,14 @@ const AssignmentDetail = () => {
                 body: formData,
             });
             if (response.ok) {
-                alert("Assignment submitted successfully.");
+                notify('Assignment submitted successfully.', 'success');
                 fetchAssignment(); // Refresh assignment details
             } else {
-                alert("Failed to submit assignment.");
+                notify('Failed to submit assignment.', 'error');
             }
         } catch (error) {
             console.error("Failed to submit assignment", error);
-            alert("An error occurred while submitting the assignment.");
+            notify('An error occurred while submitting the assignment.', 'error');
         }
     };
 

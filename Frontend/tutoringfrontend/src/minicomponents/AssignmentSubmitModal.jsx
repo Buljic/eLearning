@@ -1,53 +1,55 @@
 import { useState } from 'react';
 import config from '../config.js';
+import { notify } from '../utils/notifications.js';
+
 const AssignmentSubmitModal = ({ show, handleClose, assignment }) => {
     const [file, setFile] = useState(null);
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+    const handleSubmit = async (event) => {
+        event.preventDefault();
         if (!assignment) {
-            alert("No assignment selected");
+            notify('No assignment selected.', 'warning');
             return;
         }
 
         const formData = new FormData();
-        formData.append("file", file);
+        formData.append('file', file);
 
         try {
             const response = await fetch(`${config.BASE_URL}/api/assignments/${assignment.id}/submit`, {
-                method: "POST",
+                method: 'POST',
                 body: formData,
-                credentials: "include",
+                credentials: 'include',
             });
             if (!response.ok) {
-                throw new Error("Failed to submit assignment");
+                throw new Error('Failed to submit assignment');
             }
-            alert("Assignment submitted successfully!");
+            notify('Assignment submitted successfully!', 'success');
             handleClose();
         } catch (error) {
-            console.error("Error submitting assignment:", error);
-            alert("Failed to submit assignment");
+            console.error('Error submitting assignment:', error);
+            notify('Failed to submit assignment.', 'error');
         }
     };
 
+    if (!show) {
+        return null;
+    }
+
     return (
-        show && (
-            <div className="modal">
-                <form onSubmit={handleSubmit}>
-                    <h2>Submit Assignment: {assignment?.name}</h2>
-                    <div>
-                        <label>File:</label>
-                        <input
-                            type="file"
-                            onChange={(e) => setFile(e.target.files[0])}
-                            required
-                        />
-                    </div>
-                    <button type="submit">Submit</button>
-                    <button type="button" onClick={handleClose}>Close</button>
-                </form>
-            </div>
-        )
+        <div className="modal">
+            <form onSubmit={handleSubmit}>
+                <h2>Submit Assignment: {assignment?.name}</h2>
+                <div>
+                    <label>File:</label>
+                    <input type="file" onChange={(event) => setFile(event.target.files[0])} required />
+                </div>
+                <button type="submit">Submit</button>
+                <button type="button" onClick={handleClose}>
+                    Close
+                </button>
+            </form>
+        </div>
     );
 };
 

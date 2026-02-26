@@ -1,33 +1,31 @@
 import { useState } from 'react';
-import useFetchUser from "../customHooks/useFetchUser.js";
-import useFetchSubjects from "../customHooks/useFetchSubjects.js";
-import { Container, Box, Typography, TextField, Button, CircularProgress, Alert, List, ListItem } from '@mui/material';
+import { Alert, Box, Button, CircularProgress, Container, List, ListItem, TextField, Typography } from '@mui/material';
+import useFetchSubjects from '../customHooks/useFetchSubjects.js';
+import useFetchUser from '../customHooks/useFetchUser.js';
 import config from '../config.js';
+import { notify } from '../utils/notifications.js';
 
 const RequestSubjectAsTutor = () => {
     const { error, loading } = useFetchUser();
+    const { subjects, error: subjectsError, loading: subjectsLoading } = useFetchSubjects();
+
     const [inputSubject, setInputSubject] = useState('');
     const [comment, setComment] = useState('');
     const [writtenQualifications, setWrittenQualifications] = useState('');
     const [isSearching, setIsSearching] = useState(false);
 
-    const { subjects, error2, loading2 } = useFetchSubjects();
-
-    if (loading || loading2) {
+    if (loading || subjectsLoading) {
         return <CircularProgress />;
     }
 
-    if (error || error2) {
-        return <Alert severity="error">Došlo je do greške: {error?.message || error2?.message}</Alert>;
+    if (error || subjectsError) {
+        return <Alert severity="error">Doslo je do greske: {error?.message || subjectsError?.message}</Alert>;
     }
 
     const handleFormInput = async (event) => {
         event.preventDefault();
-
         try {
-            console.log({ inputSubject, writtenQualifications, comment });
             const requestBody = JSON.stringify({ inputSubject, writtenQualifications, comment });
-            console.log(requestBody);
             const response = await fetch(`${config.BASE_URL}/api/registerForSubjectAsTutor`, {
                 method: 'POST',
                 credentials: 'include',
@@ -36,45 +34,47 @@ const RequestSubjectAsTutor = () => {
                 },
                 body: requestBody,
             });
+
             if (!response.ok) {
-                console.log("Neka greška u slanju ZAHTJEVA ZA SUBJECTOM");
-                throw new Error("REGISTER FOR SUBJECT ERROR");
-            } else {
-                alert("Uspješno postavljeno");
+                throw new Error('Greska pri slanju zahtjeva.');
             }
-        } catch (error) {
-            console.log("Greška sa" + error);
+            notify('Uspjesno postavljen zahtjev.', 'success');
+            setComment('');
+            setWrittenQualifications('');
+        } catch (requestError) {
+            console.error('Request subject as tutor failed:', requestError);
+            notify('Doslo je do greske prilikom slanja zahtjeva.', 'error');
         }
     };
 
-    const filteredSubjects = inputSubject && typeof inputSubject === 'string'
-        ? subjects.filter(tempSubject => tempSubject.toLowerCase().includes(inputSubject.toLowerCase()))
-        : [];
+    const filteredSubjects =
+        inputSubject && typeof inputSubject === 'string'
+            ? subjects.filter((subject) => subject.toLowerCase().includes(inputSubject.toLowerCase()))
+            : [];
 
     const handleSuggestionClick = (clickedSubject) => {
-        console.log("Pritisnuo si" + clickedSubject);
         setInputSubject(clickedSubject);
         setIsSearching(false);
-    }
+    };
 
     const handleSearchChange = (event) => {
         setInputSubject(event.target.value || '');
         setIsSearching(true);
-    }
+    };
 
     return (
         <Container>
             <Box sx={{ textAlign: 'center', my: 4 }}>
                 <Typography variant="h4" gutterBottom>
-                    REGISTRACIJA ZA PREDMETE
+                    Registracija za predmete
                 </Typography>
                 <Typography variant="body1" gutterBottom>
-                    Zatraži predmete za kvalifikaciju
+                    Zatrazite predmete za kvalifikaciju
                 </Typography>
                 <Box component="form" onSubmit={handleFormInput} sx={{ mt: 3 }}>
                     <TextField
                         id="subjectInputField"
-                        label="Subject"
+                        label="Predmet"
                         fullWidth
                         value={inputSubject}
                         onChange={handleSearchChange}
@@ -83,29 +83,27 @@ const RequestSubjectAsTutor = () => {
                     />
                     {isSearching && inputSubject && (
                         <List id="suggestion">
-                            {filteredSubjects.map((tSubject, index) => (
-                                <ListItem key={index}>
-                                    <Button onClick={() => handleSuggestionClick(tSubject)}>
-                                        {tSubject}
-                                    </Button>
+                            {filteredSubjects.map((subject, index) => (
+                                <ListItem key={`${subject}-${index}`}>
+                                    <Button onClick={() => handleSuggestionClick(subject)}>{subject}</Button>
                                 </ListItem>
                             ))}
                         </List>
                     )}
                     <TextField
                         id="textQualificationField"
-                        label="Unesi svoje kvalifikacije"
+                        label="Unesite svoje kvalifikacije"
                         fullWidth
                         value={writtenQualifications}
-                        onChange={(e) => setWrittenQualifications(e.target.value)}
+                        onChange={(event) => setWrittenQualifications(event.target.value)}
                         margin="normal"
                     />
                     <TextField
                         id="extraInformationField"
-                        label="Unesi dodatne informacije"
+                        label="Unesite dodatne informacije"
                         fullWidth
                         value={comment}
-                        onChange={(e) => setComment(e.target.value)}
+                        onChange={(event) => setComment(event.target.value)}
                         margin="normal"
                     />
                     <Button id="subjectRequestSubmit" type="submit" variant="contained" color="primary" sx={{ mt: 2 }}>
@@ -115,6 +113,6 @@ const RequestSubjectAsTutor = () => {
             </Box>
         </Container>
     );
-}
+};
 
 export default RequestSubjectAsTutor;

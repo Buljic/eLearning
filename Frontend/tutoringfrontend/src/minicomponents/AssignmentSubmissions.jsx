@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from "react-router-dom";
 import config from '../config.js';
 import { Container, Box, Typography, Button, TextField, List, ListItem, Card, CardContent } from '@mui/material';
+import { notify } from '../utils/notifications.js';
 
 const AssignmentSubmissions = () => {
     const { assignmentId } = useParams();
@@ -53,14 +54,14 @@ const AssignmentSubmissions = () => {
                 body: JSON.stringify(feedbackData),
             });
             if (response.ok) {
-                alert("Feedback provided successfully.");
+                notify('Feedback provided successfully.', 'success');
                 fetchSubmissions(); // Refresh submissions
             } else {
-                alert("Failed to provide feedback.");
+                notify('Failed to provide feedback.', 'error');
             }
         } catch (error) {
             console.error("Failed to provide feedback", error);
-            alert("An error occurred while providing feedback.");
+            notify('An error occurred while providing feedback.', 'error');
         }
     };
 

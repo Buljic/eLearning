@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import config from '../config.js';
+import { notify } from '../utils/notifications.js';
 const UploadLessonFile = ({ lessonId }) => {
     const [file, setFile] = useState(null);
 
@@ -18,9 +19,9 @@ const UploadLessonFile = ({ lessonId }) => {
         });
 
         if (response.ok) {
-            alert("File uploaded successfully");
+            notify('File uploaded successfully.', 'success');
         } else {
-            alert("Failed to upload file");
+            notify('Failed to upload file.', 'error');
         }
     };
 

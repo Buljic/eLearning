@@ -32,12 +32,19 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource))
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .headers(headers -> headers
+                        .contentTypeOptions(contentTypeOptions -> {})
+                        .xssProtection(xss -> {})
+                        .frameOptions(frame -> frame.deny())
+                )
                 .authorizeHttpRequests((authz) -> authz
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(
                                 "/",
                                 "/error",
                                 "/api/login",
+                                "/api/auth/refresh",
+                                "/api/auth/logout",
                                 "/api/createAccount",
                                 "/api/welcomePage",
                                 "/uploads/**"
