@@ -1,24 +1,18 @@
-import { Box, Button } from '@mui/material';
+import { Box, Pagination as MuiPagination } from '@mui/material';
 
 const Pagination = ({ currentPage, totalPages, onPageChange }) => {
-    const pages = [];
-    for (let i = 0; i < totalPages; i++) {
-        pages.push(i);
+    if (!totalPages || totalPages <= 1) {
+        return null;
     }
 
     return (
-        <Box sx={{ display: 'flex', justifyContent: 'start', mt: 2 }}>
-            {pages.map((page) => (
-                <Button
-                    key={page}
-                    onClick={() => onPageChange(page)}
-                    disabled={page === currentPage}
-                    variant={page === currentPage ? 'contained' : 'outlined'}
-                    sx={{ margin: '0 2px' }}
-                >
-                    {page + 1}
-                </Button>
-            ))}
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+            <MuiPagination
+                count={totalPages}
+                page={currentPage + 1}
+                color="primary"
+                onChange={(_, value) => onPageChange(value - 1)}
+            />
         </Box>
     );
 };

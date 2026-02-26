@@ -1,14 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { Alert, Box, Button, CircularProgress, Container, Paper, Snackbar, Stack, Typography } from '@mui/material';
 import config from '../config.js';
-import { Container, Box, Typography, Button, CircularProgress, Alert } from '@mui/material';
 
 const GroupDetails = () => {
     const { groupId } = useParams();
     const [group, setGroup] = useState(null);
     const [error, setError] = useState('');
+    const [requestStatus, setRequestStatus] = useState({ open: false, message: '', severity: 'success' });
     const storedUser = sessionStorage.getItem('myUser');
-    const myUser = JSON.parse(storedUser);
+    const myUser = storedUser ? JSON.parse(storedUser) : null;
 
     useEffect(() => {
         const fetchGroupDetails = async () => {
@@ -21,14 +22,13 @@ const GroupDetails = () => {
                     },
                 });
                 if (!response.ok) {
-                    throw new Error('Failed to fetch group details');
+                    throw new Error('Neuspjesno ucitavanje detalja grupe.');
                 }
                 const data = await response.json();
                 setGroup(data);
-                console.log("Group data fetched: ", data);
-            } catch (err) {
-                console.error("Error fetching group details: ", err);
-                setError(err.message);
+            } catch (fetchError) {
+                console.error('Error fetching group details:', fetchError);
+                setError(fetchError.message || 'Neuspjesno ucitavanje detalja grupe.');
             }
         };
         fetchGroupDetails();
@@ -41,16 +41,20 @@ const GroupDetails = () => {
                 credentials: 'include',
                 headers: {
                     'Content-Type': 'application/json',
-                }
+                },
             });
             if (!response.ok) {
                 const errorMessage = await response.text();
-                throw new Error(errorMessage);
+                throw new Error(errorMessage || 'Neuspjesno slanje zahtjeva.');
             }
-            alert('Zahtjev za pristup je uspješno poslan.');
-        } catch (error) {
-            console.error('Error requesting access:', error);
-            alert(`Error requesting access: ${error.message}`);
+            setRequestStatus({ open: true, message: 'Zahtjev za pristup je uspjesno poslan.', severity: 'success' });
+        } catch (requestError) {
+            console.error('Error requesting access:', requestError);
+            setRequestStatus({
+                open: true,
+                message: requestError.message || 'Neuspjesno slanje zahtjeva za pristup.',
+                severity: 'error',
+            });
         }
     };
 
@@ -62,23 +66,50 @@ const GroupDetails = () => {
         return <CircularProgress />;
     }
 
+    const canRequestAccess = myUser?.accountType === 'STUDENT' && new Date(group.startDate) > new Date();
+
     return (
         <Container>
-            <Box sx={{ my: 4 }}>
-                <Typography variant="h4">{group.group_name}</Typography>
-                <Typography variant="body1">{group.description}</Typography>
-                <Typography variant="body1">Start Date: {group.startDate}</Typography>
-                <Typography variant="body1">End Date: {group.endDate}</Typography>
-                <Typography variant="body1">Hours per Week: {group.hoursPerWeek}</Typography>
-                <Typography variant="body1">Price: {group.price} BAM</Typography>
-                <Typography variant="body1">Max Students: {group.maxStudents}</Typography>
-                <Typography variant="body1">Topic: {group.topic}</Typography>
-                {myUser.accountType === 'STUDENT' && new Date(group.startDate) > new Date() && (
-                    <Button variant="contained" color="primary" onClick={handleRequestAccess}>
-                        Request Access
-                    </Button>
+            <Paper sx={{ my: 4, p: 3, borderRadius: 3 }}>
+                <Typography variant="h4" sx={{ mb: 2 }}>
+                    {group.group_name}
+                </Typography>
+                <Typography variant="body1" sx={{ mb: 2 }}>
+                    {group.description || 'Bez opisa.'}
+                </Typography>
+                <Stack spacing={0.75}>
+                    <Typography variant="body2">Start Date: {group.startDate}</Typography>
+                    <Typography variant="body2">End Date: {group.endDate}</Typography>
+                    <Typography variant="body2">Hours per Week: {group.hoursPerWeek}</Typography>
+                    <Typography variant="body2">Price: {group.price} BAM</Typography>
+                    <Typography variant="body2">Max Students: {group.maxStudents}</Typography>
+                    <Typography variant="body2">Topic: {group.topic}</Typography>
+                </Stack>
+
+                {canRequestAccess && (
+                    <Box sx={{ mt: 2 }}>
+                        <Button variant="contained" color="primary" onClick={handleRequestAccess}>
+                            Request Access
+                        </Button>
+                    </Box>
                 )}
-            </Box>
+
+                {!myUser && (
+                    <Alert severity="info" sx={{ mt: 2 }}>
+                        Prijavite se kako biste mogli slati zahtjev za pristup grupi.
+                    </Alert>
+                )}
+            </Paper>
+
+            <Snackbar
+                open={requestStatus.open}
+                autoHideDuration={4000}
+                onClose={() => setRequestStatus((prev) => ({ ...prev, open: false }))}
+            >
+                <Alert severity={requestStatus.severity} onClose={() => setRequestStatus((prev) => ({ ...prev, open: false }))}>
+                    {requestStatus.message}
+                </Alert>
+            </Snackbar>
         </Container>
     );
 };
