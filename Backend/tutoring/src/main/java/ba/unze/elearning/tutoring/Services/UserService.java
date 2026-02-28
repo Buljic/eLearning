@@ -164,91 +164,73 @@ public class UserService
 
     public List<GenericDTO> getSearchedUsers(String username)
     {
-        String sql="SELECT * FROM USER WHERE username LIKE ?;";
-        return jdbcTemplate.query(sql,new Object[]{"%"+username+"%"},new GenericDTOMapper());
+        String sql = "SELECT id, name, surname, username, account_type FROM user WHERE username LIKE ?;";
+        return jdbcTemplate.query(sql, new Object[]{"%" + username + "%"}, new GenericDTOMapper());
     }
 
     @Transactional
-    public void createGroup(GenericDTO request) throws Exception {
+    public void createGroup(GenericDTO request, Long tutorId) throws Exception {
         try {
-
             String groupName = request.getString("groupName");
-            System.out.println("groupName: " + groupName);
-
             String topic = request.getString("topic");
-            System.out.println("topic: " + topic);
-
             String description = request.getString("description");
-            System.out.println("description: " + description);
-
             LocalDate startDate = LocalDate.parse(request.getString("startDate"));
-            System.out.println("startDate: " + startDate);
-
             LocalDate endDate = LocalDate.parse(request.getString("endDate"));
-            System.out.println("endDate: " + endDate);
-
-            int hoursPerWeek = Integer.parseInt(request.getString("hoursPerWeek"));
-            System.out.println("hoursPerWeek: " + hoursPerWeek);
-
-            double price = Double.parseDouble(request.getString("price"));
-            System.out.println("price: " + price);
-
-            int maxStudents = Integer.parseInt(request.getString("maxStudents"));
-            System.out.println("maxStudents: " + maxStudents);
-
+            Integer hoursPerWeek = request.getInt("hoursPerWeek");
+            Double price = request.getDouble("price");
+            Integer maxStudents = request.getInt("maxStudents");
             List<String> subjects = (List<String>) request.getProperties().get("chosenSubjects");
-            System.out.println("subjects: " + subjects);
 
-            Long tutorId = Long.parseLong(request.getString("tutorId"));
-            System.out.println("tutorId: " + tutorId);
-
-            // Provjera duplikata grupe
-            String checkDuplicateSql = "SELECT COUNT(*) FROM group_table WHERE group_name = ? AND headtutor_id = ?;";
-            int count = jdbcTemplate.queryForObject(checkDuplicateSql, new Object[]{groupName, tutorId}, Integer.class);
-            System.out.println("duplicate check count: " + count);
-
-            if (count > 0) {
-                throw new Exception("Tutor već ima grupu s istim imenom.");
+            if (groupName == null || groupName.isBlank()) {
+                throw new IllegalArgumentException("Naziv grupe je obavezan.");
+            }
+            if (topic == null || topic.isBlank()) {
+                throw new IllegalArgumentException("Tema grupe je obavezna.");
+            }
+            if (description == null || description.isBlank()) {
+                throw new IllegalArgumentException("Opis grupe je obavezan.");
+            }
+            if (hoursPerWeek == null || hoursPerWeek <= 0 || price == null || price <= 0 || maxStudents == null || maxStudents <= 0) {
+                throw new IllegalArgumentException("Numericka polja moraju biti pozitivna.");
+            }
+            if (subjects == null || subjects.isEmpty() || subjects.stream().anyMatch(subject -> subject == null || subject.isBlank())) {
+                throw new IllegalArgumentException("Morate izabrati barem jedan validan predmet.");
+            }
+            if (endDate.isBefore(startDate)) {
+                throw new IllegalArgumentException("Datum zavrsetka mora biti nakon datuma pocetka.");
             }
 
-            // Query za umetanje nove grupe
+            String checkDuplicateSql = "SELECT COUNT(*) FROM group_table WHERE group_name = ? AND headtutor_id = ?;";
+            int count = jdbcTemplate.queryForObject(checkDuplicateSql, new Object[]{groupName, tutorId}, Integer.class);
+            if (count > 0) {
+                throw new IllegalStateException("Tutor vec ima grupu s istim imenom.");
+            }
+
             String insertGroupSql = "INSERT INTO group_table (group_name, topic, description, start_date, end_date, hours_per_week, price, max_students, creation_date, headtutor_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);";
             int groupInsertResult = jdbcTemplate.update(insertGroupSql, groupName, topic, description, startDate, endDate, hoursPerWeek, price, maxStudents, LocalDate.now(), tutorId);
-            System.out.println("Group inserted, result: " + groupInsertResult);
-
             if (groupInsertResult != 1) {
                 throw new Exception("Failed to insert group");
             }
 
-            //  Query za povezivanje grupe sa predmetima
             String insertGroupSubjectSql = "INSERT INTO group_subject (group_id, subject_id) VALUES ((SELECT group_id FROM group_table WHERE group_name = ? AND headtutor_id = ?), (SELECT id FROM subject WHERE subject_name = ?));";
             for (String subject : subjects) {
-                System.out.println("Povezivanje predmeta: " + subject);
                 int groupSubjectInsertResult = jdbcTemplate.update(insertGroupSubjectSql, groupName, tutorId, subject);
-                System.out.println("Group subject inserted, result: " + groupSubjectInsertResult);
-
                 if (groupSubjectInsertResult != 1) {
                     throw new Exception("Failed to insert group subject for: " + subject);
                 }
             }
-            System.out.println("Subjects linked to group");
 
-            //TODO BITNO! PROVJERI DA LI CEMO KORISTITI OVAJ NACIN RADA DA TUTOR BUDE U TABELI OVOJ JER MOZE ZEZNUTI NEKE STVARI
-            // SQL upit za dodavanje tutora u user_group tabelu
             String insertUserGroupSql = "INSERT INTO user_group (date_joined, group_id, user_id) VALUES (?, (SELECT group_id FROM group_table WHERE group_name = ? AND headtutor_id = ?), ?);";
             int userGroupInsertResult = jdbcTemplate.update(insertUserGroupSql, LocalDate.now(), groupName, tutorId, tutorId);
-            System.out.println("Tutor added to user_group, result: " + userGroupInsertResult);
-
             if (userGroupInsertResult != 1) {
                 throw new Exception("Failed to insert tutor into user_group");
             }
-
         } catch (DataAccessException e) {
-            throw new Exception("Greška pri pristupu bazi podataka: " + e.getMessage());
+            throw new Exception("Greska pri pristupu bazi podataka: " + e.getMessage());
         } catch (NumberFormatException e) {
-            throw new Exception("Greška pri parsiranju numeričkih vrijednosti: " + e.getMessage());
+            throw new Exception("Greska pri parsiranju numerickih vrijednosti: " + e.getMessage());
         } catch (Exception e) {
-            throw new Exception("Greška pri kreiranju grupe: " + e.getMessage());
+            throw new Exception("Greska pri kreiranju grupe: " + e.getMessage());
         }
     }
 
@@ -377,9 +359,6 @@ public class UserService
         params.add(size);
         params.add(page * size);
 
-        System.out.println("Executing query: " + sql.toString());
-        System.out.println("With params: " + params);
-
         return jdbcTemplate.query(sql.toString(), params.toArray(), new GenericDTOMapper());
     }
 
@@ -475,3 +454,4 @@ public class UserService
     }
 
 }
+
