@@ -143,6 +143,44 @@ public class UserService
 
     public void insertIntoTutorSubjectRequest(String subject,String tutorUsername,String comment)
     {
+        // TODO: When a dedicated approval workflow is added, replace this coarse duplicate check
+        // with request status transitions (PENDING/APPROVED/REJECTED).
+        Integer subjectCount = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM subject WHERE subject_name = ?",
+                new Object[]{subject},
+                Integer.class
+        );
+        if (subjectCount == null || subjectCount == 0) {
+            throw new IllegalArgumentException("Nepostojeci predmet.");
+        }
+
+        Long tutorId = jdbcTemplate.queryForObject(
+                "SELECT id FROM user WHERE username = ?",
+                new Object[]{tutorUsername},
+                Long.class
+        );
+        if (tutorId == null) {
+            throw new IllegalArgumentException("Nepostojeci tutor.");
+        }
+
+        Integer alreadyTutor = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM tutorsubject ts JOIN subject s ON s.id = ts.subject_id WHERE ts.tutor_id = ? AND s.subject_name = ?",
+                new Object[]{tutorId, subject},
+                Integer.class
+        );
+        if (alreadyTutor != null && alreadyTutor > 0) {
+            throw new IllegalStateException("Vec ste registrovani kao tutor za ovaj predmet.");
+        }
+
+        Integer existingRequests = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM tutorsubjectrequest tsr JOIN subject s ON s.id = tsr.subject_id WHERE tsr.tutor_id = ? AND s.subject_name = ?",
+                new Object[]{tutorId, subject},
+                Integer.class
+        );
+        if (existingRequests != null && existingRequests > 0) {
+            throw new IllegalStateException("Zahtjev za ovaj predmet je vec poslan.");
+        }
+
         String sql="INSERT INTO tutorsubjectrequest  (request_date,subject_id,tutor_id,comment) " +
                 "values (?,(SELECT id FROM subject where subject.subject_name=?) , (SELECT id FROM user WHERE user.username=?) ,?);";
         jdbcTemplate.update(sql,new Object[]{LocalDate.now(),subject,tutorUsername,comment});

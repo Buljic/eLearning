@@ -72,12 +72,20 @@ public class UserPageController {
         }
 
         String username = jwtUtil.getUsernameFromToken(token);
-        userService.insertIntoTutorSubjectRequest(
-                (String) genericDTO.getProperty("inputSubject"),
-                username,
-                (String) genericDTO.getProperty("comment")
-        );
-        return ResponseEntity.ok("Zahtjev uspjesno kreiran");
+        try {
+            userService.insertIntoTutorSubjectRequest(
+                    (String) genericDTO.getProperty("inputSubject"),
+                    username,
+                    (String) genericDTO.getProperty("comment")
+            );
+            return ResponseEntity.ok("Zahtjev uspjesno kreiran");
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Doslo je do greske prilikom kreiranja zahtjeva.");
+        }
     }
 
     @GetMapping("/getUser/{username}")
