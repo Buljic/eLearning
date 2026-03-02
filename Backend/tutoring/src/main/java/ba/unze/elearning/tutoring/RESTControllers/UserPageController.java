@@ -89,16 +89,31 @@ public class UserPageController {
     }
 
     @GetMapping("/getUser/{username}")
-    public ResponseEntity<?> getCertainUserInfo(@PathVariable String username) {
-        GenericDTO user = userService.getUserInfoExtended(username);
-        Object accountType = user.getProperty("account_type");
-
-        if ("PROFESOR".equals(accountType)) {
-            List<GenericDTO> subjects = userService.findTutorsSubjectsWithInfo((Long) user.getProperty("id"));
-            user.addProperty("subjects", subjects);
+    public ResponseEntity<?> getCertainUserInfo(@PathVariable String username, HttpServletRequest request) {
+        String token = jwtUtil.extractJwtFromCookie(request);
+        if (token == null || !jwtUtil.validateToken(token)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
         }
 
-        return ResponseEntity.ok(user);
+        try {
+            GenericDTO user = userService.getUserInfoExtended(username);
+            Object accountType = user.getProperty("account_type");
+
+            if (isTutorRole(accountType)) {
+                List<GenericDTO> subjects = userService.findTutorsSubjectsWithInfo((Long) user.getProperty("id"));
+                user.addProperty("subjects", subjects);
+            }
+
+            String requesterUsername = jwtUtil.getUsernameFromToken(token);
+            if (!requesterUsername.equalsIgnoreCase(username)) {
+                user.getProperties().remove("email");
+                user.getProperties().remove("phone_number");
+            }
+
+            return ResponseEntity.ok(user);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+        }
     }
 
     @GetMapping("/getAttendedGroups")
@@ -126,7 +141,7 @@ public class UserPageController {
             if (token == null || !jwtUtil.validateToken(token)) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
             }
-            if (!"PROFESOR".equals(jwtUtil.getRoleFromToken(token))) {
+            if (!isTutorRole(jwtUtil.getRoleFromToken(token))) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Samo profesori mogu kreirati grupu.");
             }
             Long tutorId = userService.getUserIdFromToken(token);
@@ -194,7 +209,7 @@ public class UserPageController {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Neispravan ili nedostajuci JWT");
             }
             String accountType = jwtUtil.getRoleFromToken(token);
-            if (!"STUDENT".equals(accountType)) {
+            if (!isStudentRole(accountType)) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Samo studenti mogu traziti pristup grupama.");
             }
             Long userId = userService.getUserIdFromToken(token);
@@ -233,5 +248,13 @@ public class UserPageController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Internal Server Error");
         }
+    }
+
+    private boolean isTutorRole(Object role) {
+        return "PROFESOR".equals(role) || "OBOJE".equals(role) || "ADMIN".equals(role);
+    }
+
+    private boolean isStudentRole(Object role) {
+        return "STUDENT".equals(role) || "OBOJE".equals(role);
     }
 }

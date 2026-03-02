@@ -46,7 +46,6 @@ public class SecurityConfig {
                                 "/api/auth/refresh",
                                 "/api/auth/logout",
                                 "/api/createAccount",
-                                "/api/welcomePage",
                                 "/uploads/**"
                         ).permitAll()
                         .requestMatchers(

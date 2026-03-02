@@ -68,7 +68,9 @@ public class GroupService {
 
         List<Map<String, Object>> users = jdbcTemplate.queryForList(sql, groupId);
 
-        return users.stream().anyMatch(user -> "PROFESOR".equals(user.get("account_type")));
+        return users.stream().anyMatch(user ->
+                "PROFESOR".equals(user.get("account_type")) || "OBOJE".equals(user.get("account_type"))
+        );
     }
 
     public boolean isTutorOwnerOfGroup(Long tutorId, Long groupId) {
