@@ -71,8 +71,12 @@ public class GroupRequestController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access denied");
         }
 
-        groupRequestService.acceptRequest(groupId, userId);
-        return ResponseEntity.ok("Zahtjev uspjesno prihvacen.");
+        try {
+            groupRequestService.acceptRequest(groupId, userId);
+            return ResponseEntity.ok("Zahtjev uspjesno prihvacen.");
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+        }
     }
 
     @PostMapping("/{groupId}/{userId}/approve")
@@ -105,8 +109,12 @@ public class GroupRequestController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access denied");
         }
 
-        groupRequestService.rejectRequest(groupId, userId);
-        return ResponseEntity.ok("Zahtjev uspjesno odbijen.");
+        try {
+            groupRequestService.rejectRequest(groupId, userId);
+            return ResponseEntity.ok("Zahtjev uspjesno odbijen.");
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+        }
     }
 
     private Long authorizeTutorForGroup(Long groupId, HttpServletRequest request) {
