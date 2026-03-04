@@ -19,6 +19,9 @@ import java.util.concurrent.ConcurrentMap;
 
 @Controller
 public class VideoCallController {
+    private static final int MAX_SIGNAL_PAYLOAD_LENGTH = 250_000;
+    private static final int MAX_USERNAME_LENGTH = 64;
+
     private final ConcurrentMap<String, Set<String>> usersByRoom = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, String> roomBySessionId = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, String> usernameBySessionId = new ConcurrentHashMap<>();
@@ -115,11 +118,20 @@ public class VideoCallController {
         if (username == null || message == null || message.getRoomId() == null) {
             return;
         }
+        if (message.getSdp() != null && message.getSdp().length() > MAX_SIGNAL_PAYLOAD_LENGTH) {
+            return;
+        }
+        if (message.getCandidate() != null && message.getCandidate().length() > MAX_SIGNAL_PAYLOAD_LENGTH) {
+            return;
+        }
         String roomId = message.getRoomId();
         if (!canAccessRoom(roomId, username)) {
             return;
         }
         if (requireTarget && (message.getTarget() == null || message.getTarget().isBlank())) {
+            return;
+        }
+        if (requireTarget && message.getTarget().length() > MAX_USERNAME_LENGTH) {
             return;
         }
 

@@ -25,6 +25,7 @@ import java.util.List;
 @RequestMapping("/api")
 public class ChatController {
     private static final int MAX_PAGE_SIZE = 100;
+    private static final int MAX_CHAT_MESSAGE_LENGTH = 4000;
 
     private final MessageService messageService;
     private final SimpMessagingTemplate template;
@@ -58,7 +59,12 @@ public class ChatController {
             return ResponseEntity.badRequest().body("Invalid pagination values");
         }
 
-        User currentUser = userService.findUserByUsername(principal.getName());
+        User currentUser;
+        try {
+            currentUser = userService.findUserByUsername(principal.getName());
+        } catch (Exception ignored) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
+        }
         Long currentUserId = currentUser.getId();
         if (!currentUserId.equals(user1) && !currentUserId.equals(user2)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access denied");
@@ -82,7 +88,12 @@ public class ChatController {
             return ResponseEntity.badRequest().body("Invalid pagination values");
         }
 
-        User currentUser = userService.findUserByUsername(principal.getName());
+        User currentUser;
+        try {
+            currentUser = userService.findUserByUsername(principal.getName());
+        } catch (Exception ignored) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
+        }
         if (!groupService.isUserInGroup(currentUser.getId(), groupId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access denied");
         }
@@ -102,7 +113,12 @@ public class ChatController {
             return;
         }
 
-        User currentUser = userService.findUserByUsername(principal.getName());
+        User currentUser;
+        try {
+            currentUser = userService.findUserByUsername(principal.getName());
+        } catch (Exception ignored) {
+            return;
+        }
         Long currentUserId = currentUser.getId();
 
         Long firstUserId;
@@ -113,13 +129,16 @@ public class ChatController {
         } catch (NumberFormatException ignored) {
             return;
         }
+        if (firstUserId.equals(secondUserId)) {
+            return;
+        }
 
         if (!currentUserId.equals(firstUserId) && !currentUserId.equals(secondUserId)) {
             return;
         }
 
         String trimmedMessage = chatMessage.getMessage_text().trim();
-        if (trimmedMessage.isEmpty()) {
+        if (trimmedMessage.isEmpty() || trimmedMessage.length() > MAX_CHAT_MESSAGE_LENGTH) {
             return;
         }
 
@@ -162,13 +181,18 @@ public class ChatController {
             return;
         }
 
-        User currentUser = userService.findUserByUsername(principal.getName());
+        User currentUser;
+        try {
+            currentUser = userService.findUserByUsername(principal.getName());
+        } catch (Exception ignored) {
+            return;
+        }
         if (!groupService.isUserInGroup(currentUser.getId(), groupId)) {
             return;
         }
 
         String trimmedMessage = groupMessage.getMessage_text().trim();
-        if (trimmedMessage.isEmpty()) {
+        if (trimmedMessage.isEmpty() || trimmedMessage.length() > MAX_CHAT_MESSAGE_LENGTH) {
             return;
         }
 

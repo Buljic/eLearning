@@ -20,6 +20,9 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/api")
 public class AuthController {
+    private static final String ACCESS_COOKIE_PATH = "/";
+    private static final String REFRESH_COOKIE_PATH = "/api/auth";
+
     @Value("${security.jwt.cookie-secure:false}")
     private boolean cookieSecure;
 
@@ -76,10 +79,12 @@ public class AuthController {
     public ResponseEntity<?> logout() {
         ResponseCookie accessCookie = buildAccessCookie("", 0);
         ResponseCookie refreshCookie = buildRefreshCookie("", 0);
+        ResponseCookie legacyRefreshCookie = buildRefreshCookieForPath("", 0, "/");
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, accessCookie.toString())
                 .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
+                .header(HttpHeaders.SET_COOKIE, legacyRefreshCookie.toString())
                 .body("Logged out");
     }
 
@@ -97,20 +102,22 @@ public class AuthController {
     }
 
     private ResponseCookie buildAccessCookie(String value, long maxAgeMs) {
-        return ResponseCookie.from("JWT", value)
-                .httpOnly(true)
-                .secure(cookieSecure)
-                .path("/")
-                .sameSite(cookieSameSite)
-                .maxAge(Duration.ofMillis(maxAgeMs))
-                .build();
+        return buildCookieForPath("JWT", value, maxAgeMs, ACCESS_COOKIE_PATH);
     }
 
     private ResponseCookie buildRefreshCookie(String value, long maxAgeMs) {
-        return ResponseCookie.from("JWT_REFRESH", value)
+        return buildRefreshCookieForPath(value, maxAgeMs, REFRESH_COOKIE_PATH);
+    }
+
+    private ResponseCookie buildRefreshCookieForPath(String value, long maxAgeMs, String path) {
+        return buildCookieForPath("JWT_REFRESH", value, maxAgeMs, path);
+    }
+
+    private ResponseCookie buildCookieForPath(String name, String value, long maxAgeMs, String path) {
+        return ResponseCookie.from(name, value)
                 .httpOnly(true)
                 .secure(cookieSecure)
-                .path("/")
+                .path(path)
                 .sameSite(cookieSameSite)
                 .maxAge(Duration.ofMillis(maxAgeMs))
                 .build();

@@ -145,8 +145,10 @@ public class UserPageController {
             Long tutorId = userService.getUserIdFromToken(token);
             userService.createGroup(request, tutorId);
             return ResponseEntity.ok("Grupa uspjesno kreirana");
-        } catch (Exception e) {
+        } catch (IllegalArgumentException | IllegalStateException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Doslo je do greske prilikom kreiranja grupe.");
         }
     }
 

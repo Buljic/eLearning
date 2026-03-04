@@ -45,8 +45,7 @@ public class SecurityConfig {
                                 "/api/login",
                                 "/api/auth/refresh",
                                 "/api/auth/logout",
-                                "/api/createAccount",
-                                "/uploads/**"
+                                "/api/createAccount"
                         ).permitAll()
                         .requestMatchers(
                                 "/api/chatTo/**",

@@ -93,6 +93,8 @@ public class AssignmentController {
             return ResponseEntity.status(HttpStatus.CREATED).body("Assignment created successfully");
         } catch (InvalidDefinitionException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Failed to parse assignment data: " + e.getMessage());
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to create assignment");
         }
@@ -170,6 +172,8 @@ public class AssignmentController {
             submission.setStudent(currentUser);
             assignmentService.saveSubmission(submission);
             return ResponseEntity.status(HttpStatus.CREATED).body("Submission created successfully");
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to submit assignment");
         }
