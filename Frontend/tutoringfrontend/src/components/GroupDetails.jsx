@@ -2,14 +2,15 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Alert, Box, Button, CircularProgress, Container, Paper, Snackbar, Stack, Typography } from '@mui/material';
 import config from '../config.js';
+import { canActAsStudent } from '../utils/userRoles.js';
+import { getSessionUser } from '../utils/sessionUser.js';
 
 const GroupDetails = () => {
     const { groupId } = useParams();
     const [group, setGroup] = useState(null);
     const [error, setError] = useState('');
     const [requestStatus, setRequestStatus] = useState({ open: false, message: '', severity: 'success' });
-    const storedUser = sessionStorage.getItem('myUser');
-    const myUser = storedUser ? JSON.parse(storedUser) : null;
+    const myUser = getSessionUser();
 
     useEffect(() => {
         const fetchGroupDetails = async () => {
@@ -66,7 +67,7 @@ const GroupDetails = () => {
         return <CircularProgress />;
     }
 
-    const canRequestAccess = myUser?.accountType === 'STUDENT' && new Date(group.startDate) > new Date();
+    const canRequestAccess = canActAsStudent(myUser) && new Date(group.startDate) > new Date();
 
     return (
         <Container>

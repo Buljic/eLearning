@@ -124,18 +124,32 @@ public class ChatController {
         }
 
         Long recipientId = currentUserId.equals(firstUserId) ? secondUserId : firstUserId;
+        User recipientUser;
+        try {
+            recipientUser = userService.getUserById(recipientId);
+        } catch (Exception ignored) {
+            return;
+        }
+
         messageService.saveDirectMessage(currentUserId, recipientId, trimmedMessage, currentUser.getUsername());
 
-        Long minUserId = Math.min(firstUserId, secondUserId);
-        Long maxUserId = Math.max(firstUserId, secondUserId);
-
+        String conversationKey = buildConversationKey(firstUserId, secondUserId);
         ChatMessage outbound = new ChatMessage();
         outbound.setMessage_text(trimmedMessage);
         outbound.setSenderId(currentUserId);
         outbound.setSenderName(currentUser.getUsername());
         outbound.setUser2(recipientId);
 
-        template.convertAndSend("/queue/" + minUserId + '/' + maxUserId, outbound);
+        template.convertAndSendToUser(
+                currentUser.getUsername(),
+                "/queue/direct/" + conversationKey,
+                outbound
+        );
+        template.convertAndSendToUser(
+                recipientUser.getUsername(),
+                "/queue/direct/" + conversationKey,
+                outbound
+        );
     }
 
     @MessageMapping("/{groupId}")
@@ -165,6 +179,15 @@ public class ChatController {
         outbound.setSenderId(currentUser.getId());
         outbound.setSenderName(currentUser.getUsername());
 
-        template.convertAndSend("/queue/" + groupId, outbound);
+        List<String> groupUsernames = groupService.getGroupMemberUsernames(groupId);
+        for (String username : groupUsernames) {
+            template.convertAndSendToUser(username, "/queue/group/" + groupId, outbound);
+        }
+    }
+
+    private String buildConversationKey(Long user1, Long user2) {
+        long minUserId = Math.min(user1, user2);
+        long maxUserId = Math.max(user1, user2);
+        return minUserId + "/" + maxUserId;
     }
 }

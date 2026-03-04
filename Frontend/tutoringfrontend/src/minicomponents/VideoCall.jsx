@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+﻿import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import SockJS from 'sockjs-client';
 import { Client } from '@stomp/stompjs';
 import { Alert, Box, Button, Chip, Paper, Stack, Typography } from '@mui/material';
 import config from '../config';
+import { getSessionUser } from '../utils/sessionUser.js';
 
 const VideoCall = ({ groupId }) => {
     const [users, setUsers] = useState([]);
@@ -13,9 +14,9 @@ const VideoCall = ({ groupId }) => {
     const [connecting, setConnecting] = useState(true);
     const [error, setError] = useState('');
 
-    const myUser = useMemo(() => JSON.parse(sessionStorage.getItem('myUser')), []);
+    const myUser = useMemo(() => getSessionUser(), []);
     const myUsername = myUser?.username;
-    const roomId = String(groupId ?? 'global');
+    const roomId = groupId ? String(groupId) : null;
 
     const stompClientRef = useRef(null);
     const localStreamRef = useRef(null);
@@ -224,6 +225,11 @@ const VideoCall = ({ groupId }) => {
             setConnecting(false);
             return;
         }
+        if (!roomId) {
+            setError('Video poziv mora biti vezan za grupu.');
+            setConnecting(false);
+            return;
+        }
 
         let mounted = true;
         setConnecting(true);
@@ -252,11 +258,8 @@ const VideoCall = ({ groupId }) => {
                     }
                     setConnecting(false);
 
-                    client.subscribe(`/topic/videoCall/${roomId}`, (rawMessage) => {
+                    client.subscribe(`/user/queue/videoCall/${roomId}`, (rawMessage) => {
                         const message = JSON.parse(rawMessage.body);
-                        if (message.roomId && message.roomId !== roomId) {
-                            return;
-                        }
 
                         switch (message.type) {
                             case 'join':
@@ -295,7 +298,7 @@ const VideoCall = ({ groupId }) => {
                 };
 
                 client.onStompError = () => {
-                    setError('Greška u signalizaciji video poziva. Pokušajte ponovo.');
+                    setError('Greska u signalizaciji video poziva. Pokusajte ponovo.');
                 };
 
                 client.activate();
@@ -471,3 +474,5 @@ const VideoCall = ({ groupId }) => {
 };
 
 export default VideoCall;
+
+

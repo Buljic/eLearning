@@ -1,99 +1,67 @@
-// import React, { useEffect, useState } from "react";
-// import { Link } from "react-router-dom";
-//
-// const AttendedSubjects = () => {
-//     const storedUser = sessionStorage.getItem('myUser');
-//     const myUser = JSON.parse(storedUser);
-//
-//     const [attendedGroups, setAttendedGroups] = useState([]);
-//
-//     useEffect(() => {
-//         const getAttendedSubjects = async () => {
-//             try {
-//                 const response = await fetch(`http://localhost:8080/api/getAttendedGroups?userId=${myUser.id}`, {
-//                     method: 'GET',
-//                     credentials: 'include',
-//                     headers: {
-//                         'Content-Type': 'application/json',
-//                     }
-//                 });
-//                 if (!response.ok) {
-//                     throw new Error('Problem s fetchanjem attended groups');
-//                 } else {
-//                     const data = await response.json();
-//                     setAttendedGroups(data);
-//                     data.forEach(subject => {
-//                         console.log('Ovo je grupa ' + subject.group_id);
-//                     });
-//                 }
-//             } catch (error) {
-//                 console.error(error);
-//             }
-//         }
-//         getAttendedSubjects();
-//     }, [myUser.id]);
-//
-//     if (!attendedGroups.length) {
-//         return <h1>Učitavanje ...</h1>
-//     }
-//
-//     return (
-//         <div>
-//             <h1>Pohađani kursevi</h1>
-//             <br />
-//             {attendedGroups.length > 0 && (
-//                 <ul id="attendedGroups">
-//                     {attendedGroups.map((group, index) => (
-//                         <li key={index} id={group.group_id}>
-//                             {/*<Link to={`/chatGroup/${group.group_id}`}>{group.group_name}</Link>*/}
-//                             <Link to={`/group/${group.group_id}`}>{group.group_name}</Link>
-//                         </li>
-//                     ))}
-//                 </ul>
-//             )}
-//         </div>
-//     );
-// }
-//
-// export default AttendedSubjects;
 import { useEffect, useState } from 'react';
 import { Link } from "react-router-dom";
-import { Container, Box, Typography, CircularProgress, List, ListItem, Button } from '@mui/material';
+import { Alert, Container, Box, Typography, CircularProgress, List, ListItem, Button } from '@mui/material';
 import config from '../config.js';
+import { getSessionUser } from '../utils/sessionUser.js';
 
 const AttendedSubjects = () => {
-    const storedUser = sessionStorage.getItem("myUser");
-    const myUser = JSON.parse(storedUser);
-
+    const myUser = getSessionUser();
     const [attendedGroups, setAttendedGroups] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
 
     useEffect(() => {
-        const getAttendedSubjects = async () => {
-            const response = await fetch(`${config.BASE_URL}/api/getAttendedGroups?userId=${myUser.id}`, {
-                method: 'GET',
-                credentials: 'include',
-                headers: {
-                    'Content-Type': 'application/json',
-                }
-            });
-            if (!response.ok) {
-                throw new Error('Problem s fetchanjem attended groups');
-            } else {
-                const data = await response.json();
-                setAttendedGroups(data);
-            }
+        if (!myUser?.id) {
+            setLoading(false);
+            setError('Morate biti prijavljeni.');
+            return;
         }
-        getAttendedSubjects();
-    }, []);
 
-    if (!attendedGroups.length) {
+        const getAttendedSubjects = async () => {
+            setLoading(true);
+            setError('');
+            try {
+                const response = await fetch(`${config.BASE_URL}/api/getAttendedGroups?userId=${myUser.id}`, {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                if (!response.ok) {
+                    throw new Error('Problem s fetchanjem attended groups');
+                }
+
+                const data = await response.json();
+                setAttendedGroups(data || []);
+            } catch {
+                setAttendedGroups([]);
+                setError('Neuspjesno ucitavanje kurseva.');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        getAttendedSubjects();
+    }, [myUser?.id]);
+
+    if (loading) {
         return <CircularProgress />;
+    }
+
+    if (error) {
+        return <Alert severity="error">{error}</Alert>;
     }
 
     return (
         <Container>
             <Box sx={{ my: 4, textAlign: 'center' }}>
-                <Typography variant="h4" gutterBottom>Vaši kursevi</Typography>
+                <Typography variant="h4" gutterBottom>Vasi kursevi</Typography>
+                {attendedGroups.length === 0 && (
+                    <Alert severity="info" sx={{ mb: 2 }}>
+                        Trenutno nemate aktivnih kurseva.
+                    </Alert>
+                )}
                 <List sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                     {attendedGroups.map((group, index) => (
                         <ListItem key={index} sx={{ width: '100%', maxWidth: 600 }}>
@@ -115,8 +83,6 @@ const AttendedSubjects = () => {
             </Box>
         </Container>
     );
-}
+};
 
 export default AttendedSubjects;
-
-

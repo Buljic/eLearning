@@ -12,7 +12,6 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import java.util.NoSuchElementException;
 
 @Service
@@ -62,20 +61,25 @@ public class GroupService {
     }
 
     public boolean isTutorPresentInGroup(Long groupId) {
-        String sql = "SELECT u.id, u.account_type FROM user u " +
+        String sql = "SELECT COUNT(*) FROM user u " +
                 "JOIN user_group ug ON u.id = ug.user_id " +
-                "WHERE ug.group_id = ?";
-
-        List<Map<String, Object>> users = jdbcTemplate.queryForList(sql, groupId);
-
-        return users.stream().anyMatch(user ->
-                "PROFESOR".equals(user.get("account_type")) || "OBOJE".equals(user.get("account_type"))
-        );
+                "LEFT JOIN user_roles ur ON ur.user_id = u.id " +
+                "WHERE ug.group_id = ? " +
+                "AND (u.account_type IN ('PROFESOR', 'OBOJE') OR ur.role = 'PROFESOR')";
+        Integer count = jdbcTemplate.queryForObject(sql, new Object[]{groupId}, Integer.class);
+        return count != null && count > 0;
     }
 
     public boolean isTutorOwnerOfGroup(Long tutorId, Long groupId) {
         String sql = "SELECT COUNT(*) FROM group_table WHERE group_id = ? AND headtutor_id = ?";
         Integer count = jdbcTemplate.queryForObject(sql, new Object[]{groupId, tutorId}, Integer.class);
         return count != null && count > 0;
+    }
+
+    public List<String> getGroupMemberUsernames(Long groupId) {
+        String sql = "SELECT DISTINCT u.username FROM user u " +
+                "JOIN user_group ug ON ug.user_id = u.id " +
+                "WHERE ug.group_id = ?";
+        return jdbcTemplate.query(sql, new Object[]{groupId}, (rs, rowNum) -> rs.getString("username"));
     }
 }

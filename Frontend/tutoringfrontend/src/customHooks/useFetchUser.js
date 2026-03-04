@@ -44,6 +44,7 @@ const useFetchUser = () => {
 
                     const retryData = await retryResponse.json();
                     setUser(retryData);
+                    sessionStorage.setItem('myUser', JSON.stringify(retryData));
                     return;
                 }
 
@@ -53,8 +54,10 @@ const useFetchUser = () => {
 
                 const data = await response.json();
                 setUser(data);
+                sessionStorage.setItem('myUser', JSON.stringify(data));
             } catch (fetchError) {
                 setError(fetchError);
+                sessionStorage.removeItem('myUser');
                 console.error('Error while fetching user', fetchError);
             } finally {
                 setLoading(false);

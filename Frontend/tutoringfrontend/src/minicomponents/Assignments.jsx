@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import AssignmentCreateModal from "./AssignmentCreateModal";
 import config from '../config.js';
+import { canActAsProfessor } from '../utils/userRoles.js';
+import { getSessionUser } from '../utils/sessionUser.js';
 const Assignments = ({ groupId, onSelectAssignment }) => {
     const [assignments, setAssignments] = useState([]);
     const [showCreateModal, setShowCreateModal] = useState(false);
-    const storedUser = sessionStorage.getItem("myUser");
-    const myUser = JSON.parse(storedUser);
+    const myUser = getSessionUser();
 
     useEffect(() => {
         fetchAssignments();
@@ -52,7 +53,7 @@ const Assignments = ({ groupId, onSelectAssignment }) => {
     return (
         <div>
             <h2>Zadaci</h2>
-            {myUser.accountType === 'PROFESOR' && (
+            {canActAsProfessor(myUser) && (
                 <button onClick={handleCreateAssignment}>Novi zadatak</button>
             )}
             <AssignmentCreateModal show={showCreateModal} handleClose={handleCloseCreateModal} groupId={groupId} />

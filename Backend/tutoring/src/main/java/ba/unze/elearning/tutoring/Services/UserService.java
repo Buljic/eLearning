@@ -6,7 +6,6 @@ import ba.unze.elearning.tutoring.DTOs.StringNumber;
 import ba.unze.elearning.tutoring.DTOs.UserDTO;
 import ba.unze.elearning.tutoring.Entities.Tutor;
 import ba.unze.elearning.tutoring.Entities.User;
-import ba.unze.elearning.tutoring.Other.UserMapper;
 import ba.unze.elearning.tutoring.Repositories.UserRepository;
 import ba.unze.elearning.tutoring.Security.EncriptionUtility;
 import ba.unze.elearning.tutoring.Security.JwtUtil;
@@ -117,6 +116,13 @@ public class UserService
             genericDTO.setProperty("phone_number",encriptionUtility.decrypt(phoneNumber));
         }
 
+        userRepository.findByUsername(username).ifPresent(user ->
+                genericDTO.setProperty(
+                        "roles",
+                        user.getEffectiveRoles().stream().map(Enum::name).toList()
+                )
+        );
+
         return genericDTO;
     }
 
@@ -127,6 +133,7 @@ public class UserService
         UserDTO userDTO= jdbcTemplate.queryForObject(sql,new Object[]{username},new BeanPropertyRowMapper<>(UserDTO.class));
         userDTO.setEmail(encriptionUtility.decrypt(userDTO.getEmail()));
         if(userDTO.getPhoneNumber()!=null) userDTO.setPhoneNumber(encriptionUtility.decrypt(userDTO.getPhoneNumber()));
+        userRepository.findByUsername(username).ifPresent(user -> userDTO.setRoles(user.getEffectiveRoles()));
 
         return userDTO;
     }
@@ -244,6 +251,7 @@ public class UserService
                 throw new IllegalStateException("Tutor vec ima grupu s istim imenom.");
             }
 
+            // TODO: Migrate from single headtutor_id to group_tutor mapping when co-professor support per group is introduced.
             String insertGroupSql = "INSERT INTO group_table (group_name, topic, description, start_date, end_date, hours_per_week, price, max_students, creation_date, headtutor_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);";
             int groupInsertResult = jdbcTemplate.update(insertGroupSql, groupName, topic, description, startDate, endDate, hoursPerWeek, price, maxStudents, LocalDate.now(), tutorId);
             if (groupInsertResult != 1) {
@@ -468,13 +476,12 @@ public class UserService
     }
 
     public User findUserByUsername(String username) {
-        return userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        return getUserByUsername(username);
     }
 
     public User getCurrentUser(HttpServletRequest request) {
         String token = jwtUtil.extractJwtFromCookie(request);
-        if (token == null) {
+        if (token == null || !jwtUtil.validateToken(token)) {
             throw new RuntimeException("Token not found");
         }
         String username = jwtUtil.getUsernameFromToken(token);
@@ -482,8 +489,8 @@ public class UserService
     }
 
     public User getUserByUsername(String username) {
-        String sql = "SELECT * FROM user WHERE username = ?";
-        return jdbcTemplate.queryForObject(sql, new Object[]{username}, new UserMapper());
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
     }
 
     public Optional<User> getUserFromToken(String token) {

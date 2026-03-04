@@ -97,10 +97,8 @@ public class UserPageController {
 
         try {
             GenericDTO user = userService.getUserInfoExtended(username);
-            Object accountType = user.getProperty("account_type");
-
-            if (isTutorRole(accountType)) {
-                List<GenericDTO> subjects = userService.findTutorsSubjectsWithInfo((Long) user.getProperty("id"));
+            List<GenericDTO> subjects = userService.findTutorsSubjectsWithInfo((Long) user.getProperty("id"));
+            if (!subjects.isEmpty()) {
                 user.addProperty("subjects", subjects);
             }
 
@@ -141,7 +139,7 @@ public class UserPageController {
             if (token == null || !jwtUtil.validateToken(token)) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
             }
-            if (!isTutorRole(jwtUtil.getRoleFromToken(token))) {
+            if (!jwtUtil.tokenHasAnyRole(token, "PROFESOR")) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Samo profesori mogu kreirati grupu.");
             }
             Long tutorId = userService.getUserIdFromToken(token);
@@ -208,8 +206,7 @@ public class UserPageController {
             if (token == null || !jwtUtil.validateToken(token)) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Neispravan ili nedostajuci JWT");
             }
-            String accountType = jwtUtil.getRoleFromToken(token);
-            if (!isStudentRole(accountType)) {
+            if (!jwtUtil.tokenHasAnyRole(token, "STUDENT")) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Samo studenti mogu traziti pristup grupama.");
             }
             Long userId = userService.getUserIdFromToken(token);
@@ -250,11 +247,4 @@ public class UserPageController {
         }
     }
 
-    private boolean isTutorRole(Object role) {
-        return "PROFESOR".equals(role) || "OBOJE".equals(role) || "ADMIN".equals(role);
-    }
-
-    private boolean isStudentRole(Object role) {
-        return "STUDENT".equals(role) || "OBOJE".equals(role);
-    }
 }

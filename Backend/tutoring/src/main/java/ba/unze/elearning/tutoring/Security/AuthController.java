@@ -38,16 +38,21 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<?> autentificarKorisnika(@RequestBody LoginRequest loginRequest) {
-        Optional<User> userOptional = userRepository.findByUsername(loginRequest.getUsername());
-        if (userOptional.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Nepostojeci user");
-        }
-
-        User user = userOptional.get();
-        if (!bCryptPasswordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
+        if (loginRequest == null
+                || loginRequest.getUsername() == null
+                || loginRequest.getPassword() == null
+                || loginRequest.getUsername().isBlank()
+                || loginRequest.getPassword().isBlank()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Neispravni kredencijali");
         }
 
+        Optional<User> userOptional = userRepository.findByUsername(loginRequest.getUsername());
+        if (userOptional.isEmpty()
+                || !bCryptPasswordEncoder.matches(loginRequest.getPassword(), userOptional.get().getPassword())) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Neispravni kredencijali");
+        }
+
+        User user = userOptional.get();
         return buildAuthenticatedResponse(user, "Autentifikacija uspjesna");
     }
 

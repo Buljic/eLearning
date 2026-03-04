@@ -291,8 +291,7 @@ public class LessonController {
     }
 
     private boolean canActAsProfessor(User user) {
-        AccountType type = user.getAccountType();
-        return type == AccountType.PROFESOR || type == AccountType.OBOJE || type == AccountType.ADMIN;
+        return user.hasRole(AccountType.PROFESOR) || user.hasRole(AccountType.ADMIN);
     }
 }
 

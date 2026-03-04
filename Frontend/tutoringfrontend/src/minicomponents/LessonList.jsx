@@ -3,17 +3,19 @@ import { useParams } from "react-router-dom";
 import CreateLessonModal from "./CreateLessonModal";
 import config from '../config.js';
 import { Container, Box, Typography, Button, List, ListItem, Card, CardContent } from '@mui/material';
+import { canActAsProfessor } from '../utils/userRoles.js';
+import { getSessionUser } from '../utils/sessionUser.js';
 
-const LessonList = () => {
-    const { groupId } = useParams();
-    const storedUser = sessionStorage.getItem("myUser");
-    const myUser = JSON.parse(storedUser);
+const LessonList = ({ groupId: groupIdProp }) => {
+    const params = useParams();
+    const groupId = groupIdProp ?? params.groupId;
+    const myUser = getSessionUser();
     const [lessons, setLessons] = useState([]);
     const [showModal, setShowModal] = useState(false);
 
     useEffect(() => {
         fetchLessons();
-    }, []);
+    }, [groupId]);
 
     const fetchLessons = async () => {
         const response = await fetch(`${config.BASE_URL}/api/${groupId}/lessons`, {
@@ -44,7 +46,7 @@ const LessonList = () => {
         <Container>
             <Box sx={{ my: 4 }}>
                 <Typography variant="h4">Lessons</Typography>
-                {myUser.accountType === 'PROFESOR' && (
+                {canActAsProfessor(myUser) && (
                     <Button variant="contained" color="primary" onClick={handleOpenModal}>Add Lesson</Button>
                 )}
                 <CreateLessonModal show={showModal} handleClose={handleCloseModal} groupId={groupId} />
