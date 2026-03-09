@@ -2,6 +2,27 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import useFetchSubjects from '../customHooks/useFetchSubjects.js';
 import config from '../config.js';
+import {
+    Box,
+    Button,
+    Card,
+    CardActionArea,
+    CardContent,
+    Chip,
+    Container,
+    Grid,
+    List,
+    ListItem,
+    ListItemButton,
+    ListItemText,
+    Paper,
+    Stack,
+    TextField,
+    Typography,
+} from '@mui/material';
+import SearchIcon from '@mui/icons-material/Search';
+import SchoolIcon from '@mui/icons-material/School';
+import PersonIcon from '@mui/icons-material/Person';
 
 const Subjects = () => {
     const { subjects } = useFetchSubjects();
@@ -84,45 +105,83 @@ const Subjects = () => {
     const subjectsToRender = isSearching ? searchResults : popularSubjects;
 
     return (
-        <div style={{ textAlign: 'center' }}>
-            <p style={{ marginBottom: '1rem', fontSize: '1.2rem' }}>Profesori s specijalizacijom za predmete</p>
-            <form id="searchForm" onSubmit={handleSubmit} style={{ marginBottom: '1rem' }}>
-                <input
-                    id="inputField"
-                    type="text"
-                    value={searchTerm}
-                    onChange={handleSearchChange}
-                    onFocus={() => searchTerm && setShowSuggestions(true)}
-                    placeholder="Pretrazi predmete"
-                    style={{ padding: '0.5rem', marginRight: '0.5rem', borderRadius: '5px', border: '1px solid #ccc' }}
-                />
-                <button type="submit" id="subjectsSearch" style={{ padding: '0.5rem 1rem', borderRadius: '5px', backgroundColor: '#007bff', color: '#fff', border: 'none' }}>Pretrazi</button>
-            </form>
+        <Container maxWidth="md" sx={{ py: 3 }}>
+            <Paper elevation={0} sx={{ p: { xs: 2, md: 4 }, borderRadius: 3, border: '1px solid #d8e3ef', textAlign: 'center', mb: 3 }}>
+                <SchoolIcon sx={{ fontSize: 48, color: 'primary.main', mb: 1 }} />
+                <Typography variant="h4" gutterBottom>
+                    Pretraga predmeta
+                </Typography>
+                <Typography color="text.secondary" sx={{ mb: 3 }}>
+                    Pronadjite predmete i tutore sa specijalizacijom
+                </Typography>
 
-            {showSuggestions && searchTerm && (
-                <ul id="suggestions" style={{ listStyleType: 'none', padding: 0 }}>
-                    {filteredSubjects.map((subject) => (
-                        <li key={subject} id={subject} style={{ marginBottom: '0.5rem' }}>
-                            <button id={subject} type="button" onClick={() => handleSuggestionClick(subject)} style={{ padding: '0.3rem 0.5rem', borderRadius: '5px', backgroundColor: '#f0f0f0', border: '1px solid #ccc' }}>
-                                {subject}
-                            </button>
-                        </li>
-                    ))}
-                </ul>
+                <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', gap: 1.5, justifyContent: 'center', flexWrap: 'wrap' }}>
+                    <TextField
+                        value={searchTerm}
+                        onChange={handleSearchChange}
+                        onFocus={() => searchTerm && setShowSuggestions(true)}
+                        placeholder="Pretrazi predmete..."
+                        size="small"
+                        sx={{ minWidth: 280 }}
+                    />
+                    <Button type="submit" variant="contained" startIcon={<SearchIcon />}>
+                        Pretrazi
+                    </Button>
+                </Box>
+
+                {showSuggestions && searchTerm && filteredSubjects.length > 0 && (
+                    <Paper elevation={2} sx={{ mt: 1, maxWidth: 360, mx: 'auto', maxHeight: 200, overflow: 'auto' }}>
+                        <List dense disablePadding>
+                            {filteredSubjects.map((subject) => (
+                                <ListItem key={subject} disablePadding>
+                                    <ListItemButton onClick={() => handleSuggestionClick(subject)}>
+                                        <ListItemText primary={subject} />
+                                    </ListItemButton>
+                                </ListItem>
+                            ))}
+                        </List>
+                    </Paper>
+                )}
+            </Paper>
+
+            <Typography variant="h6" sx={{ mb: 2 }}>
+                {isSearching ? 'Rezultati pretrage' : 'Popularni predmeti'}
+            </Typography>
+
+            {subjectsToRender.length === 0 && (
+                <Typography color="text.secondary" sx={{ textAlign: 'center' }}>
+                    {isSearching ? 'Nema rezultata za zadani pojam.' : 'Nema popularnih predmeta.'}
+                </Typography>
             )}
 
-            <ul style={{ listStyleType: 'none', padding: 0 }}>
+            <Grid container spacing={2}>
                 {subjectsToRender.map((subject) => (
-                    <li key={subject.name} id={isSearching ? 'searchSubjectsResult' : 'popularSubjectsResult'} style={{ marginBottom: '0.5rem' }}>
-                        <Link to={`/tutorsFor/${subject.name}`} style={{ textDecoration: 'none', color: '#000' }}>
-                            <div style={{ padding: '0.5rem', borderRadius: '5px', border: '1px solid #ccc', backgroundColor: '#f0f0f0', maxWidth: '300px', margin: 'auto' }}>
-                                Ime je {subject.name}. Broj tutora: {subject.number}
-                            </div>
-                        </Link>
-                    </li>
+                    <Grid item xs={12} sm={6} md={4} key={subject.name}>
+                        <Card variant="outlined" sx={{ borderRadius: 2, transition: 'box-shadow 0.2s', '&:hover': { boxShadow: '0 4px 20px rgba(13,91,203,0.12)' } }}>
+                            <CardActionArea component={Link} to={`/tutorsFor/${subject.name}`}>
+                                <CardContent>
+                                    <Stack direction="row" alignItems="center" spacing={1.5}>
+                                        <SchoolIcon color="primary" />
+                                        <Box sx={{ flexGrow: 1 }}>
+                                            <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                                                {subject.name}
+                                            </Typography>
+                                        </Box>
+                                        <Chip
+                                            icon={<PersonIcon />}
+                                            label={`${subject.number} tutora`}
+                                            size="small"
+                                            color="primary"
+                                            variant="outlined"
+                                        />
+                                    </Stack>
+                                </CardContent>
+                            </CardActionArea>
+                        </Card>
+                    </Grid>
                 ))}
-            </ul>
-        </div>
+            </Grid>
+        </Container>
     );
 };
 

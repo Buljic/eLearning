@@ -1,29 +1,19 @@
-import {useParams} from "react-router-dom";
+import { useParams } from "react-router-dom";
 import Chat from "../minicomponents/Chat.jsx";
-import { Alert } from "@mui/material";
-const ChatTo=()=>{
-    const {objectUser}=useParams();
+import { Alert, Container } from "@mui/material";
+
+const ChatTo = () => {
+    const { objectUser } = useParams();
     const targetUserId = Number(objectUser);
     if (!Number.isInteger(targetUserId) || targetUserId <= 0) {
-        return <Alert severity="error">Neispravan korisnik za chat.</Alert>;
+        return <Alert severity="error" sx={{ m: 3 }}>Neispravan korisnik za chat.</Alert>;
     }
 
     return (
-        <div>
-            <Chat chatId={targetUserId} isGroupChat={false}></Chat>
-
-        </div>
+        <Container maxWidth="md" sx={{ py: 2 }}>
+            <Chat chatId={targetUserId} isGroupChat={false} />
+        </Container>
     );
-}
+};
+
 export default ChatTo;
-
-
-
-
-
-
-
-
-
-
-

@@ -29,6 +29,65 @@ const theme = createTheme({
     h4: { fontFamily: "Space Grotesk, 'Segoe UI', sans-serif", fontWeight: 700 },
     button: { textTransform: "none", fontWeight: 700 },
   },
+  components: {
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          borderRadius: 10,
+          boxShadow: "none",
+          "&:hover": { boxShadow: "0 2px 8px rgba(13,91,203,0.18)" },
+        },
+        containedPrimary: {
+          background: "linear-gradient(135deg, #0d5bcb 0%, #1976d2 100%)",
+        },
+        sizeLarge: {
+          padding: "12px 28px",
+          fontSize: "1rem",
+        },
+      },
+    },
+    MuiPaper: {
+      styleOverrides: {
+        root: {
+          backgroundImage: "none",
+        },
+      },
+    },
+    MuiTextField: {
+      defaultProps: {
+        variant: "outlined",
+        size: "medium",
+      },
+      styleOverrides: {
+        root: {
+          "& .MuiOutlinedInput-root": {
+            borderRadius: 10,
+          },
+        },
+      },
+    },
+    MuiCard: {
+      styleOverrides: {
+        root: {
+          borderRadius: 12,
+        },
+      },
+    },
+    MuiAlert: {
+      styleOverrides: {
+        root: {
+          borderRadius: 10,
+        },
+      },
+    },
+    MuiChip: {
+      styleOverrides: {
+        root: {
+          fontWeight: 600,
+        },
+      },
+    },
+  },
 });
 
 export default theme;
