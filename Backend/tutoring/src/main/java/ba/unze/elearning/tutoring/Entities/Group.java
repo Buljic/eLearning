@@ -1,12 +1,9 @@
 package ba.unze.elearning.tutoring.Entities;
 
 import jakarta.persistence.*;
-import jdk.jfr.Name;
 
 import java.util.Date;
 import java.util.List;
-
-//todo dodaj usergroup tabelu
 @Entity
 @Table (name = "group_table")
 public class Group

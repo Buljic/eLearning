@@ -20,7 +20,7 @@ const SearchUsers = () => {
     }
 
     const getSearchedUsers = async () => {
-        const response = await fetch(`${config.BASE_URL}/api/getUsers?searchTerm=${searchTerm}`, {
+        const response = await fetch(`${config.BASE_URL}/api/getUsers?searchTerm=${encodeURIComponent(searchTerm)}`, {
             method: 'GET',
             credentials: 'include',
             headers: {

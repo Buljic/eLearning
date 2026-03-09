@@ -132,7 +132,7 @@ const CreateGroup = () => {
                     label="Naziv Grupe"
                     value={groupName}
                     onChange={(event) => setGroupName(event.target.value)}
-                    maxLength="31"
+                    inputProps={{ maxLength: 31 }}
                     required
                     error={groupName.length < 3}
                     helperText={groupName.length < 3 ? 'Naziv grupe mora imati najmanje 3 slova.' : ''}
@@ -141,7 +141,7 @@ const CreateGroup = () => {
                     label="Topic"
                     value={topic}
                     onChange={(event) => setTopic(event.target.value)}
-                    maxLength="31"
+                    inputProps={{ maxLength: 31 }}
                     required
                     error={topic.length < 4}
                     helperText={topic.length < 4 ? 'Topic mora imati najmanje 4 slova.' : ''}
@@ -179,7 +179,7 @@ const CreateGroup = () => {
                     onChange={(event) => setDescription(event.target.value)}
                     multiline
                     rows={4}
-                    maxLength="255"
+                    inputProps={{ maxLength: 255 }}
                     required
                     error={description.length === 0}
                     helperText={description.length === 0 ? 'Opis mora biti popunjen.' : ''}

@@ -1,7 +1,5 @@
 const defaultIceServers = [{ urls: 'stun:stun.l.google.com:19302' }];
 const baseUrlOverride = import.meta.env.VITE_BASE_URL?.trim();
-const wsBaseUrlOverride = import.meta.env.VITE_WS_BASE_URL?.trim();
-
 const parseIceServers = () => {
     const rawIceServers = import.meta.env.VITE_ICE_SERVERS;
     if (!rawIceServers) {
@@ -20,12 +18,10 @@ const parseIceServers = () => {
 const config = {
     local: {
         BASE_URL: baseUrlOverride || 'http://localhost:8080',
-        WS_BASE_URL: wsBaseUrlOverride || 'http://localhost:5173',
         ICE_SERVERS: parseIceServers(),
     },
     lan: {
         BASE_URL: baseUrlOverride || 'http://192.168.126.66:8080',
-        WS_BASE_URL: wsBaseUrlOverride || 'http://192.168.126.66:5173',
         ICE_SERVERS: parseIceServers(),
     },
 };

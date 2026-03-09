@@ -72,39 +72,4 @@ public class SecurityConfig {
             throw new UsernameNotFoundException("User lookup via Spring Security is disabled in JWT mode");
         };
     }
-
-//    private final JwtUtil jwtUtil;
-//
-//    public SecurityConfig(JwtUtil jwtUtil)
-//    {
-//        this.jwtUtil = jwtUtil;
-//    }
-//
-//    @Bean
-//    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-//        JwtFilter jwtFilter = new JwtFilter(jwtUtil);
-//
-//        // CORS konfiguracija
-//        CorsConfiguration corsConfiguration = new CorsConfiguration();
-//        corsConfiguration.setAllowCredentials(true);
-//        corsConfiguration.addAllowedOriginPattern("*"); // Možete ograničiti na specifične origin-e ako je potrebno
-//        corsConfiguration.addAllowedOrigin("http://localhost:5173"); // Ako je ovo origin frontend-a
-//
-//        corsConfiguration.addAllowedHeader("*");
-//        corsConfiguration.addAllowedMethod("*");
-//        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-//        source.registerCorsConfiguration("/**", corsConfiguration);
-//
-//        http
-//                .cors(cors -> cors.configurationSource(request -> corsConfiguration))
-//                .csrf(AbstractHttpConfigurer::disable)
-//                .authorizeHttpRequests((authz) -> authz
-//                        .requestMatchers("/api/**", "/api/login","/api/createAccount","api/welcomePage").permitAll()
-//                        .anyRequest().authenticated()
-//                )
-//                .httpBasic(Customizer.withDefaults())
-//                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
-//
-//        return http.build();
-//    }
 }

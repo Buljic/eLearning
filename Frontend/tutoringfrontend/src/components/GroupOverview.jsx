@@ -3,7 +3,6 @@ import { useParams } from "react-router-dom";
 import Chat from "../minicomponents/Chat.jsx";
 import AssignmentList from "../minicomponents/AssignmentList.jsx";
 import VideoCall from "../minicomponents/VideoCall.jsx";
-import ChatForGroup from "../minicomponents/ChatForGroup.jsx";
 import LessonList from "../minicomponents/LessonList.jsx";
 import { Container, Box, Typography, Tabs, Tab, Alert } from '@mui/material';
 import ChatIcon from '@mui/icons-material/Chat';
@@ -26,7 +25,7 @@ const GroupOverview = () => {
     const renderTabContent = () => {
         switch (activeTab) {
             case "chat":
-                return <ChatForGroup chatId={groupId} isGroupChat={true} />;
+                return <Chat chatId={groupId} isGroupChat={true} />;
             case "lessons":
                 return <LessonList groupId={groupId} />;
             case "assignments":
@@ -34,7 +33,7 @@ const GroupOverview = () => {
             case "videoCall":
                 return <VideoCall groupId={groupId} />;
             default:
-                return <Chat chatId={groupId} isGroupChat={true} />;
+                return null;
         }
     };
 
