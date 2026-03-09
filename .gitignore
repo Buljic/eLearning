@@ -50,5 +50,6 @@ Frontend/tutoringfrontend/.env
 # Runtime/uploads artifacts (user-generated content)
 uploads/
 
-# Local scripts (keep only on this machine)
+# Local scripts
 scripts/
+.claude/
