@@ -15,7 +15,7 @@ const TutorsForSubject = () => {
             setLoading(true);
             setError('');
             try {
-                const response = await fetch(`${config.BASE_URL}/api/getTutorsFor?subject=${subject}`, {
+                const response = await fetch(`${config.BASE_URL}/api/getTutorsFor?subject=${encodeURIComponent(subject)}`, {
                     method: 'GET',
                     credentials: 'include',
                     headers: {

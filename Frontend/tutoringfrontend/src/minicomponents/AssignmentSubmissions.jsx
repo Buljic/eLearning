@@ -7,41 +7,45 @@ import { notify } from '../utils/notifications.js';
 const AssignmentSubmissions = () => {
     const { assignmentId } = useParams();
     const [submissions, setSubmissions] = useState([]);
-    const [feedback, setFeedback] = useState("");
-    const [grade, setGrade] = useState("");
+    const [feedbackMap, setFeedbackMap] = useState({});
+    const [gradeMap, setGradeMap] = useState({});
 
     useEffect(() => {
         fetchSubmissions();
-    }, []);
+    }, [assignmentId]);
 
     const fetchSubmissions = async () => {
-        const response = await fetch(`${config.BASE_URL}/api/assignments/${assignmentId}/submissions`, {
-            method: 'GET',
-            credentials: 'include',
-            headers: {
-                'Content-Type': 'application/json',
+        try {
+            const response = await fetch(`${config.BASE_URL}/api/assignments/${assignmentId}/submissions`, {
+                method: 'GET',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+            if (response.ok) {
+                const data = await response.json();
+                setSubmissions(data);
+            } else {
+                console.error("Failed to fetch submissions");
             }
-        });
-        if (response.ok) {
-            const data = await response.json();
-            setSubmissions(data);
-        } else {
-            console.error("Failed to fetch submissions");
+        } catch (error) {
+            console.error("Failed to fetch submissions", error);
         }
     };
 
-    const handleFeedbackChange = (e) => {
-        setFeedback(e.target.value);
+    const handleFeedbackChange = (submissionId, value) => {
+        setFeedbackMap(prev => ({ ...prev, [submissionId]: value }));
     };
 
-    const handleGradeChange = (e) => {
-        setGrade(e.target.value);
+    const handleGradeChange = (submissionId, value) => {
+        setGradeMap(prev => ({ ...prev, [submissionId]: value }));
     };
 
     const handleProvideFeedback = async (submissionId) => {
         const feedbackData = {
-            feedback,
-            grade
+            feedback: feedbackMap[submissionId] || "",
+            grade: gradeMap[submissionId] || ""
         };
 
         try {
@@ -55,7 +59,9 @@ const AssignmentSubmissions = () => {
             });
             if (response.ok) {
                 notify('Feedback provided successfully.', 'success');
-                fetchSubmissions(); // Refresh submissions
+                setFeedbackMap(prev => ({ ...prev, [submissionId]: "" }));
+                setGradeMap(prev => ({ ...prev, [submissionId]: "" }));
+                fetchSubmissions();
             } else {
                 notify('Failed to provide feedback.', 'error');
             }
@@ -86,16 +92,16 @@ const AssignmentSubmissions = () => {
                                                 label="Feedback"
                                                 multiline
                                                 rows={4}
-                                                value={feedback}
-                                                onChange={handleFeedbackChange}
+                                                value={feedbackMap[submission.id] || ""}
+                                                onChange={(e) => handleFeedbackChange(submission.id, e.target.value)}
                                                 fullWidth
                                                 sx={{ my: 2 }}
                                             />
                                             <TextField
                                                 label="Grade"
                                                 type="number"
-                                                value={grade}
-                                                onChange={handleGradeChange}
+                                                value={gradeMap[submission.id] || ""}
+                                                onChange={(e) => handleGradeChange(submission.id, e.target.value)}
                                                 fullWidth
                                             />
                                             <Button variant="contained" color="primary" onClick={() => handleProvideFeedback(submission.id)} sx={{ mt: 2 }}>Submit Feedback</Button>

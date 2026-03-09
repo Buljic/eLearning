@@ -32,7 +32,6 @@ public class UserService
     private final EncriptionUtility encriptionUtility;
     private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
-    //named parameter jos mozda
     public UserService(JdbcTemplate jdbcTemplate, EncriptionUtility encriptionUtility, UserRepository userRepository,
                        JwtUtil jwtUtil)
     {
@@ -53,53 +52,30 @@ public class UserService
     }
 
     public List<StringNumber> findMostTutorSubjects()
-    {//'-' se koristi da bi se izbjeglo ono 12 i 3 moze biti 1 i 23 ili 12 i 3 i slicno
+    {
         String sql = "SELECT Subject.subject_name AS name, " +
-                "COUNT(DISTINCT CONCAT (tutorsubject.subject_id,'-',tutorsubject.tutor_id)) AS number " +  //NIJE BITNO KADA BROJIMO SVE RECORDE A NE SPECIFICNE , IAKO JE COMPOSITE KEY
+                "COUNT(DISTINCT CONCAT(tutorsubject.subject_id,'-',tutorsubject.tutor_id)) AS number " +
                 "FROM Subject " +
                 "LEFT JOIN tutorsubject ON Subject.id = tutorsubject.subject_id " +
                 "GROUP BY Subject.subject_name " +
                 "ORDER BY number DESC, Subject.subject_name " +
                 "LIMIT 5;";
-//        String sql = "SELECT Subject.subject_name, " +
-//                "COALESCE(COUNT(TutorSubject.id), 0) as brojTutora " +
-//                "FROM Subject " +
-//                "LEFT JOIN TutorSubject ON Subject.id = TutorSubject.subject_id " +
-//                "GROUP BY Subject.subject_name " +
-//                "ORDER BY COUNT(TutorSubject.id) DESC, Subject.subject_name " +
-//                "LIMIT 5;";
-//        String sql = "SELECT Subject.subject_name, COUNT(TutorSubject.id) as brojTutora " +
-//                "FROM Subject " +
-//                "LEFT JOIN TutorSubject ON Subject.id = TutorSubject.subject_id " +
-//                "GROUP BY Subject.subject_name " +
-//                "ORDER BY brojTutora DESC, Subject.subject_name " +
-//                "LIMIT 5;";
-//        String sql="SELECT Subject.subject_name, COUNT(TutorSubject.id) as brojTutora " +
-//                "FROM TutorSubject " +
-//                "JOIN Subject ON TutorSubject.subject_id = Subject.id " +
-//                "GROUP BY Subject.subject_name  " +
-//                "ORDER BY brojTutora DESC " +
-//                " LIMIT 5;";
         return jdbcTemplate.query(sql,new BeanPropertyRowMapper<>(StringNumber.class));
     }
+
     public List<StringNumber> findSearchedSubjects(String searchedText)
-    {//koristi se where nakon from i join ali prije npr group by
-//        String sql="SELECT Subject.subject_name , COUNT(TutorSubject.id) as brojTutora " +
-//                "FROM TutorSubject " +
-//                "JOIN Subject ON TutorSubject.subject_id= Subject.id " +
-//                "WHERE LOWER(Subject.subject_name) LIKE  LOWER(?) " +
-//                "GROUP BY Subject.subject_name ;";
-            //COALESCE sE KORISTI da vrati element prvi koji nije null a ako su svi null onda vraca null
-        String sql = "SELECT Subject.subject_name AS name, COUNT(DISTINCT  CONCAT(tutorsubject.subject_id,'-',tutorsubject.tutor_id)) as number " +//moras AS koristiti ono sto ce dto-u lakse bit skontat
+    {
+        String sql = "SELECT Subject.subject_name AS name, COUNT(DISTINCT CONCAT(tutorsubject.subject_id,'-',tutorsubject.tutor_id)) as number " +
                 "FROM Subject " +
                 "LEFT JOIN tutorsubject ON Subject.id = tutorsubject.subject_id " +
                 "WHERE LOWER(Subject.subject_name) LIKE LOWER(?) " +
                 "GROUP BY Subject.subject_name;";
-                return jdbcTemplate.query(sql,new Object[]{"%"+searchedText+"%"},new BeanPropertyRowMapper<>(StringNumber.class));
+        return jdbcTemplate.query(sql,new Object[]{"%"+searchedText+"%"},new BeanPropertyRowMapper<>(StringNumber.class));
     }
+
     public List<Tutor> findTutorsBySubjectName(String subject_name){
-        String sql="SELECT * from (SELECT Subject.id AS sid FROM Subject WHERE Subject LIKE ? ) " +
-                " LEFT JOIN  tutorsubject  ON sid=tutorsubject.subject_id";
+        String sql="SELECT * FROM (SELECT Subject.id AS sid FROM Subject WHERE Subject.subject_name LIKE ?) sub " +
+                "LEFT JOIN tutorsubject ON sub.sid = tutorsubject.subject_id";
         return jdbcTemplate.query(sql,new Object[]{subject_name},new BeanPropertyRowMapper<>(Tutor.class));
     }
 
@@ -326,63 +302,6 @@ public class UserService
         }
     }
 
-//    public List<GenericDTO> getFilteredGroups(Map<String, String> filters)
-//    {
-//        StringBuilder sql = new StringBuilder("SELECT * FROM group_table WHERE 1=1");
-//
-//        List<Object> params = new ArrayList<>();
-//
-//        if (filters.containsKey("group_name")) {
-//            sql.append(" AND group_name LIKE ?");
-//            params.add("%" + filters.get("group_name") + "%");
-//        }
-//
-//        if (filters.containsKey("topic")) {
-//            sql.append(" AND topic LIKE ?");
-//            params.add("%" + filters.get("topic") + "%");
-//        }
-//
-//        if (filters.containsKey("start_date")) {
-//            sql.append(" AND start_date >= ?");
-//            params.add(filters.get("start_date"));
-//        }
-//
-//        if (filters.containsKey("end_date")) {
-//            sql.append(" AND end_date <= ?");
-//            params.add(filters.get("end_date"));
-//        }
-//
-//        if (filters.containsKey("hours_per_week")) {
-//            sql.append(" AND hours_per_week = ?");
-//            params.add(Integer.parseInt(filters.get("hours_per_week")));
-//        }
-//
-//        if (filters.containsKey("price")) {
-//            sql.append(" AND price <= ?");
-//            params.add(Double.parseDouble(filters.get("price")));
-//        }
-//
-//        if (filters.containsKey("max_students")) {
-//            sql.append(" AND max_students = ?");
-//            params.add(Integer.parseInt(filters.get("max_students")));
-//        }
-//
-//        // Handle subjects
-//        if (filters.containsKey("subjects")) {
-//            String[] subjects = filters.get("subjects").split(",");
-//            sql.append(" AND group_id IN (SELECT group_id FROM group_subject WHERE subject_id IN (SELECT id FROM subject WHERE subject_name IN (");
-//            for (int i = 0; i < subjects.length; i++) {
-//                sql.append("?");
-//                if (i < subjects.length - 1) {
-//                    sql.append(",");
-//                }
-//                params.add(subjects[i]);
-//            }
-//            sql.append(")))");
-//        }
-//
-//        return jdbcTemplate.query(sql.toString(), params.toArray(), new GenericDTOMapper());
-//    }
     public List<GenericDTO> getFilteredGroups(GenericDTO filters, int page, int size) {
         StringBuilder sql = new StringBuilder("SELECT * FROM group_table WHERE 1=1");
         List<Object> params = new ArrayList<>();
