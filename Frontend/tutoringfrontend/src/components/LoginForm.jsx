@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { TextField, Button, Typography, Container, Box, Alert, Paper } from "@mui/material";
+import { TextField, Button, Typography, Container, Box, Alert, Paper, Link as MuiLink } from "@mui/material";
+import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
+import { Link } from "react-router-dom";
 import config from "../config.js";
 
 function LoginForm() {
@@ -58,11 +60,17 @@ function LoginForm() {
   };
 
   return (
-    <Container maxWidth="sm" sx={{ mt: 5 }}>
-      <Paper elevation={0} sx={{ p: 3, borderRadius: 3, border: "1px solid #d8e3ef" }}>
-        <Typography variant="h4" gutterBottom textAlign="center">
-          Prijava
-        </Typography>
+    <Container maxWidth="sm" sx={{ py: 4 }}>
+      <Paper elevation={0} sx={{ p: { xs: 3, md: 4 }, borderRadius: 3, border: "1px solid #d8e3ef" }}>
+        <Box sx={{ textAlign: "center", mb: 3 }}>
+          <LockOutlinedIcon sx={{ fontSize: 48, color: "primary.main", mb: 1 }} />
+          <Typography variant="h4" gutterBottom>
+            Prijava
+          </Typography>
+          <Typography color="text.secondary">
+            Unesite podatke za pristup vasem racunu
+          </Typography>
+        </Box>
 
         <Box component="form" onSubmit={handleLogin} sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
           <TextField
@@ -78,12 +86,19 @@ function LoginForm() {
             onChange={(e) => setPassword(e.target.value)}
             required
           />
-          <Button type="submit" variant="contained" disabled={submitting}>
+          <Button type="submit" variant="contained" size="large" disabled={submitting}>
             {submitting ? "Prijava..." : "Prijava"}
           </Button>
         </Box>
 
         {message && <Alert severity="error" sx={{ mt: 2 }}>{message}</Alert>}
+
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 3, textAlign: "center" }}>
+          Nemate racun?{" "}
+          <MuiLink component={Link} to="/createAccount" underline="hover">
+            Registrujte se
+          </MuiLink>
+        </Typography>
       </Paper>
     </Container>
   );

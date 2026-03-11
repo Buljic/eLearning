@@ -1,6 +1,21 @@
 import { useEffect, useState } from 'react';
 import { Link } from "react-router-dom";
-import { Alert, Container, Box, Typography, CircularProgress, List, ListItem, Button } from '@mui/material';
+import {
+    Alert,
+    Avatar,
+    Box,
+    Card,
+    CardActionArea,
+    CardContent,
+    CircularProgress,
+    Container,
+    Grid,
+    Paper,
+    Stack,
+    Typography,
+} from '@mui/material';
+import MenuBookIcon from '@mui/icons-material/MenuBook';
+import GroupsIcon from '@mui/icons-material/Groups';
 import config from '../config.js';
 import { getSessionUser } from '../utils/sessionUser.js';
 
@@ -46,41 +61,60 @@ const AttendedSubjects = () => {
     }, [myUser?.id]);
 
     if (loading) {
-        return <CircularProgress />;
+        return (
+            <Box sx={{ display: 'grid', placeItems: 'center', minHeight: '40vh' }}>
+                <CircularProgress />
+            </Box>
+        );
     }
 
     if (error) {
-        return <Alert severity="error">{error}</Alert>;
+        return <Alert severity="error" sx={{ m: 3 }}>{error}</Alert>;
     }
 
     return (
-        <Container>
-            <Box sx={{ my: 4, textAlign: 'center' }}>
+        <Container maxWidth="md" sx={{ py: 3 }}>
+            <Paper elevation={0} sx={{ p: 3, borderRadius: 3, border: '1px solid #d8e3ef', textAlign: 'center', mb: 3 }}>
+                <MenuBookIcon sx={{ fontSize: 48, color: 'primary.main', mb: 1 }} />
                 <Typography variant="h4" gutterBottom>Vasi kursevi</Typography>
-                {attendedGroups.length === 0 && (
-                    <Alert severity="info" sx={{ mb: 2 }}>
-                        Trenutno nemate aktivnih kurseva.
-                    </Alert>
-                )}
-                <List sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                    {attendedGroups.map((group, index) => (
-                        <ListItem key={index} sx={{ width: '100%', maxWidth: 600 }}>
-                            <Button
-                                variant="contained"
-                                color="primary"
-                                component={Link}
-                                to={`/group/${group.group_id}`}
-                                fullWidth
-                                sx={{ mb: 2, textTransform: 'none' }}
-                            >
-                                <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'white' }}>
-                                    {group.group_name}
-                                </Typography>
-                            </Button>
-                        </ListItem>
-                    ))}
-                </List>
-            </Box>
+                <Typography color="text.secondary">
+                    Pregledajte grupe kojima prisustvujete
+                </Typography>
+            </Paper>
+
+            {attendedGroups.length === 0 && (
+                <Alert severity="info">
+                    Trenutno nemate aktivnih kurseva.
+                </Alert>
+            )}
+
+            <Grid container spacing={2}>
+                {attendedGroups.map((group, index) => (
+                    <Grid item xs={12} sm={6} key={index}>
+                        <Card
+                            variant="outlined"
+                            sx={{
+                                borderRadius: 2,
+                                transition: 'all 0.2s',
+                                '&:hover': { boxShadow: '0 6px 24px rgba(13,91,203,0.14)', borderColor: 'primary.main' },
+                            }}
+                        >
+                            <CardActionArea component={Link} to={`/group/${group.group_id}`}>
+                                <CardContent>
+                                    <Stack direction="row" alignItems="center" spacing={2}>
+                                        <Avatar sx={{ bgcolor: 'primary.main' }}>
+                                            <GroupsIcon />
+                                        </Avatar>
+                                        <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                                            {group.group_name}
+                                        </Typography>
+                                    </Stack>
+                                </CardContent>
+                            </CardActionArea>
+                        </Card>
+                    </Grid>
+                ))}
+            </Grid>
         </Container>
     );
 };

@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Navigate, Route, Routes } from 'react-router-d
 import Header from './minicomponents/Header.jsx';
 import NotificationHost from './minicomponents/NotificationHost.jsx';
 import config from './config.js';
+import { Box, CircularProgress } from '@mui/material';
 
 const LoginForm = lazy(() => import('./components/LoginForm'));
 const WelcomePage = lazy(() => import('./components/WelcomePage'));
@@ -24,6 +25,12 @@ const GroupOverview = lazy(() => import('./components/GroupOverview.jsx'));
 const AssignmentSubmissions = lazy(() => import('./minicomponents/AssignmentSubmissions.jsx'));
 const SubmissionDetail = lazy(() => import('./minicomponents/SubmissionDetail.jsx'));
 const AssignmentDetail = lazy(() => import('./minicomponents/AssignmentDetail.jsx'));
+
+const LoadingFallback = () => (
+    <Box sx={{ display: 'grid', placeItems: 'center', minHeight: '40vh' }}>
+        <CircularProgress />
+    </Box>
+);
 
 function App() {
     useEffect(() => {
@@ -50,42 +57,40 @@ function App() {
     }, []);
 
     return (
-        <>
+        <Router>
             <Header />
             <NotificationHost />
 
-            <Router>
-                <Suspense fallback={<div style={{ padding: '1rem' }}>Loading...</div>}>
-                    <Routes>
-                        <Route path="/login" element={<LoginForm />} />
-                        <Route path="/createAccount" element={<CreateAccount />} />
-                        <Route path="/welcome" element={<WelcomePage />} />
-                        <Route path="/searchSubjects" element={<Subjects />} />
-                        <Route path="/requestSubjectsAsTutor" element={<RequestSubjectAsTutor />} />
-                        <Route path="/userInfoFor/:username" element={<UserInfo />} />
-                        <Route path="/chatTo/:objectUser" element={<ChatTo />} />
-                        <Route path="/userSearch" element={<SearchUsers />} />
-                        <Route path="/tutorsFor/:subject" element={<TutorsForSubject />} />
+            <Suspense fallback={<LoadingFallback />}>
+                <Routes>
+                    <Route path="/login" element={<LoginForm />} />
+                    <Route path="/createAccount" element={<CreateAccount />} />
+                    <Route path="/welcome" element={<WelcomePage />} />
+                    <Route path="/searchSubjects" element={<Subjects />} />
+                    <Route path="/requestSubjectsAsTutor" element={<RequestSubjectAsTutor />} />
+                    <Route path="/userInfoFor/:username" element={<UserInfo />} />
+                    <Route path="/chatTo/:objectUser" element={<ChatTo />} />
+                    <Route path="/userSearch" element={<SearchUsers />} />
+                    <Route path="/tutorsFor/:subject" element={<TutorsForSubject />} />
 
-                        <Route path="/attendedCourses" element={<AttendedSubjects />} />
-                        <Route path="/groupSearch" element={<GroupSearch />} />
+                    <Route path="/attendedCourses" element={<AttendedSubjects />} />
+                    <Route path="/groupSearch" element={<GroupSearch />} />
 
-                        <Route path="/createGroup" element={<CreateGroup />} />
-                        <Route path="/groupDetails/:groupId" element={<GroupDetails />} />
-                        <Route path="/groupRequests" element={<GroupRequests />} />
+                    <Route path="/createGroup" element={<CreateGroup />} />
+                    <Route path="/groupDetails/:groupId" element={<GroupDetails />} />
+                    <Route path="/groupRequests" element={<GroupRequests />} />
 
-                        <Route path="/chatGroup/:objectGroup" element={<ChatGroup />} />
-                        <Route path="/group/:groupId" element={<GroupOverview />} />
+                    <Route path="/chatGroup/:objectGroup" element={<ChatGroup />} />
+                    <Route path="/group/:groupId" element={<GroupOverview />} />
 
-                        <Route path="/assignments/:assignmentId" element={<AssignmentDetail />} />
-                        <Route path="/assignments/:assignmentId/submissions" element={<AssignmentSubmissions />} />
-                        <Route path="/assignments/:assignmentId/submissions/:submissionId" element={<SubmissionDetail />} />
-                        <Route path="/" element={<Homepage />} />
-                        <Route path="*" element={<Navigate to="/" replace />} />
-                    </Routes>
-                </Suspense>
-            </Router>
-        </>
+                    <Route path="/assignments/:assignmentId" element={<AssignmentDetail />} />
+                    <Route path="/assignments/:assignmentId/submissions" element={<AssignmentSubmissions />} />
+                    <Route path="/assignments/:assignmentId/submissions/:submissionId" element={<SubmissionDetail />} />
+                    <Route path="/" element={<Homepage />} />
+                    <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+            </Suspense>
+        </Router>
     );
 }
 
