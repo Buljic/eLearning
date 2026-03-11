@@ -8,7 +8,7 @@ import ba.unze.elearning.tutoring.Other.AccountType;
 import ba.unze.elearning.tutoring.Repositories.StudentRepository;
 import ba.unze.elearning.tutoring.Repositories.TutorRepository;
 import ba.unze.elearning.tutoring.Repositories.UserRepository;
-import ba.unze.elearning.tutoring.Security.EncriptionUtility;
+import ba.unze.elearning.tutoring.Security.EncryptionUtility;
 import ba.unze.elearning.tutoring.Security.JwtUtil;
 import ba.unze.elearning.tutoring.Services.UserService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -47,11 +47,11 @@ public class UserLoginController
     private final UserService userService;
     private final JwtUtil jwtUtil;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
-    private final EncriptionUtility encriptionUtility;
+    private final EncryptionUtility encryptionUtility;
 
     UserLoginController(UserRepository userRepository, TutorRepository tutorRepository,
                         StudentRepository studentRepository, UserService userService, JwtUtil jwtUtil,
-                        BCryptPasswordEncoder bCryptPasswordEncoder, EncriptionUtility encriptionUtility)
+                        BCryptPasswordEncoder bCryptPasswordEncoder, EncryptionUtility encryptionUtility)
 
     {
         this.userRepository=userRepository;
@@ -60,7 +60,7 @@ public class UserLoginController
         this.userService = userService;
         this.jwtUtil=jwtUtil;
         this.bCryptPasswordEncoder = bCryptPasswordEncoder;
-        this.encriptionUtility = encriptionUtility;
+        this.encryptionUtility = encryptionUtility;
     }
 
 
@@ -89,11 +89,11 @@ public class UserLoginController
         }
 
         String normalizedPhone = normalizePhone(createAccountDTO.getPhoneNumber());
-        String encryptedPhone = normalizedPhone.isBlank() ? null : encriptionUtility.encrypt(normalizedPhone);
+        String encryptedPhone = normalizedPhone.isBlank() ? null : encryptionUtility.encrypt(normalizedPhone);
         User user=new User(normalizedUsername,bCryptPasswordEncoder.encode(createAccountDTO.getPassword())
         ,createAccountDTO.getName().trim(),
                 createAccountDTO.getSurname().trim(),
-                encriptionUtility.encrypt(createAccountDTO.getEmail().trim()),
+                encryptionUtility.encrypt(createAccountDTO.getEmail().trim()),
                 encryptedPhone,
                 requestedAccountType);
         user.setRoles(resolveInitialRoles(requestedAccountType));

@@ -84,9 +84,16 @@ public class GenericDTO
         return null;
     }
 
+    @SuppressWarnings("unchecked")
     public List<String> getList(String key) {
         Object value = properties.get(key);
-        return value instanceof List ? (List<String>) value : Collections.emptyList();
+        if (value instanceof List<?> rawList) {
+            if (rawList.isEmpty() || rawList.get(0) instanceof String) {
+                return (List<String>) value;
+            }
+            return rawList.stream().map(Object::toString).toList();
+        }
+        return Collections.emptyList();
     }
 
     //KORISTI SE da mozemo ispisivati dto normalno
@@ -98,20 +105,4 @@ public class GenericDTO
                         .collect(Collectors.joining(", ")) +
                 '}';
     }
-    //TODO implementuj
-//    @Override
-//    public String toString() {
-//        StringBuilder sb = new StringBuilder("GenericDTO{");
-//        for (Map.Entry<String, Object> entry : properties.entrySet()) {
-//            sb.append(entry.getKey())
-//                    .append('=')
-//                    .append(entry.getValue())
-//                    .append(',');
-//        }
-//        if (sb.length() > "GenericDTO{".length()) {
-//            sb.delete(sb.length() - 2, sb.length()); // Uklanja poslednji zarez i razmak
-//        }
-//        sb.append('}');
-//        return sb.toString();
-//    }
 }

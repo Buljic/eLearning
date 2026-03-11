@@ -4,10 +4,10 @@ import org.jasypt.encryption.StringEncryptor;
 import org.springframework.stereotype.Component;
 
 @Component
-public class EncriptionUtility
+public class EncryptionUtility
 {
     private final StringEncryptor stringEncryptor;
-    public EncriptionUtility(StringEncryptor stringEncryptor1)
+    public EncryptionUtility(StringEncryptor stringEncryptor1)
     {
         this.stringEncryptor=stringEncryptor1;
     }

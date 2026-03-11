@@ -11,6 +11,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -22,6 +23,30 @@ public class StorageService {
             "ppt", "pptx", "odp", "xls", "xlsx", "ods",
             "mp4", "mp3", "wav", "m4a",
             "zip", "rar", "7z"
+    );
+
+    private static final Map<String, Set<String>> EXTENSION_TO_MIME = Map.ofEntries(
+            Map.entry("png", Set.of("image/png")),
+            Map.entry("jpg", Set.of("image/jpeg")),
+            Map.entry("jpeg", Set.of("image/jpeg")),
+            Map.entry("gif", Set.of("image/gif")),
+            Map.entry("webp", Set.of("image/webp")),
+            Map.entry("pdf", Set.of("application/pdf")),
+            Map.entry("txt", Set.of("text/plain")),
+            Map.entry("csv", Set.of("text/csv", "text/plain", "application/csv")),
+            Map.entry("doc", Set.of("application/msword")),
+            Map.entry("docx", Set.of("application/vnd.openxmlformats-officedocument.wordprocessingml.document")),
+            Map.entry("ppt", Set.of("application/vnd.ms-powerpoint")),
+            Map.entry("pptx", Set.of("application/vnd.openxmlformats-officedocument.presentationml.presentation")),
+            Map.entry("xls", Set.of("application/vnd.ms-excel")),
+            Map.entry("xlsx", Set.of("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")),
+            Map.entry("mp4", Set.of("video/mp4")),
+            Map.entry("mp3", Set.of("audio/mpeg")),
+            Map.entry("wav", Set.of("audio/wav", "audio/x-wav")),
+            Map.entry("m4a", Set.of("audio/mp4", "audio/x-m4a")),
+            Map.entry("zip", Set.of("application/zip", "application/x-zip-compressed")),
+            Map.entry("rar", Set.of("application/x-rar-compressed", "application/vnd.rar")),
+            Map.entry("7z", Set.of("application/x-7z-compressed"))
     );
 
     @Value("${file.upload-dir}")
@@ -67,6 +92,7 @@ public class StorageService {
             }
 
             String extension = extractSafeExtension(originalFilename);
+            validateMimeType(file, extension);
             String generatedFilename = UUID.randomUUID() + "." + extension;
 
             Path root = ensureDirectory(Paths.get(uploadDir));
@@ -89,6 +115,17 @@ public class StorageService {
         Path normalized = path.toAbsolutePath().normalize();
         Files.createDirectories(normalized);
         return normalized;
+    }
+
+    private void validateMimeType(MultipartFile file, String extension) {
+        String contentType = file.getContentType();
+        if (contentType == null || contentType.isBlank()) {
+            return;
+        }
+        Set<String> allowedMimes = EXTENSION_TO_MIME.get(extension);
+        if (allowedMimes != null && !allowedMimes.contains(contentType.toLowerCase(Locale.ROOT))) {
+            throw new RuntimeException("MIME tip fajla ne odgovara ekstenziji.");
+        }
     }
 
     private String extractSafeExtension(String filename) {

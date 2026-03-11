@@ -10,7 +10,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
-import java.util.Date;
 import java.util.List;
 import java.util.NoSuchElementException;
 
@@ -22,7 +21,7 @@ public class GroupService {
     public Group findGroupById(Long groupId) {
         String sql = "SELECT * FROM group_table WHERE group_id = ?";
         try {
-            return jdbcTemplate.queryForObject(sql, new Object[]{groupId}, new BeanPropertyRowMapper<>(Group.class));
+            return jdbcTemplate.queryForObject(sql, new BeanPropertyRowMapper<>(Group.class), groupId);
         } catch (EmptyResultDataAccessException ignored) {
             return null;
         }
@@ -39,14 +38,14 @@ public class GroupService {
         }
 
         String checkRequestSql = "SELECT COUNT(*) FROM group_requests WHERE group_id = ? AND user_id = ?";
-        int count = jdbcTemplate.queryForObject(checkRequestSql, new Object[]{groupId, userId}, Integer.class);
+        int count = jdbcTemplate.queryForObject(checkRequestSql, Integer.class, groupId, userId);
 
         if (count > 0) {
             throw new IllegalStateException("Vec ste poslali zahtjev za ovu grupu.");
         }
 
-        Date startDate = group.getStartDate();
-        if (startDate != null && startDate.before(new Date())) {
+        LocalDate startDate = group.getStartDate();
+        if (startDate != null && startDate.isBefore(LocalDate.now())) {
             throw new IllegalStateException("Grupa je vec pocela, ne mozete se pridruziti.");
         }
 
@@ -56,7 +55,7 @@ public class GroupService {
 
     public boolean isUserInGroup(Long userId, Long groupId) {
         String sql = "SELECT COUNT(*) FROM user_group WHERE user_id = ? AND group_id = ?";
-        Integer count = jdbcTemplate.queryForObject(sql, new Object[]{userId, groupId}, Integer.class);
+        Integer count = jdbcTemplate.queryForObject(sql, Integer.class, userId, groupId);
         return count != null && count > 0;
     }
 
@@ -66,13 +65,13 @@ public class GroupService {
                 "LEFT JOIN user_roles ur ON ur.user_id = u.id " +
                 "WHERE ug.group_id = ? " +
                 "AND (u.account_type IN ('PROFESOR', 'OBOJE') OR ur.role = 'PROFESOR')";
-        Integer count = jdbcTemplate.queryForObject(sql, new Object[]{groupId}, Integer.class);
+        Integer count = jdbcTemplate.queryForObject(sql, Integer.class, groupId);
         return count != null && count > 0;
     }
 
     public boolean isTutorOwnerOfGroup(Long tutorId, Long groupId) {
         String sql = "SELECT COUNT(*) FROM group_table WHERE group_id = ? AND headtutor_id = ?";
-        Integer count = jdbcTemplate.queryForObject(sql, new Object[]{groupId, tutorId}, Integer.class);
+        Integer count = jdbcTemplate.queryForObject(sql, Integer.class, groupId, tutorId);
         return count != null && count > 0;
     }
 
@@ -80,6 +79,6 @@ public class GroupService {
         String sql = "SELECT DISTINCT u.username FROM user u " +
                 "JOIN user_group ug ON ug.user_id = u.id " +
                 "WHERE ug.group_id = ?";
-        return jdbcTemplate.query(sql, new Object[]{groupId}, (rs, rowNum) -> rs.getString("username"));
+        return jdbcTemplate.query(sql, (rs, rowNum) -> rs.getString("username"), groupId);
     }
 }

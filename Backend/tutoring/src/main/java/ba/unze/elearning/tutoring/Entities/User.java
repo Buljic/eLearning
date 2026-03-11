@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Entity
+@Table(name = "`user`")
 @Inheritance(strategy=InheritanceType.JOINED)//da su razliciti svi entiteti ali povezani s glavnim sa 1 na 1
 public class User
 {

@@ -33,13 +33,13 @@ public class MessageService
                         "JOIN user u1 ON dm.user1 = u1.id " +
                         "WHERE (dm.user1 = ? AND dm.user2 = ?) OR (dm.user1 = ? AND dm.user2 = ?) " +
                         "ORDER BY dm.time DESC LIMIT ? OFFSET ?",
-                new Object[]{user1, user2, user2, user1, size, page * size},
                 (rs, rowNum) -> {
                     DirectMessageId id = new DirectMessageId(rs.getLong("user1"), rs.getLong("user2"), rs.getTimestamp("time").toLocalDateTime());
                     DirectMessage dm = new DirectMessage(id, rs.getString("message_text"));
                     dm.setSenderName(rs.getString("sender_name"));
                     return dm;
-                }
+                },
+                user1, user2, user2, user1, size, page * size
         );
     }
 
@@ -49,7 +49,7 @@ public class MessageService
         LocalDateTime now = LocalDateTime.now();
 
         String sql = "INSERT INTO group_message(group_id, sender, time, message_text) VALUES (?, ?, ?, ?)";
-        jdbcTemplate.update(sql, new Object[]{group, sender, now, message});
+        jdbcTemplate.update(sql, group, sender, now, message);
     }
 
     public List<GenericDTO> getOldGroupMessages(Long groupId, int page, int size) {
@@ -58,7 +58,7 @@ public class MessageService
                 "JOIN user u ON gm.sender = u.id " +
                 "WHERE gm.group_id = ? " +
                 "ORDER BY gm.time DESC LIMIT ? OFFSET ?";
-        List<GenericDTO> messages = jdbcTemplate.query(sql, new Object[]{groupId, size, page * size}, (rs, rowNum) -> {
+        List<GenericDTO> messages = jdbcTemplate.query(sql, (rs, rowNum) -> {
             GenericDTO dto = new GenericDTO();
             dto.addProperty("group_id", rs.getLong("group_id"));
             dto.addProperty("senderId", rs.getLong("sender"));
@@ -66,7 +66,7 @@ public class MessageService
             dto.addProperty("message_text", rs.getString("message_text"));
             dto.addProperty("sender_name", rs.getString("sender_name"));
             return dto;
-        });
+        }, groupId, size, page * size);
 
         return messages;
     }
