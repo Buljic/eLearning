@@ -8,7 +8,7 @@ import com.example.tutoring.Other.AccountType;
 import com.example.tutoring.Repositories.StudentRepository;
 import com.example.tutoring.Repositories.TutorRepository;
 import com.example.tutoring.Repositories.UserRepository;
-import com.example.tutoring.Security.EncriptionUtility;
+import com.example.tutoring.Security.EncryptionUtility;
 import com.example.tutoring.Security.JwtUtil;
 import com.example.tutoring.Services.UserService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -47,11 +47,11 @@ public class UserLoginController
     private final UserService userService;
     private final JwtUtil jwtUtil;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
-    private final EncriptionUtility encriptionUtility;
+    private final EncryptionUtility encryptionUtility;
 
     UserLoginController(UserRepository userRepository, TutorRepository tutorRepository,
                         StudentRepository studentRepository, UserService userService, JwtUtil jwtUtil,
-                        BCryptPasswordEncoder bCryptPasswordEncoder, EncriptionUtility encriptionUtility)
+                        BCryptPasswordEncoder bCryptPasswordEncoder, EncryptionUtility encryptionUtility)
 
     {
         this.userRepository=userRepository;
@@ -60,7 +60,7 @@ public class UserLoginController
         this.userService = userService;
         this.jwtUtil=jwtUtil;
         this.bCryptPasswordEncoder = bCryptPasswordEncoder;
-        this.encriptionUtility = encriptionUtility;
+        this.encryptionUtility = encryptionUtility;
     }
 
 
@@ -89,11 +89,11 @@ public class UserLoginController
         }
 
         String normalizedPhone = normalizePhone(createAccountDTO.getPhoneNumber());
-        String encryptedPhone = normalizedPhone.isBlank() ? null : encriptionUtility.encrypt(normalizedPhone);
+        String encryptedPhone = normalizedPhone.isBlank() ? null : encryptionUtility.encrypt(normalizedPhone);
         User user=new User(normalizedUsername,bCryptPasswordEncoder.encode(createAccountDTO.getPassword())
         ,createAccountDTO.getName().trim(),
                 createAccountDTO.getSurname().trim(),
-                encriptionUtility.encrypt(createAccountDTO.getEmail().trim()),
+                encryptionUtility.encrypt(createAccountDTO.getEmail().trim()),
                 encryptedPhone,
                 requestedAccountType);
         user.setRoles(resolveInitialRoles(requestedAccountType));

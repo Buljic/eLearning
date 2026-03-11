@@ -7,7 +7,7 @@ import com.example.tutoring.DTOs.UserDTO;
 import com.example.tutoring.Entities.Tutor;
 import com.example.tutoring.Entities.User;
 import com.example.tutoring.Repositories.UserRepository;
-import com.example.tutoring.Security.EncriptionUtility;
+import com.example.tutoring.Security.EncryptionUtility;
 import com.example.tutoring.Security.JwtUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
@@ -29,14 +29,14 @@ import java.util.*;
 public class UserService
 {
     private final JdbcTemplate jdbcTemplate;
-    private final EncriptionUtility encriptionUtility;
+    private final EncryptionUtility encryptionUtility;
     private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
-    public UserService(JdbcTemplate jdbcTemplate, EncriptionUtility encriptionUtility, UserRepository userRepository,
+    public UserService(JdbcTemplate jdbcTemplate, EncryptionUtility encryptionUtility, UserRepository userRepository,
                        JwtUtil jwtUtil)
     {
         this.jdbcTemplate = jdbcTemplate;
-        this.encriptionUtility = encriptionUtility;
+        this.encryptionUtility = encryptionUtility;
         this.userRepository = userRepository;
         this.jwtUtil = jwtUtil;
     }
@@ -44,7 +44,7 @@ public class UserService
     public Long getUserIdFromToken(String token) {
         String username = jwtUtil.getUsernameFromToken(token);
         String userIdSql = "SELECT id FROM user WHERE username = ?;";
-        return jdbcTemplate.queryForObject(userIdSql, new Object[]{username}, Long.class);
+        return jdbcTemplate.queryForObject(userIdSql, Long.class, username);
     }
 
     public User getUserById(Long id) {
@@ -70,31 +70,31 @@ public class UserService
                 "LEFT JOIN tutorsubject ON Subject.id = tutorsubject.subject_id " +
                 "WHERE LOWER(Subject.subject_name) LIKE LOWER(?) " +
                 "GROUP BY Subject.subject_name;";
-        return jdbcTemplate.query(sql,new Object[]{"%"+searchedText+"%"},new BeanPropertyRowMapper<>(StringNumber.class));
+        return jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(StringNumber.class), "%" + searchedText + "%");
     }
 
     public List<Tutor> findTutorsBySubjectName(String subject_name){
         String sql="SELECT * FROM (SELECT Subject.id AS sid FROM Subject WHERE Subject.subject_name LIKE ?) sub " +
                 "LEFT JOIN tutorsubject ON sub.sid = tutorsubject.subject_id";
-        return jdbcTemplate.query(sql,new Object[]{subject_name},new BeanPropertyRowMapper<>(Tutor.class));
+        return jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(Tutor.class), subject_name);
     }
 
     public GenericDTO getUserInfoExtended(String username)
     {
         String sql = "SELECT user.id, user.name, user.surname, user.username, user.account_type, user.phone_number, user.email " +
                 " FROM user where LOWER(user.username) = LOWER(?) ; ";
-        GenericDTO genericDTO = jdbcTemplate.queryForObject(sql, new Object[]{username}, new GenericDTOMapper());
+        GenericDTO genericDTO = jdbcTemplate.queryForObject(sql, new GenericDTOMapper(), username);
 
         // Dekripcija emaila
         String email = (String)genericDTO.getProperty("email");
         if (email != null) {
-            genericDTO.setProperty("email",encriptionUtility.decrypt(email));
+            genericDTO.setProperty("email",encryptionUtility.decrypt(email));
         }
 
         // Dekripcija broja telefona
         String phoneNumber = (String)genericDTO.getProperty("phone_number");
         if (phoneNumber != null) {
-            genericDTO.setProperty("phone_number",encriptionUtility.decrypt(phoneNumber));
+            genericDTO.setProperty("phone_number",encryptionUtility.decrypt(phoneNumber));
         }
 
         userRepository.findByUsername(username).ifPresent(user ->
@@ -111,9 +111,9 @@ public class UserService
     {
         String sql="SELECT user.id, user.name , user.surname, user.username, user.account_type " +
                 ",user.email,user.phone_number FROM user where LOWER(user.username) = LOWER (?) ; ";
-        UserDTO userDTO= jdbcTemplate.queryForObject(sql,new Object[]{username},new BeanPropertyRowMapper<>(UserDTO.class));
-        userDTO.setEmail(encriptionUtility.decrypt(userDTO.getEmail()));
-        if(userDTO.getPhoneNumber()!=null) userDTO.setPhoneNumber(encriptionUtility.decrypt(userDTO.getPhoneNumber()));
+        UserDTO userDTO = jdbcTemplate.queryForObject(sql, new BeanPropertyRowMapper<>(UserDTO.class), username);
+        userDTO.setEmail(encryptionUtility.decrypt(userDTO.getEmail()));
+        if(userDTO.getPhoneNumber()!=null) userDTO.setPhoneNumber(encryptionUtility.decrypt(userDTO.getPhoneNumber()));
         userRepository.findByUsername(username).ifPresent(user -> userDTO.setRoles(user.getEffectiveRoles()));
 
         return userDTO;
@@ -125,18 +125,18 @@ public class UserService
                 " from tutorsubject JOIN tutor ON tutorsubject.tutor_id = tutor.id " +
                 " JOIN user ON tutor.id=user.id " +
                 " where  tutorsubject.subject_id = (SELECT subject.id AS sid FROM subject where subject.subject_name = ? ); ";
-        return jdbcTemplate.query(sql,new Object[]{subjectName},new GenericDTOMapper());
+        return jdbcTemplate.query(sql, new GenericDTOMapper(), subjectName);
 
     }
 
+    @Transactional
     public void insertIntoTutorSubjectRequest(String subject,String tutorUsername,String comment)
     {
         // TODO: When a dedicated approval workflow is added, replace this coarse duplicate check
         // with request status transitions (PENDING/APPROVED/REJECTED).
         Integer subjectCount = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM subject WHERE subject_name = ?",
-                new Object[]{subject},
-                Integer.class
+                Integer.class, subject
         );
         if (subjectCount == null || subjectCount == 0) {
             throw new IllegalArgumentException("Nepostojeci predmet.");
@@ -144,8 +144,7 @@ public class UserService
 
         Long tutorId = jdbcTemplate.queryForObject(
                 "SELECT id FROM user WHERE username = ?",
-                new Object[]{tutorUsername},
-                Long.class
+                Long.class, tutorUsername
         );
         if (tutorId == null) {
             throw new IllegalArgumentException("Nepostojeci tutor.");
@@ -153,8 +152,7 @@ public class UserService
 
         Integer alreadyTutor = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM tutorsubject ts JOIN subject s ON s.id = ts.subject_id WHERE ts.tutor_id = ? AND s.subject_name = ?",
-                new Object[]{tutorId, subject},
-                Integer.class
+                Integer.class, tutorId, subject
         );
         if (alreadyTutor != null && alreadyTutor > 0) {
             throw new IllegalStateException("Vec ste registrovani kao tutor za ovaj predmet.");
@@ -162,8 +160,7 @@ public class UserService
 
         Integer existingRequests = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM tutorsubjectrequest tsr JOIN subject s ON s.id = tsr.subject_id WHERE tsr.tutor_id = ? AND s.subject_name = ?",
-                new Object[]{tutorId, subject},
-                Integer.class
+                Integer.class, tutorId, subject
         );
         if (existingRequests != null && existingRequests > 0) {
             throw new IllegalStateException("Zahtjev za ovaj predmet je vec poslan.");
@@ -171,27 +168,27 @@ public class UserService
 
         String sql="INSERT INTO tutorsubjectrequest  (request_date,subject_id,tutor_id,comment) " +
                 "values (?,(SELECT id FROM subject where subject.subject_name=?) , (SELECT id FROM user WHERE user.username=?) ,?);";
-        jdbcTemplate.update(sql,new Object[]{LocalDate.now(),subject,tutorUsername,comment});
+        jdbcTemplate.update(sql, LocalDate.now(), subject, tutorUsername, comment);
     }
     public List<GenericDTO> findTutorsSubjectsWithInfo(Long id)
     {
         String sql="select subject.subject_name , tutorsubject.teaching_grade from\n" +
                 "tutorsubject JOIN subject on tutorsubject.subject_id=subject.id \n" +
                 "where tutorsubject.tutor_id = ?;";
-        return jdbcTemplate.query(sql,new Object[]{id},new GenericDTOMapper());
+        return jdbcTemplate.query(sql, new GenericDTOMapper(), id);
     }
 
     public List<GenericDTO> findAttendedCourses(Long userId) {
         String sql = "SELECT group_table.* FROM group_table " +
                 "JOIN user_group ON group_table.group_id = user_group.group_id " +
                 "WHERE user_group.user_id = ?";
-        return jdbcTemplate.query(sql, new Object[]{userId}, new GenericDTOMapper());
+        return jdbcTemplate.query(sql, new GenericDTOMapper(), userId);
     }
 
     public List<GenericDTO> getSearchedUsers(String username)
     {
         String sql = "SELECT id, name, surname, username, account_type FROM user WHERE username LIKE ?;";
-        return jdbcTemplate.query(sql, new Object[]{"%" + username + "%"}, new GenericDTOMapper());
+        return jdbcTemplate.query(sql, new GenericDTOMapper(), "%" + username + "%");
     }
 
     @Transactional
@@ -239,7 +236,7 @@ public class UserService
                     .toList();
 
             String checkDuplicateSql = "SELECT COUNT(*) FROM group_table WHERE group_name = ? AND headtutor_id = ?;";
-            int count = jdbcTemplate.queryForObject(checkDuplicateSql, new Object[]{normalizedGroupName, tutorId}, Integer.class);
+            int count = jdbcTemplate.queryForObject(checkDuplicateSql, Integer.class, normalizedGroupName, tutorId);
             if (count > 0) {
                 throw new IllegalStateException("Tutor vec ima grupu s istim imenom.");
             }
@@ -272,8 +269,7 @@ public class UserService
                 try {
                     subjectId = jdbcTemplate.queryForObject(
                             "SELECT id FROM subject WHERE subject_name = ?",
-                            new Object[]{subject},
-                            Long.class
+                            Long.class, subject
                     );
                 } catch (EmptyResultDataAccessException e) {
                     throw new IllegalArgumentException("Nepostojeci predmet: " + subject);
@@ -305,8 +301,24 @@ public class UserService
     public List<GenericDTO> getFilteredGroups(GenericDTO filters, int page, int size) {
         StringBuilder sql = new StringBuilder("SELECT * FROM group_table WHERE 1=1");
         List<Object> params = new ArrayList<>();
+        appendGroupFilters(filters, sql, params);
 
-        // Dodavanje filtera
+        sql.append(" LIMIT ? OFFSET ?");
+        params.add(size);
+        params.add(page * size);
+
+        return jdbcTemplate.query(sql.toString(), new GenericDTOMapper(), params.toArray());
+    }
+
+    public int getTotalCount(GenericDTO filters) {
+        StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM group_table WHERE 1=1");
+        List<Object> params = new ArrayList<>();
+        appendGroupFilters(filters, sql, params);
+
+        return jdbcTemplate.queryForObject(sql.toString(), Integer.class, params.toArray());
+    }
+
+    private void appendGroupFilters(GenericDTO filters, StringBuilder sql, List<Object> params) {
         if (filters.getString("group_name") != null && !filters.getString("group_name").isEmpty()) {
             sql.append(" AND group_name LIKE ?");
             params.add("%" + filters.getString("group_name") + "%");
@@ -365,79 +377,6 @@ public class UserService
                 params.addAll(subjects);
             }
         }
-
-        sql.append(" LIMIT ? OFFSET ?");
-        params.add(size);
-        params.add(page * size);
-
-        return jdbcTemplate.query(sql.toString(), params.toArray(), new GenericDTOMapper());
-    }
-
-    public int getTotalCount(GenericDTO filters) {
-        StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM group_table WHERE 1=1");
-        List<Object> params = new ArrayList<>();
-
-        // Dodavanje filtera
-        if (filters.getString("group_name") != null && !filters.getString("group_name").isEmpty()) {
-            sql.append(" AND group_name LIKE ?");
-            params.add("%" + filters.getString("group_name") + "%");
-        }
-        if (filters.getString("topic") != null && !filters.getString("topic").isEmpty()) {
-            sql.append(" AND topic LIKE ?");
-            params.add("%" + filters.getString("topic") + "%");
-        }
-        if (filters.getString("start_date_from") != null && !filters.getString("start_date_from").isEmpty()) {
-            sql.append(" AND start_date >= ?");
-            params.add(LocalDate.parse(filters.getString("start_date_from")));
-        }
-        if (filters.getString("start_date_to") != null && !filters.getString("start_date_to").isEmpty()) {
-            sql.append(" AND start_date <= ?");
-            params.add(LocalDate.parse(filters.getString("start_date_to")));
-        }
-        if (filters.getString("end_date_from") != null && !filters.getString("end_date_from").isEmpty()) {
-            sql.append(" AND end_date >= ?");
-            params.add(LocalDate.parse(filters.getString("end_date_from")));
-        }
-        if (filters.getString("end_date_to") != null && !filters.getString("end_date_to").isEmpty()) {
-            sql.append(" AND end_date <= ?");
-            params.add(LocalDate.parse(filters.getString("end_date_to")));
-        }
-        if (filters.getInt("hours_per_week_from") != null) {
-            sql.append(" AND hours_per_week >= ?");
-            params.add(filters.getInt("hours_per_week_from"));
-        }
-        if (filters.getInt("hours_per_week_to") != null) {
-            sql.append(" AND hours_per_week <= ?");
-            params.add(filters.getInt("hours_per_week_to"));
-        }
-        if (filters.getDouble("price_from") != null) {
-            sql.append(" AND price >= ?");
-            params.add(filters.getDouble("price_from"));
-        }
-        if (filters.getDouble("price_to") != null) {
-            sql.append(" AND price <= ?");
-            params.add(filters.getDouble("price_to"));
-        }
-        if (filters.getInt("max_students_from") != null) {
-            sql.append(" AND max_students >= ?");
-            params.add(filters.getInt("max_students_from"));
-        }
-        if (filters.getInt("max_students_to") != null) {
-            sql.append(" AND max_students <= ?");
-            params.add(filters.getInt("max_students_to"));
-        }
-        if (filters.getProperties().containsKey("subjects")) {
-            List<String> subjects = filters.getList("subjects");
-            if (!subjects.isEmpty()) {
-                sql.append(" AND group_id IN (SELECT group_id FROM group_subject WHERE subject_id IN (SELECT id FROM subject WHERE subject_name IN (");
-                String placeholders = String.join(",", Collections.nCopies(subjects.size(), "?"));
-                sql.append(placeholders);
-                sql.append(")))");
-                params.addAll(subjects);
-            }
-        }
-
-        return jdbcTemplate.queryForObject(sql.toString(), params.toArray(), Integer.class);
     }
 
     public User findUserByUsername(String username) {

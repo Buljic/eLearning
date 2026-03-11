@@ -2,7 +2,7 @@ package com.example.tutoring.Entities;
 
 import jakarta.persistence.*;
 
-import java.util.Date;
+import java.time.LocalDate;
 import java.util.List;
 @Entity
 @Table (name = "group_table")
@@ -12,7 +12,7 @@ public class Group
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long group_id;
 
-    private Date creation_date;
+    private LocalDate creation_date;
 
     @ManyToOne
     @JoinColumn(name = "subject_id")
@@ -28,9 +28,9 @@ public class Group
 
     private String description;
 
-    private Date startDate;
+    private LocalDate startDate;
 
-    private Date endDate;
+    private LocalDate endDate;
 
     private int hoursPerWeek;
 
@@ -60,12 +60,12 @@ public class Group
         this.group_id = group_id;
     }
 
-    public Date getCreation_date()
+    public LocalDate getCreation_date()
     {
         return creation_date;
     }
 
-    public void setCreation_date(Date creation_date)
+    public void setCreation_date(LocalDate creation_date)
     {
         this.creation_date = creation_date;
     }
@@ -110,22 +110,22 @@ public class Group
         this.description = description;
     }
 
-    public Date getStartDate()
+    public LocalDate getStartDate()
     {
         return startDate;
     }
 
-    public void setStartDate(Date startDate)
+    public void setStartDate(LocalDate startDate)
     {
         this.startDate = startDate;
     }
 
-    public Date getEndDate()
+    public LocalDate getEndDate()
     {
         return endDate;
     }
 
-    public void setEndDate(Date endDate)
+    public void setEndDate(LocalDate endDate)
     {
         this.endDate = endDate;
     }

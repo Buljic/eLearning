@@ -45,7 +45,6 @@ public class GroupRequestService {
     public void updateRequestStatuses() {
         List<GroupRequest> pendingRequests = jdbcTemplate.query(
                 "SELECT * FROM group_requests WHERE status = 'PENDING' AND request_date < ?",
-                new Object[]{LocalDate.now()},
                 (rs, rowNum) -> {
                     GroupRequest request = new GroupRequest();
                     GroupRequestId id = new GroupRequestId();
@@ -55,7 +54,8 @@ public class GroupRequestService {
                     request.setStatus(RequestStatus.valueOf(rs.getString("status")));
                     request.setRequestDate(rs.getDate("request_date").toLocalDate());
                     return request;
-                }
+                },
+                LocalDate.now()
         );
 
         for (GroupRequest request : pendingRequests) {
@@ -76,8 +76,7 @@ public class GroupRequestService {
         chatMessage.setMessage_text(message);
         String username = jdbcTemplate.queryForObject(
                 "SELECT username FROM user WHERE id = ?",
-                new Object[]{userId},
-                String.class
+                String.class, userId
         );
         if (username != null && !username.isBlank()) {
             messagingTemplate.convertAndSendToUser(username, "/queue/notifications", chatMessage);
@@ -92,7 +91,6 @@ public class GroupRequestService {
                         "WHERE gr.status != 'REJECTED' AND gr.status != 'ACCEPTED' " +
                         "AND g.headtutor_id = (SELECT id FROM user WHERE username = ?) " +
                         "LIMIT ? OFFSET ?",
-                new Object[]{tutorUsername, size, page * size},
                 (rs, rowNum) -> {
                     GroupRequest request = new GroupRequest();
                     GroupRequestId id = new GroupRequestId();
@@ -104,7 +102,8 @@ public class GroupRequestService {
                     request.setGroupName(rs.getString("group_name"));
                     request.setUsername(rs.getString("username"));
                     return request;
-                }
+                },
+                tutorUsername, size, page * size
         );
 
         int totalRequests = jdbcTemplate.queryForObject(
@@ -112,8 +111,7 @@ public class GroupRequestService {
                         "JOIN group_table g ON gr.group_id = g.group_id " +
                         "WHERE gr.status != 'REJECTED' AND gr.status != 'ACCEPTED' " +
                         "AND g.headtutor_id = (SELECT id FROM user WHERE username = ?)",
-                new Object[]{tutorUsername},
-                Integer.class
+                Integer.class, tutorUsername
         );
 
         int totalPages = (int) Math.ceil((double) totalRequests / size);
@@ -141,8 +139,7 @@ public class GroupRequestService {
     public void approveRequest(Long groupId, Long userId) {
         Integer requestExists = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM group_requests WHERE user_id = ? AND group_id = ? AND status = 'PENDING'",
-                new Object[]{userId, groupId},
-                Integer.class
+                Integer.class, userId, groupId
         );
         if (requestExists == null || requestExists == 0) {
             throw new IllegalStateException("Zahtjev nije u stanju koje dozvoljava odobravanje.");
@@ -150,14 +147,12 @@ public class GroupRequestService {
 
         int maxStudents = jdbcTemplate.queryForObject(
                 "SELECT max_students FROM group_table WHERE group_id = ? FOR UPDATE",
-                new Object[]{groupId},
-                Integer.class
+                Integer.class, groupId
         );
 
         int currentAccepted = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM group_requests WHERE group_id = ? AND status = 'ACCEPTED'",
-                new Object[]{groupId},
-                Integer.class
+                Integer.class, groupId
         );
 
         if (currentAccepted >= maxStudents) {
@@ -172,8 +167,7 @@ public class GroupRequestService {
 
         Integer alreadyInGroup = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM user_group WHERE user_id = ? AND group_id = ?",
-                new Object[]{userId, groupId},
-                Integer.class
+                Integer.class, userId, groupId
         );
         if (alreadyInGroup == null || alreadyInGroup == 0) {
             jdbcTemplate.update(

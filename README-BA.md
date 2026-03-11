@@ -1,138 +1,255 @@
 # TutoringSistem
 
-Platforma za online tutorstvo izgrađena sa React + Spring Boot + MySQL stackom.
+TutoringSistem je full-stack platforma za organizovano online tutorstvo i upravljanje učenjem. Sistem objedinjuje korisničke naloge, grupe, tutorski tok rada, nastavne materijale, zadatke, real-time chat i signalizaciju za video pozive u jednu koherentnu aplikaciju.
 
-## Sadržaj
+Platforma je implementirana kroz Spring Boot backend, React frontend, MySQL bazu, JWT sesije, WebSocket komunikaciju, sigurniji upload fajlova i Docker deployment podršku.
 
-- Pregled arhitekture
-- Moduli i funkcionalnosti
-- Sigurnost i autentifikacija
-- Pokretanje lokalno
-- Pokretanje kroz Docker
-- Konfiguracija okruženja
-- Testiranje i provjere kvaliteta
-- Ograničenja i planirana poboljšanja
-- Kratka svrha projekta
+## Pregled Platforme
 
-## Pregled arhitekture
+TutoringSistem je dizajniran oko stvarnog toka rada tutoring organizacije:
 
-Sistem ima tri glavna sloja:
+- Tutori mogu kreirati i voditi nastavne grupe.
+- Studenti mogu pretraživati grupe i slati zahtjeve za pristup.
+- Vlasnici grupa mogu pregledati i upravljati zahtjevima.
+- Lekcije i nastavni materijali mogu se objavljivati po grupi.
+- Zadaci se mogu kreirati, predavati, pregledati i ocjenjivati.
+- Korisnici mogu komunicirati kroz direktni i grupni chat.
+- Grupe mogu koristiti real-time signalizaciju za video sesije.
 
-- Frontend (`Frontend/tutoringfrontend`)  
-  React SPA sa stranicama za korisnike, grupe, lekcije, zadatke, chat i video pozive.
-- Backend (`Backend/tutoring`)  
-  Spring Boot REST API + WebSocket signaling, poslovna logika i sigurnosni sloj.
-- Baza (`MySQL`)  
-  Relacijski model za korisnike, grupe, poruke, predmete, materijale i zadatke.
+Aplikacija je strukturisana kao produkcijski orijentisan full-stack sistem, sa autentifikacijom, pristupom po rolama, perzistentnim skladištenjem, sigurnijim uploadom fajlova i deployment artefaktima unutar repozitorija.
 
-## Moduli i funkcionalnosti
+## Arhitektura
 
-### 1. Korisnici i profili
+Platforma je podijeljena u tri glavna sloja:
 
-- Registracija korisnika (`/api/createAccount`)
-- Prijava i dohvat korisničkog profila (`/api/login`, `/api/welcomePage`)
-- Podrška za više rola kroz `user_roles` i kompatibilnost sa legacy `OBOJE` modelom
-- Pregled profila korisnika i pretraga korisnika
+- Frontend: `Frontend/tutoringfrontend`
+  React single-page aplikacija izgrađena sa Vite, React Router, MUI, custom hookovima i reusable komponentama.
 
-Ključni fajlovi:
+- Backend: `Backend/tutoring`
+  Spring Boot 4 aplikacija na Java 25, sa REST API rutama i WebSocket endpointima za real-time funkcionalnosti.
 
-- `Backend/tutoring/src/main/java/com/example/tutoring/RESTControllers/UserLoginController.java`
-- `Backend/tutoring/src/main/java/com/example/tutoring/RESTControllers/UserPageController.java`
+- Baza: `MySQL`
+  Relacijsko skladište za korisnike, role, grupe, predmete, materijale, zadatke, predaje i poruke.
+
+Docker Compose je uključen za pokretanje kompletnog stacka sa MySQL, backend i frontend containerima.
+
+## Glavni Moduli
+
+### Autentifikacija i Nalozi
+
+Autentifikacija koristi HTTP-only cookie-je sa access i refresh JWT tokenima. Backend validira JWT kroz security filter i štiti API rute na nivou aplikacije.
+
+Podržani tokovi:
+
+- Javna registracija korisnika
+- Login i učitavanje sesije
+- Refresh token tok
+- Logout sa čišćenjem cookie-ja
+- Multi-role korisnički model
+- Kompatibilnost sa starijim `OBOJE` modelom
+
+Važni backend fajlovi:
+
+- `Backend/tutoring/src/main/java/com/example/tutoring/Security/AuthController.java`
+- `Backend/tutoring/src/main/java/com/example/tutoring/Security/JwtFilter.java`
+- `Backend/tutoring/src/main/java/com/example/tutoring/Security/JwtUtil.java`
 - `Backend/tutoring/src/main/java/com/example/tutoring/Entities/User.java`
 
-### 2. Grupe i pristup grupama
+### Korisnici i Pretraga Tutora
 
-- Kreiranje grupa od strane profesora
-- Filtriranje i paginacija grupa
-- Slanje zahtjeva za pristup grupi od strane studenata
-- Prihvatanje, odobravanje i odbijanje zahtjeva od strane vlasnika grupe
+Platforma podržava pretragu predmeta, pronalazak tutora po predmetu, pregled korisničkih profila i dohvat podataka za trenutno prijavljenog korisnika.
 
-Ključni fajlovi:
+Funkcionalnosti:
+
+- Pretraga predmeta
+- Predmeti sa najviše tutora
+- Lista tutora po predmetu
+- Profil korisnika
+- Učitavanje korisnika na osnovu aktivne sesije
+
+Važni fajlovi:
+
+- `Backend/tutoring/src/main/java/com/example/tutoring/RESTControllers/UserPageController.java`
+- `Backend/tutoring/src/main/java/com/example/tutoring/Services/UserService.java`
+- `Frontend/tutoringfrontend/src/components/Subjects.jsx`
+- `Frontend/tutoringfrontend/src/components/TutorsForSubject.jsx`
+- `Frontend/tutoringfrontend/src/components/UserInfo.jsx`
+
+### Grupe i Upis
+
+Grupe predstavljaju osnovnu nastavnu jedinicu. Profesor može kreirati grupu, definisati temu, raspored, cijenu, kapacitet i povezane predmete. Studenti šalju zahtjeve za pristup, a vlasnik grupe kontroliše odobravanje.
+
+Funkcionalnosti:
+
+- Kreiranje grupa
+- Dodjela predmeta grupi
+- Pretraga i filtriranje grupa
+- Paginacija
+- Zahtjevi studenata za pristup
+- Odobravanje i odbijanje zahtjeva
+- Autorizacija bazirana na vlasniku grupe
+
+Važni fajlovi:
 
 - `Backend/tutoring/src/main/java/com/example/tutoring/Services/GroupService.java`
 - `Backend/tutoring/src/main/java/com/example/tutoring/RESTControllers/GroupRequestController.java`
+- `Frontend/tutoringfrontend/src/components/CreateGroup.jsx`
 - `Frontend/tutoringfrontend/src/components/GroupSearch.jsx`
 - `Frontend/tutoringfrontend/src/components/GroupRequests.jsx`
 
-### 3. Predavanja i materijali
+### Lekcije i Materijali
 
-- Kreiranje predavanja po grupi
-- Upload materijala uz validaciju tipova fajlova
-- Prikaz lekcija i materijala po grupi
+Lekcije su vezane za grupe i mogu sadržavati uploadovane fajlove. Upload logika je centralizovana kroz storage servis i uključuje sigurnosne provjere.
 
-Ključni fajlovi:
+Funkcionalnosti:
+
+- Kreiranje lekcija od strane autorizovanih profesora
+- Upload materijala po lekciji
+- Pregled lekcija i materijala po grupi
+- Whitelist dozvoljenih ekstenzija
+- Nasumično generisana imena spremljenih fajlova
+- Zaštita od path traversal pokušaja
+
+Važni fajlovi:
 
 - `Backend/tutoring/src/main/java/com/example/tutoring/RESTControllers/LessonController.java`
 - `Backend/tutoring/src/main/java/com/example/tutoring/Services/LessonService.java`
 - `Backend/tutoring/src/main/java/com/example/tutoring/Services/StorageService.java`
 - `Frontend/tutoringfrontend/src/minicomponents/Lessons.jsx`
+- `Frontend/tutoringfrontend/src/minicomponents/CreateLessonModal.jsx`
 
-### 4. Zadaci i predaje
+### Zadaci i Predaje
 
-- Kreiranje zadataka od profesora
-- Predaja zadataka od studenata
-- Pregled submissiona, feedback i ocjenjivanje
-- Pristup je ograničen na članove grupe i vlasnika grupe
+Zadaci su vezani za grupe. Studenti mogu predati fajlove, a profesori mogu pregledati predaje, dodati feedback i ocjene.
 
-Ključni fajlovi:
+Funkcionalnosti:
+
+- Kreiranje zadataka od vlasnika grupe
+- Pregled zadataka po grupi
+- Upload studentskih predaja
+- Zaštita od duplih predaja
+- Status zakašnjele predaje
+- Feedback i ocjenjivanje
+- Kontrola pristupa predajama
+
+Važni fajlovi:
 
 - `Backend/tutoring/src/main/java/com/example/tutoring/RESTControllers/AssignmentController.java`
 - `Backend/tutoring/src/main/java/com/example/tutoring/Services/AssignmentService.java`
 - `Frontend/tutoringfrontend/src/minicomponents/Assignments.jsx`
+- `Frontend/tutoringfrontend/src/minicomponents/AssignmentDetail.jsx`
+- `Frontend/tutoringfrontend/src/minicomponents/AssignmentSubmissions.jsx`
 
-### 5. Chat i video poziv
+### Chat i Real-Time Komunikacija
 
-- Direktni chat korisnik-korisnik
-- Grupni chat po grupi
-- WebSocket signaling za video pozive unutar grupe
-- Zaštite za neispravne ID parametre, dužinu poruka i validaciju članstva u grupi
+Chat modul koristi WebSocket/STOMP komunikaciju i podržava direktne i grupne razgovore.
 
-Ključni fajlovi:
+Funkcionalnosti:
 
+- Direktne poruke između korisnika
+- Grupni chat po ID-u grupe
+- Paginacija historije poruka
+- Autentifikovane WebSocket sesije
+- Validacija članstva u grupi
+- Limit dužine poruka
+- Zaštita od neispravnih frontend ruta
+
+Važni fajlovi:
+
+- `Backend/tutoring/src/main/java/com/example/tutoring/WebSocket/WebSocketConfig.java`
 - `Backend/tutoring/src/main/java/com/example/tutoring/WebSocket/ChatController.java`
-- `Backend/tutoring/src/main/java/com/example/tutoring/VideoCall/VideoCallController.java`
+- `Backend/tutoring/src/main/java/com/example/tutoring/Services/MessageService.java`
 - `Frontend/tutoringfrontend/src/minicomponents/Chat.jsx`
+- `Frontend/tutoringfrontend/src/components/ChatTo.jsx`
+- `Frontend/tutoringfrontend/src/components/ChatGroup.jsx`
+
+### Signalizacija za Video Pozive
+
+Video pozivi koriste WebRTC na klijentskoj strani i Spring WebSocket signalizaciju na backendu. Backend ne streama media sadržaj, nego koordinira prisustvo u sobi i signaling poruke između autentifikovanih članova grupe.
+
+Funkcionalnosti:
+
+- Video sobe vezane za grupu
+- Join i leave obrada
+- Relay za offer, answer i ICE candidate poruke
+- Autentifikovan pristup sobi
+- Validacija target korisnika
+- Limit veličine signaling payload-a
+
+Važni fajlovi:
+
+- `Backend/tutoring/src/main/java/com/example/tutoring/VideoCall/VideoCallController.java`
 - `Frontend/tutoringfrontend/src/minicomponents/VideoCall.jsx`
 
-## Sigurnost i autentifikacija
+## Sigurnosni Model
 
-- Access i refresh tokeni kroz HTTP-only cookie-je
-- JWT filter za zaštitu API ruta
-- Refresh endpoint i logout endpoint
-- CORS konfiguracija iz property varijable
-- Hardened upload storage:
-  - whitelist ekstenzija
-  - randomizirani naziv fajla
-  - zaštita od path traversal pokušaja
-- Upload putanja više nije javno otvorena bez autentifikacije
+Sigurnost je raspoređena kroz više slojeva:
 
-Ključni fajlovi:
+- JWT access token u HTTP-only cookie-ju
+- Refresh token u HTTP-only cookie-ju ograničenom na `/api/auth`
+- Stateless Spring Security filter chain
+- CORS konfiguracija kroz env varijable
+- Autorizacija po rolama na backendu
+- Provjere vlasništva grupe za profesorske akcije
+- Provjere članstva u grupi za studentski pristup, grupni chat, zadatke, lekcije i video pozive
+- Validacija uploadovanih fajlova kroz whitelist ekstenzija i sigurno razrješavanje putanja
 
-- `Backend/tutoring/src/main/java/com/example/tutoring/Security/AuthController.java`
-- `Backend/tutoring/src/main/java/com/example/tutoring/Security/JwtFilter.java`
-- `Backend/tutoring/src/main/java/com/example/tutoring/Security/SecurityConfig.java`
-- `Backend/tutoring/src/main/java/com/example/tutoring/Security/JwtUtil.java`
+Za produkcijski deployment potrebno je zamijeniti sve placeholder secret vrijednosti jakim vrijednostima specifičnim za okruženje.
 
-## Pokretanje lokalno
+## Tehnološki Stack
+
+Backend:
+
+- Java 25
+- Spring Boot 4.0.3
+- Spring Security
+- Spring WebSocket
+- Spring Data JPA
+- JDBC Template za odabrane query tokove
+- MySQL
+- JJWT
+- Jasypt
+
+Frontend:
+
+- React 18
+- Vite
+- React Router
+- MUI
+- STOMP preko SockJS
+- WebRTC APIs
+
+Infrastruktura:
+
+- Docker
+- Docker Compose
+- Nginx za serviranje frontend containera
+- MySQL 8.4 container
+
+## Lokalni Development
 
 ### Preduvjeti
 
 - Java 25
-- Node.js 20+ (preporuka: 22)
-- MySQL 8+
+- Node.js 20 ili noviji
+- MySQL 8 ili noviji
 
-### 1. Backend
+### Backend
 
-1. Kreirati bazu `elearning` u MySQL-u.
-2. U `Backend/tutoring/src/main/resources/application.properties` podesiti kredencijale ili env varijable.
-3. Pokrenuti:
+Kreirati MySQL bazu `elearning`, podesiti kredencijale kroz env varijable ili `application.properties`, zatim pokrenuti:
 
 ```powershell
 cd Backend/tutoring
 ./mvnw.cmd spring-boot:run
 ```
 
-### 2. Frontend
+Default backend URL:
+
+```text
+http://localhost:8080
+```
+
+### Frontend
 
 ```powershell
 cd Frontend/tutoringfrontend
@@ -140,25 +257,23 @@ npm install
 npm run dev
 ```
 
-Frontend po defaultu radi na `http://localhost:5173`, backend na `http://localhost:8080`.
+Default frontend URL:
 
-## Pokretanje kroz Docker
+```text
+http://localhost:5173
+```
 
-### 1. Priprema
+## Docker Deployment
 
-1. Kopirati primjer env fajla:
+Repozitorij uključuje kompletan Docker Compose setup za lokalno container pokretanje.
+
+Pripremiti env varijable:
 
 ```powershell
 copy .env.docker.example .env
 ```
 
-2. U `.env` postaviti jake vrijednosti za:
-
-- `JWT_SECRET`
-- `JWT_REFRESH_SECRET`
-- `JASYPT_PASSWORD`
-
-### 2. Pokretanje
+Pokrenuti stack:
 
 ```powershell
 docker compose up --build -d
@@ -170,39 +285,50 @@ Servisi:
 - Backend: `http://localhost:8080`
 - MySQL: `localhost:3306`
 
-Upload fajlovi su persistirani kroz Docker volume `uploads_data`.
+Perzistentni volume-i:
 
-## Konfiguracija okruženja
+- `mysql_data` za podatke baze
+- `uploads_data` za uploadovane fajlove
 
-### Backend env varijable
+Zaustavljanje stacka:
+
+```powershell
+docker compose down
+```
+
+## Environment Varijable
+
+Backend:
 
 - `DB_URL`
 - `DB_USERNAME`
 - `DB_PASSWORD`
+- `JASYPT_PASSWORD`
 - `JWT_SECRET`
 - `JWT_REFRESH_SECRET`
+- `JWT_EXPIRATION_MS`
+- `JWT_REFRESH_EXPIRATION_MS`
 - `JWT_COOKIE_SECURE`
 - `JWT_COOKIE_SAME_SITE`
 - `CORS_ALLOWED_ORIGINS`
-- `JASYPT_PASSWORD`
 
-### Frontend env varijable
+Frontend:
 
-- `VITE_APP_ENV` (`local` ili `lan`)
-- `VITE_BASE_URL` (override backend URL)
-- `VITE_WS_BASE_URL` (override frontend/ws base)
-- `VITE_ICE_SERVERS` (JSON niz ICE servera)
+- `VITE_APP_ENV`
+- `VITE_BASE_URL`
+- `VITE_WS_BASE_URL`
+- `VITE_ICE_SERVERS`
 
-## Testiranje i provjere kvaliteta
+## Verifikacija
 
-### Backend
+Backend testovi:
 
 ```powershell
 cd Backend/tutoring
 ./mvnw.cmd test
 ```
 
-### Frontend
+Frontend lint i produkcijski build:
 
 ```powershell
 cd Frontend/tutoringfrontend
@@ -210,13 +336,19 @@ npm run lint
 npm run build
 ```
 
-## Ograničenja i planirana poboljšanja
+Provjera Docker konfiguracije:
 
-- Trenutni model grupe koristi jednog `headtutor` vlasnika.
-- Multi-profesor model po jednoj grupi je označen kao TODO u kodu i traži proširenje data modela.
-- Refresh tokeni su stateless i mogu se dodatno ojačati server-side revocation mehanizmom.
-- Dio SQL sloja koristi `JdbcTemplate` i može se postepeno migrirati na konzistentniji pristup po modulima.
+```powershell
+docker compose config
+```
 
-## Kratka svrha projekta
+## Trenutne Inženjerske Napomene
 
-Projekat je nastao kao praktičan sistem za učenje i primjenu Spring Boot + React pristupa na realnijem toku rada. Fokus je bio da se napravi funkcionalna tutoring platforma sa autentičnim modulima kao što su grupe, lekcije, zadaci, chat i video pozivi, pa je vremenom evoluirao u ozbiljniji full-stack sistem.
+- Trenutni model grupe ima jednog primarnog vlasnika kroz `headtutor_id`.
+- Podrška za više profesora na jednoj grupi je planirano proširenje data modela.
+- Refresh tokeni su stateless; server-side token registry bi omogućio eksplicitno poništavanje refresh tokena.
+- Dio backend modula koristi `JdbcTemplate`, dok drugi dio koristi JPA repozitorije. To je funkcionalno, ali budući cleanup može standardizovati persistence pristup po modulu.
+
+## Pozicioniranje Projekta
+
+TutoringSistem nije samo demo aplikacija. To je full-stack tutoring platforma sa stvarnim aplikacionim granicama: autentifikovane sesije, role-aware tokovi, vlasništvo nad grupama, studentski upisi, distribucija sadržaja, zadaci, direktna komunikacija, real-time signalizacija, rad sa fajlovima i containerized deployment. Codebase također odražava praktičnu evoluciju od ranijeg Spring projekta fokusiranog na učenje prema kompletnijem sistemu sa produkcijski orijentisanim brigama.

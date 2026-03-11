@@ -3,12 +3,10 @@ package com.example.tutoring.RESTControllers;
 import com.example.tutoring.Entities.Lesson;
 import com.example.tutoring.Entities.Material;
 import com.example.tutoring.Entities.User;
-import com.example.tutoring.Other.AccountType;
-import com.example.tutoring.Security.JwtUtil;
+import com.example.tutoring.Security.AuthHelper;
 import com.example.tutoring.Services.GroupService;
 import com.example.tutoring.Services.LessonService;
 import com.example.tutoring.Services.StorageService;
-import com.example.tutoring.Services.UserService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
@@ -27,11 +25,10 @@ import java.util.List;
 @RequestMapping ("/api")
 public class LessonController {
     private final LessonService lessonService;
-    private final JwtUtil jwtUtil;
     private final StorageService storageService;
     private final GroupService groupService;
-    private final UserService userService;
     private final ObjectMapper objectMapper;
+    private final AuthHelper authHelper;
     private static final Logger logger = LoggerFactory.getLogger(LessonController.class);
 
     @Value ("${file.upload-dir}")
@@ -39,27 +36,25 @@ public class LessonController {
 
     public LessonController(
             LessonService lessonService,
-            JwtUtil jwtUtil,
             StorageService storageService,
             GroupService groupService,
-            UserService userService,
-            ObjectMapper objectMapper
+            ObjectMapper objectMapper,
+            AuthHelper authHelper
     ) {
         this.lessonService = lessonService;
-        this.jwtUtil = jwtUtil;
         this.storageService = storageService;
         this.groupService = groupService;
-        this.userService = userService;
         this.objectMapper = objectMapper;
+        this.authHelper = authHelper;
     }
 
     @PostMapping(value = "/lessons", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> createLessonWithFiles(HttpServletRequest request, @RequestPart("lesson") String lessonData, @RequestPart("files") MultipartFile[] files) {
-        User currentUser = authenticate(request);
+        User currentUser = authHelper.authenticate(request);
         if (currentUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
         }
-        if (!canActAsProfessor(currentUser)) {
+        if (!authHelper.canActAsProfessor(currentUser)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Only professors can create lessons");
         }
 
@@ -109,11 +104,11 @@ public class LessonController {
 
     @GetMapping("/{groupId}/lessons")
     public ResponseEntity<?> getLessons(@PathVariable Long groupId, HttpServletRequest request) {
-        User currentUser = authenticate(request);
+        User currentUser = authHelper.authenticate(request);
         if (currentUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
         }
-        if (!canAccessGroup(currentUser, groupId)) {
+        if (!authHelper.canAccessGroup(currentUser, groupId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access denied");
         }
 
@@ -127,11 +122,11 @@ public class LessonController {
 
     @PostMapping("/lessons/{lessonId}/upload")
     public ResponseEntity<?> uploadMaterial(@PathVariable Long lessonId, @RequestParam("file") MultipartFile file, HttpServletRequest request) {
-        User currentUser = authenticate(request);
+        User currentUser = authHelper.authenticate(request);
         if (currentUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
         }
-        if (!canActAsProfessor(currentUser)) {
+        if (!authHelper.canActAsProfessor(currentUser)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Only professors can upload lesson materials");
         }
 
@@ -164,27 +159,4 @@ public class LessonController {
         }
     }
 
-    private User authenticate(HttpServletRequest request) {
-        String token = jwtUtil.extractJwtFromCookie(request);
-        if (token == null || !jwtUtil.validateToken(token)) {
-            return null;
-        }
-        String username = jwtUtil.getUsernameFromToken(token);
-        try {
-            return userService.getUserByUsername(username);
-        } catch (Exception ignored) {
-            return null;
-        }
-    }
-
-    private boolean canAccessGroup(User user, Long groupId) {
-        if (groupService.isUserInGroup(user.getId(), groupId)) {
-            return true;
-        }
-        return canActAsProfessor(user) && groupService.isTutorOwnerOfGroup(user.getId(), groupId);
-    }
-
-    private boolean canActAsProfessor(User user) {
-        return user.hasRole(AccountType.PROFESOR) || user.hasRole(AccountType.ADMIN);
-    }
 }

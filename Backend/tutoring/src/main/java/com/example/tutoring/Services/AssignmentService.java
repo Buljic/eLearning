@@ -26,7 +26,7 @@ public class AssignmentService {
 
     public List<Assignment> getAssignmentsByGroupId(Long groupId) {
         String sql = "SELECT * FROM assignment WHERE group_id = ? ORDER BY due_date_time DESC";
-        return jdbcTemplate.query(sql, new Object[]{groupId}, new AssignmentMapper());
+        return jdbcTemplate.query(sql, new AssignmentMapper(), groupId);
     }
 
     public void saveAssignment(Assignment assignment) {
@@ -49,7 +49,7 @@ public class AssignmentService {
 
     public List<AssignmentSubmission> getSubmissionsByAssignmentId(Long assignmentId) {
         String sql = "SELECT asub.*, u.username FROM assignment_submission asub JOIN user u ON asub.user_id = u.id WHERE asub.assignment_id = ?";
-        return jdbcTemplate.query(sql, new Object[]{assignmentId}, new AssignmentSubmissionMapper());
+        return jdbcTemplate.query(sql, new AssignmentSubmissionMapper(), assignmentId);
     }
 
     public void updateSubmission(AssignmentSubmission submission) {
@@ -59,20 +59,19 @@ public class AssignmentService {
 
     public AssignmentSubmission getSubmissionById(Long submissionId) {
         String sql = "SELECT asub.*, u.username FROM assignment_submission asub JOIN user u ON asub.user_id = u.id WHERE asub.id = ?";
-        return jdbcTemplate.queryForObject(sql, new Object[]{submissionId}, new AssignmentSubmissionMapper());
+        return jdbcTemplate.queryForObject(sql, new AssignmentSubmissionMapper(), submissionId);
     }
 
     public Assignment getAssignmentById(Long assignmentId) {
         String sql = "SELECT * FROM assignment WHERE id = ?";
-        return jdbcTemplate.queryForObject(sql, new Object[]{assignmentId}, new AssignmentMapper());
+        return jdbcTemplate.queryForObject(sql, new AssignmentMapper(), assignmentId);
     }
 
     public Long getGroupIdByAssignmentId(Long assignmentId) {
         try {
             return jdbcTemplate.queryForObject(
                     "SELECT group_id FROM assignment WHERE id = ?",
-                    new Object[]{assignmentId},
-                    Long.class
+                    Long.class, assignmentId
             );
         } catch (EmptyResultDataAccessException ignored) {
             return null;
@@ -83,8 +82,7 @@ public class AssignmentService {
         try {
             return jdbcTemplate.queryForObject(
                     "SELECT a.group_id FROM assignment_submission s JOIN assignment a ON a.id = s.assignment_id WHERE s.id = ?",
-                    new Object[]{submissionId},
-                    Long.class
+                    Long.class, submissionId
             );
         } catch (EmptyResultDataAccessException ignored) {
             return null;
@@ -94,8 +92,7 @@ public class AssignmentService {
     public boolean hasSubmissionForAssignment(Long assignmentId, Long userId) {
         Integer count = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM assignment_submission WHERE assignment_id = ? AND user_id = ?",
-                new Object[]{assignmentId, userId},
-                Integer.class
+                Integer.class, assignmentId, userId
         );
         return count != null && count > 0;
     }
@@ -105,7 +102,7 @@ public class AssignmentService {
                 "FROM assignment a " +
                 "LEFT JOIN assignment_submission asub ON a.id = asub.assignment_id AND asub.user_id = ? " +
                 "WHERE a.group_id = ? ORDER BY a.due_date_time DESC";
-        return jdbcTemplate.query(sql, new Object[]{userId, groupId}, new AssignmentWithSubmissionsMapper());
+        return jdbcTemplate.query(sql, new AssignmentWithSubmissionsMapper(), userId, groupId);
     }
 
     public Assignment getAssignmentWithSubmissions(Long assignmentId, Long userId) {
@@ -113,6 +110,6 @@ public class AssignmentService {
                 "FROM assignment a " +
                 "LEFT JOIN assignment_submission asub ON a.id = asub.assignment_id AND asub.user_id = ? " +
                 "WHERE a.id = ?";
-        return jdbcTemplate.queryForObject(sql, new Object[]{userId, assignmentId}, new AssignmentWithSubmissionsMapper());
+        return jdbcTemplate.queryForObject(sql, new AssignmentWithSubmissionsMapper(), userId, assignmentId);
     }
 }

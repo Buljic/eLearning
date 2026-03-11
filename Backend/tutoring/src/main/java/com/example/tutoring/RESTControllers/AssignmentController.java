@@ -5,12 +5,10 @@ import com.example.tutoring.Entities.Assignment;
 import com.example.tutoring.Entities.AssignmentSubmission;
 import com.example.tutoring.Entities.Group;
 import com.example.tutoring.Entities.User;
-import com.example.tutoring.Other.AccountType;
-import com.example.tutoring.Security.JwtUtil;
+import com.example.tutoring.Security.AuthHelper;
 import com.example.tutoring.Services.AssignmentService;
 import com.example.tutoring.Services.GroupService;
 import com.example.tutoring.Services.StorageService;
-import com.example.tutoring.Services.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.InvalidDefinitionException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -32,26 +30,23 @@ import java.util.List;
 @RequestMapping("/api")
 public class AssignmentController {
     private final AssignmentService assignmentService;
-    private final JwtUtil jwtUtil;
     private final StorageService storageService;
     private final ObjectMapper objectMapper;
-    private final UserService userService;
     private final GroupService groupService;
+    private final AuthHelper authHelper;
 
     public AssignmentController(
             AssignmentService assignmentService,
-            JwtUtil jwtUtil,
             StorageService storageService,
             ObjectMapper objectMapper,
-            UserService userService,
-            GroupService groupService
+            GroupService groupService,
+            AuthHelper authHelper
     ) {
         this.assignmentService = assignmentService;
-        this.jwtUtil = jwtUtil;
         this.storageService = storageService;
         this.objectMapper = objectMapper;
-        this.userService = userService;
         this.groupService = groupService;
+        this.authHelper = authHelper;
     }
 
     @PostMapping(value = "/assignments", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -60,11 +55,11 @@ public class AssignmentController {
             @RequestPart("assignment") String assignmentData,
             @RequestPart("file") MultipartFile file
     ) {
-        User currentUser = authenticate(request);
+        User currentUser = authHelper.authenticate(request);
         if (currentUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
         }
-        if (!canActAsProfessor(currentUser)) {
+        if (!authHelper.canActAsProfessor(currentUser)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Only professors can create assignments");
         }
 
@@ -102,16 +97,16 @@ public class AssignmentController {
 
     @GetMapping("/{groupId}/assignments")
     public ResponseEntity<List<Assignment>> getAssignments(@PathVariable Long groupId, HttpServletRequest request) {
-        User currentUser = authenticate(request);
+        User currentUser = authHelper.authenticate(request);
         if (currentUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
         }
-        if (!canAccessGroup(currentUser, groupId)) {
+        if (!authHelper.canAccessGroup(currentUser, groupId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
         }
 
         List<Assignment> assignments;
-        if (currentUser.hasRole(AccountType.STUDENT)) {
+        if (authHelper.canActAsStudent(currentUser)) {
             assignments = assignmentService.getAssignmentsByGroupIdWithSubmissionsForUser(groupId, currentUser.getId());
         } else {
             assignments = assignmentService.getAssignmentsByGroupId(groupId);
@@ -122,7 +117,7 @@ public class AssignmentController {
 
     @GetMapping("/assignments/{assignmentId}")
     public ResponseEntity<Assignment> getAssignment(@PathVariable Long assignmentId, HttpServletRequest request) {
-        User currentUser = authenticate(request);
+        User currentUser = authHelper.authenticate(request);
         if (currentUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
         }
@@ -131,7 +126,7 @@ public class AssignmentController {
         if (groupId == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
         }
-        if (!canAccessGroup(currentUser, groupId)) {
+        if (!authHelper.canAccessGroup(currentUser, groupId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
         }
 
@@ -145,11 +140,11 @@ public class AssignmentController {
             @PathVariable Long assignmentId,
             @RequestPart("file") MultipartFile file
     ) {
-        User currentUser = authenticate(request);
+        User currentUser = authHelper.authenticate(request);
         if (currentUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
         }
-        if (!canActAsStudent(currentUser)) {
+        if (!authHelper.canActAsStudent(currentUser)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Only students can submit assignments");
         }
 
@@ -181,11 +176,11 @@ public class AssignmentController {
 
     @GetMapping("/assignments/{assignmentId}/submissions")
     public ResponseEntity<List<AssignmentSubmission>> getSubmissions(@PathVariable Long assignmentId, HttpServletRequest request) {
-        User currentUser = authenticate(request);
+        User currentUser = authHelper.authenticate(request);
         if (currentUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
         }
-        if (!canActAsProfessor(currentUser)) {
+        if (!authHelper.canActAsProfessor(currentUser)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
         }
 
@@ -208,11 +203,11 @@ public class AssignmentController {
             @RequestBody AssignmentSubmission feedback,
             HttpServletRequest request
     ) {
-        User currentUser = authenticate(request);
+        User currentUser = authHelper.authenticate(request);
         if (currentUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
         }
-        if (!canActAsProfessor(currentUser)) {
+        if (!authHelper.canActAsProfessor(currentUser)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Only professors can provide feedback");
         }
 
@@ -238,7 +233,7 @@ public class AssignmentController {
 
     @GetMapping("/assignments/{assignmentId}/withSubmissions")
     public ResponseEntity<Assignment> getAssignmentWithSubmissions(@PathVariable Long assignmentId, HttpServletRequest request) {
-        User currentUser = authenticate(request);
+        User currentUser = authHelper.authenticate(request);
         if (currentUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
         }
@@ -247,11 +242,11 @@ public class AssignmentController {
         if (groupId == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
         }
-        if (!canAccessGroup(currentUser, groupId)) {
+        if (!authHelper.canAccessGroup(currentUser, groupId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
         }
 
-        if (canActAsStudent(currentUser)) {
+        if (authHelper.canActAsStudent(currentUser)) {
             Assignment assignment = assignmentService.getAssignmentWithSubmissions(assignmentId, currentUser.getId());
             return ResponseEntity.ok(assignment);
         }
@@ -260,32 +255,4 @@ public class AssignmentController {
         return ResponseEntity.ok(assignment);
     }
 
-    private User authenticate(HttpServletRequest request) {
-        String token = jwtUtil.extractJwtFromCookie(request);
-        if (token == null || !jwtUtil.validateToken(token)) {
-            return null;
-        }
-
-        String username = jwtUtil.getUsernameFromToken(token);
-        try {
-            return userService.getUserByUsername(username);
-        } catch (Exception ignored) {
-            return null;
-        }
-    }
-
-    private boolean canAccessGroup(User user, Long groupId) {
-        if (groupService.isUserInGroup(user.getId(), groupId)) {
-            return true;
-        }
-        return canActAsProfessor(user) && groupService.isTutorOwnerOfGroup(user.getId(), groupId);
-    }
-
-    private boolean canActAsProfessor(User user) {
-        return user.hasRole(AccountType.PROFESOR) || user.hasRole(AccountType.ADMIN);
-    }
-
-    private boolean canActAsStudent(User user) {
-        return user.hasRole(AccountType.STUDENT);
-    }
 }

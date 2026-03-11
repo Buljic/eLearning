@@ -23,7 +23,7 @@ public class LessonService {
 
     public List<Lesson> getLessonsByGroupId(Long groupId) {
         String sql = "SELECT * FROM lessons WHERE group_id = ? ORDER BY created_at DESC";
-        List<Lesson> lessons = jdbcTemplate.query(sql, new Object[]{groupId}, new LessonMapper());
+        List<Lesson> lessons = jdbcTemplate.query(sql, new LessonMapper(), groupId);
 
         for (Lesson lesson : lessons) {
             List<Material> materials = getMaterialsByLessonId(lesson.getId());
@@ -35,15 +35,14 @@ public class LessonService {
 
     public List<Material> getMaterialsByLessonId(Long lessonId) {
         String sql = "SELECT * FROM materials WHERE lesson_id = ?";
-        return jdbcTemplate.query(sql, new Object[]{lessonId}, new MaterialMapper());
+        return jdbcTemplate.query(sql, new MaterialMapper(), lessonId);
     }
 
     public Long getGroupIdByLessonId(Long lessonId) {
         try {
             return jdbcTemplate.queryForObject(
                     "SELECT group_id FROM lessons WHERE id = ?",
-                    new Object[]{lessonId},
-                    Long.class
+                    Long.class, lessonId
             );
         } catch (EmptyResultDataAccessException ignored) {
             return null;

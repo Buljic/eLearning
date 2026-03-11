@@ -39,18 +39,13 @@ public class WebConfig implements WebMvcConfigurer
         return source;
     }
 
-//    @Override
-//    public void addResourceHandlers(ResourceHandlerRegistry registry) {
-//        registry.addResourceHandler("/uploads/**")
-//                .addResourceLocations("file:../uploads/")
-//                .setCachePeriod(0);
-//    }
 @Override
 public void addResourceHandlers(ResourceHandlerRegistry registry) {
     //apsolutna putanja do tog mjesta
     String uploadPath = "file:" + System.getProperty("user.dir") + "/uploads/";
 
     registry.addResourceHandler("/uploads/**")
-            .addResourceLocations(uploadPath);
+            .addResourceLocations(uploadPath)
+            .setCachePeriod(3600);
 }
 }
